@@ -13,8 +13,6 @@
 - Auto-refresh API keys
 - Account health indicators
 - Discord authentication
-- Subscription system with crypto payments (USDT TRC20)
-- Auto-updater
 - Multi-language (FR, EN, ES, DE, PT)
 
 ## Download
@@ -34,18 +32,6 @@
 5. Your accounts are imported automatically from the Ankama Launcher
 6. Select accounts and click **PLAY**
 
-## Pricing
-
-| Duration | Price |
-|----------|-------|
-| 7 days | 1.50 USDT |
-| 15 days | 3 USDT |
-| 30 days | 5 USDT |
-| 60 days | 9 USDT |
-| 90 days | 13 USDT |
-| 180 days | 24 USDT |
-| 365 days | 40 USDT |
-
 Payment via USDT (TRC20) — automatic detection.
 
 ## Requirements
@@ -57,13 +43,4 @@ Payment via USDT (TRC20) — automatic detection.
 
 1. **stakk.exe** runs locally and exposes an API on `localhost:3000`
 2. The web interface communicates with the local API
-3. Frida hooks intercept game connections and replace device identifiers
 4. Each account gets a unique fingerprint, allowing multi-account on mono servers
-
-## Support
-
-Join our Discord for help and updates.
-
-## Disclaimer
-
-This tool is for educational purposes. Use at your own risk.
