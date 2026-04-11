@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>STAKK</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231abc9c' stroke-width='2'%3E%3Cpath d='M12 2L2 7l10 5 10-5-10-5z'/%3E%3Cpath d='M2 17l10 5 10-5' opacity='.5'/%3E%3Cpath d='M2 12l10 5 10-5' opacity='.75'/%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#111318;--panel:#181c24;--panel2:#1e222c;--border:#252a36;--text:#d4d8e4;--dim:#666d80;--accent:#1abc9c;--green:#2ecc71;--red:#e74c3c;--blue:#3498db;--orange:#f39c12;--radius:12px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;overflow:hidden;height:100vh}
+::selection{background:rgba(26,188,156,.25)}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:#2a2f3a;border-radius:3px}
+
+.app{display:grid;grid-template-columns:360px 1fr;height:100vh}
+
+/* LEFT */
+.left{background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.left-head{padding:18px 20px 0;flex-shrink:0}
+.game-sel{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.game-logo{width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#1abc9c,#16a085);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.game-logo svg{width:26px;height:26px;color:#fff}
+.game-txt h2{font-size:15px;font-weight:700;color:#fff}
+.game-txt select{background:transparent;border:none;color:var(--accent);font-size:12px;font-weight:500;font-family:inherit;cursor:pointer;padding:0;margin-top:1px}
+.game-txt select:focus{outline:none}
+.game-txt select option{background:var(--panel);color:var(--text)}
+
+.play-sec{padding:0 20px;margin-bottom:14px;flex-shrink:0}
+.btn-play-big{width:100%;height:46px;border:none;border-radius:10px;background:linear-gradient(135deg,#1abc9c,#16a085);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s;text-transform:uppercase;letter-spacing:.5px}
+.btn-play-big:hover{background:linear-gradient(135deg,#1dd1a8,#1abc9c);box-shadow:0 4px 20px rgba(26,188,156,.3)}
+.btn-play-big:disabled{opacity:.4;cursor:default;box-shadow:none}
+.btn-play-big svg{width:16px;height:16px}
+
+.sec-title{font-size:10px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:1.2px;padding:0 20px;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.sec-title span{font-weight:400}
+
+/* Account list */
+.acc-list{flex:1;overflow-y:auto;padding:0 8px 8px}
+.acc-row{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:10px;cursor:pointer;transition:background .12s;user-select:none}
+.acc-row:hover{background:rgba(255,255,255,.03)}
+.acc-row.on{background:rgba(26,188,156,.08)}
+
+/* Checkbox */
+.ck{width:20px;height:20px;border-radius:6px;border:2px solid #333;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.acc-row.on .ck{border-color:var(--accent);background:var(--accent)}
+.ck svg{width:12px;height:12px;color:#fff;display:none}
+.acc-row.on .ck svg{display:block}
+
+/* Avatar */
+.av{width:36px;height:36px;border-radius:50%;flex-shrink:0;overflow:hidden;background:var(--panel2);position:relative}
+.av img{width:100%;height:100%;object-fit:cover}
+.av .ini{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#fff}
+
+/* Info */
+.acc-info{flex:1;min-width:0}
+.acc-name{font-size:13px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:5px}
+.acc-id{font-size:10.5px;color:var(--dim);margin-top:1px}
+
+/* Shield icon inline */
+.sh-icon{width:14px;height:14px;flex-shrink:0}
+.sh-icon.yes{color:var(--accent)}
+.sh-icon.no{color:var(--dim);opacity:.3}
+
+/* Quick play / stop button */
+.qplay{width:30px;height:30px;border-radius:8px;border:none;background:transparent;color:var(--dim);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
+.qplay:hover{background:var(--accent);color:#fff}
+.qplay.stop{color:var(--red)}
+.qplay.stop:hover{background:var(--red);color:#fff}
+.qplay svg{width:14px;height:14px}
+
+/* Running indicator */
+.running-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* Footer */
+.left-foot{border-top:1px solid var(--border);padding:8px;display:flex;gap:6px;flex-shrink:0}
+.fb{flex:1;height:32px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--dim);font-size:11px;font-weight:500;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:4px;transition:all .15s}
+.fb:hover{color:#fff;border-color:#444;background:rgba(255,255,255,.03)}
+.fb svg{width:13px;height:13px}
+
+/* RIGHT */
+.right{display:flex;flex-direction:column;overflow:hidden}
+.right-nav{display:flex;height:46px;border-bottom:1px solid var(--border);background:var(--panel);flex-shrink:0;padding:0 20px;align-items:center;gap:4px}
+.rn{height:30px;padding:0 14px;border:none;border-radius:7px;background:transparent;color:var(--dim);font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .15s}
+.rn:hover{color:var(--text);background:rgba(255,255,255,.04)}
+.rn.on{color:#fff;background:rgba(26,188,156,.12)}
+.right-nav .sp{flex:1}
+.right-body{flex:1;overflow-y:auto;padding:24px;background:var(--bg)}
+.rv{display:none}.rv.on{display:block}
+
+/* DETAIL */
+.det-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--dim);gap:10px}
+.det-empty svg{width:48px;height:48px;opacity:.15}
+.det-empty p{font-size:13px;max-width:240px;text-align:center;line-height:1.5}
+
+.det{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;max-width:560px}
+.det-top{height:80px;position:relative}
+.det-top .bg{position:absolute;inset:0}
+.g0 .bg{background:linear-gradient(135deg,#1a2a3a,#0f1923)}.g1 .bg{background:linear-gradient(135deg,#2a1a3a,#1a0f30)}.g2 .bg{background:linear-gradient(135deg,#1a3a2a,#0f2318)}.g3 .bg{background:linear-gradient(135deg,#3a2a1a,#2a1a0f)}
+.det-av-wrap{display:flex;align-items:flex-end;gap:14px;padding:0 20px;margin-top:-28px;position:relative;z-index:2}
+.det-av{width:56px;height:56px;border-radius:50%;border:3px solid var(--panel);overflow:hidden;background:var(--panel2);flex-shrink:0}
+.det-av img{width:100%;height:100%;object-fit:cover}
+.det-av .ini{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:22px;color:#fff;background:linear-gradient(135deg,var(--accent),#16a085)}
+.det-av-name{font-size:17px;font-weight:700;color:#fff;padding-bottom:4px}
+.det-body{padding:6px 20px 16px}
+.det-name{font-size:17px;font-weight:700;color:#fff}
+.det-sub{font-size:12px;color:var(--dim);margin-top:2px}
+.det-tags{display:flex;gap:5px;margin-top:10px;flex-wrap:wrap}
+.dt{font-size:10px;padding:4px 10px;border-radius:6px;font-weight:600;letter-spacing:.2px}
+.dt-g{background:rgba(26,188,156,.12);color:var(--accent)}.dt-r{background:rgba(231,76,60,.1);color:var(--red)}.dt-b{background:rgba(52,152,219,.1);color:var(--blue)}
+.det-acts{padding:12px 20px 18px;border-top:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap}
+.da{height:36px;padding:0 16px;border-radius:8px;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px;transition:all .15s}
+.da svg{width:14px;height:14px}
+.da-1{background:var(--accent);color:#fff}.da-1:hover{background:#1dd1a8}
+.da-2{background:rgba(255,255,255,.05);color:var(--text);border:1px solid var(--border)}.da-2:hover{border-color:#444}
+.da-3{background:transparent;color:var(--dim);border:1px solid transparent}.da-3:hover{color:var(--red)}
+
+/* NETWORK */
+.net-title{font-size:16px;font-weight:700;color:#fff;margin-bottom:16px}
+.ng{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px}
+.nc{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:20px;transition:border-color .2s}
+.nc:hover{border-color:#333}
+.nc h4{font-size:14px;font-weight:700;color:#fff;margin-bottom:12px;display:flex;align-items:center;gap:10px}
+.nc .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;box-shadow:0 0 6px rgba(26,188,156,.3)}
+.nc label.f{font-size:11px;color:var(--dim);display:block;margin-top:10px;margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.nc input[type=text],.nc select{width:100%;padding:10px 14px;background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:8px;font-size:13px;font-family:inherit;transition:border-color .2s}
+.nc select{appearance:none;-webkit-appearance:none}
+.nc select{background:var(--panel2) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23666d80'%3E%3Cpath d='M2 4l4 4 4-4'/%3E%3C/svg%3E") no-repeat right 12px center;padding-right:32px;cursor:pointer}
+.nc input:focus,.nc select:focus{outline:none;border-color:rgba(26,188,156,.4)}
+.nc select option{background:var(--panel);color:var(--text);padding:8px}
+.nc .accs{margin-top:12px;display:flex;flex-wrap:wrap;gap:8px 16px}
+.nc .accs label{font-size:13px;color:#aaa;cursor:pointer;display:flex;align-items:center;gap:8px;padding:4px 0;transition:color .15s;user-select:none}
+.nc .accs label:hover{color:#fff}
+.nc .accs input[type=checkbox]{display:none}
+.nc .accs .nck{width:20px;height:20px;border-radius:6px;border:2px solid #333;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
+.nc .accs input:checked+.nck{border-color:var(--accent);background:var(--accent)}
+.nc .accs .nck svg{width:12px;height:12px;color:#fff;display:none}
+.nc .accs input:checked+.nck svg{display:block}
+.nc .del{background:none;border:none;color:#444;cursor:pointer;font-size:18px;margin-left:auto;transition:color .15s;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:6px}
+.nc .del:hover{color:var(--red);background:rgba(231,76,60,.08)}
+.nb{margin-top:20px;display:flex;gap:10px;align-items:center}
+.nbo{height:38px;padding:0 18px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--dim);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .15s}
+.nbo:hover{color:#fff;border-color:#444;background:rgba(255,255,255,.02)}
+.nbs{height:38px;padding:0 22px;border:none;border-radius:8px;background:var(--accent);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s}
+.nbs:hover{background:#1dd1a8}
+
+/* LOGS */
+.log-title{font-size:16px;font-weight:700;color:#fff;margin-bottom:6px}
+.log-sub{font-size:12px;color:var(--dim);margin-bottom:16px}
+.lbox{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;max-height:calc(100vh - 180px);overflow-y:auto;font-family:'Cascadia Mono','Fira Code','Consolas',monospace;font-size:12px;line-height:2;color:#6a6f82}
+.lbox:empty::after{content:'Aucun log pour le moment.';color:var(--dim);font-family:inherit;font-style:italic}
+.lbox div{padding:1px 0;border-bottom:1px solid rgba(255,255,255,.02);transition:all .1s}
+.lbox div:last-child{border-bottom:none}
+.lbox div:hover{color:#c0c4d0;background:rgba(255,255,255,.015);margin:0 -18px;padding:1px 18px}
+.lbox .ts{color:#3a3f50;margin-right:4px}
+.lbox .hi{color:var(--accent)}
+.lbox .wr{color:var(--orange)}
+.lbox .er{color:var(--red)}
+
+/* MODAL */
+.ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(8px);z-index:100;align-items:center;justify-content:center}
+.ov.open{display:flex}
+.mod{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:28px;width:380px;max-width:92vw;box-shadow:0 24px 80px rgba(0,0,0,.5)}
+.mod h3{font-size:16px;color:#fff;font-weight:700}
+.mod .dsc{font-size:12px;color:var(--dim);margin:4px 0 18px;line-height:1.5}
+.mod label{font-size:12px;color:#666;display:block;margin-bottom:3px;font-weight:500}
+.mod input{width:100%;padding:10px 14px;background:var(--bg);border:1px solid var(--border);color:#ddd;border-radius:8px;font-size:13px;margin-bottom:12px;font-family:inherit}
+.mod input:focus{outline:none;border-color:rgba(26,188,156,.4)}
+.mod input.code{font-size:24px;text-align:center;letter-spacing:10px;font-weight:700;padding:14px}
+.mod .step{display:none}.mod .step.active{display:block}
+.mod .ok{text-align:center;padding:20px 0;color:var(--accent);font-size:15px;font-weight:600}
+.mod .er{color:var(--red);font-size:12px;margin-bottom:12px;background:rgba(231,76,60,.08);padding:10px 14px;border-radius:8px}
+.mod .ft{display:flex;gap:8px;margin-top:4px}
+.mb{flex:1;height:40px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+.mb.p{background:var(--accent);color:#fff}.mb.p:disabled{opacity:.4}
+.mb.s{background:rgba(255,255,255,.05);color:var(--dim);border:1px solid var(--border)}
+
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(60px);padding:10px 24px;border-radius:8px;font-size:13px;font-weight:500;z-index:200;opacity:0;transition:all .3s;pointer-events:none;background:var(--panel2);color:#fff;border:1px solid var(--border);box-shadow:0 8px 32px rgba(0,0,0,.4);font-family:inherit}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.av0{background:linear-gradient(135deg,#f97316,#ea580c)}.av1{background:linear-gradient(135deg,#3b82f6,#2563eb)}.av2{background:linear-gradient(135deg,#22c55e,#16a34a)}.av3{background:linear-gradient(135deg,#a855f7,#9333ea)}.av4{background:linear-gradient(135deg,#ef4444,#dc2626)}.av5{background:linear-gradient(135deg,#eab308,#ca8a04)}.av6{background:linear-gradient(135deg,#06b6d4,#0891b2)}.av7{background:linear-gradient(135deg,#ec4899,#db2777)}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- LEFT -->
+<div class="left">
+  <div class="left-head">
+    <div class="game-sel">
+      <div class="game-logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5" opacity=".5"/><path d="M2 12l10 5 10-5" opacity=".75"/></svg></div>
+      <div class="game-txt"><h2>STAKK</h2><select id="game"><option value="dofus3">Dofus 3</option><option value="retro">Retro</option><option value="beta">Beta</option><option value="wakfu">Wakfu</option></select></div>
+    </div>
+  </div>
+  <div class="play-sec">
+    <button class="btn-play-big" id="playBtn" onclick="launchSelected()">
+      <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>JOUER
+    </button>
+  </div>
+  <div class="sec-title">Comptes <span>&mdash; <span id="cnt">0</span></span></div>
+  <div class="acc-list" id="list"></div>
+  <div class="left-foot">
+    <button class="fb" id="fbImport" onclick="importAccounts()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Importer</span></button>
+    <button class="fb" id="fbAll" onclick="toggleAll()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg><span>Tout</span></button>
+    <button class="fb" onclick="cycleLang()" title="FR/EN" style="flex:0;padding:0 10px"><span id="langBtn" style="font-weight:700">FR</span></button>
+  </div>
+</div>
+
+<!-- RIGHT -->
+<div class="right">
+  <div class="right-nav">
+    <button class="rn on" onclick="showR('detail')" id="rn-detail">Compte</button>
+    <button class="rn" onclick="showR('net')" id="rn-net">Réseau</button>
+    <button class="rn" onclick="showR('logs')" id="rn-logs">Logs</button>
+    <span class="sp"></span>
+    <div id="connStatus" style="margin-right:8px"></div>
+    <div id="authArea"></div>
+  </div>
+  <div class="right-body">
+    <div id="rv-detail" class="rv on"></div>
+    <div id="rv-net" class="rv"></div>
+    <div id="rv-logs" class="rv"></div>
+  </div>
+</div>
+</div>
+
+<!-- Modal -->
+<div class="ov" id="ov"><div class="mod">
+  <h3 id="mT">Shield</h3>
+  <div class="dsc">Générer un certificat pour les serveurs monocompte.</div>
+  <div class="step active" id="s1"><label>Login</label><input id="mL"><label>Mot de passe</label><input id="mP" type="password"><div class="ft"><button class="mb p" onclick="doLogin()" id="mB1">Se connecter</button><button class="mb s" onclick="closeM()">Annuler</button></div></div>
+  <div class="step" id="s2"><label id="mCLabel">Code email</label><input id="mC" class="code" maxlength="6" placeholder="------"><div class="ft"><button class="mb p" onclick="doVal()">Valider</button><button class="mb s" onclick="closeM()">Annuler</button></div></div>
+  <div class="step" id="s3"><div class="ok">Certificat enregistré !</div><div class="ft"><button class="mb s" onclick="closeM()">Fermer</button></div></div>
+  <div class="step" id="s4"><div class="er" id="mE"></div><div class="ft"><button class="mb p" onclick="stp(1)">Réessayer</button><button class="mb s" onclick="closeM()">Fermer</button></div></div>
+</div></div>
+<!-- Modal Abonnement -->
+<div class="ov" id="ovSub"><div class="mod" style="width:440px">
+  <h3>Abonnement STAKK</h3>
+  <div class="dsc" id="subStatus"></div>
+  <div id="subContent"></div>
+  <div id="subPayment" style="display:none">
+    <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:20px;text-align:center;margin-bottom:16px">
+      <div style="font-size:12px;color:var(--dim);margin-bottom:8px">Envoie exactement ce montant en USDT (TRC20)</div>
+      <div id="subAmount" style="font-size:28px;font-weight:700;color:#fff;margin-bottom:12px"></div>
+      <canvas id="qrCanvas" style="margin:0 auto 12px;display:block;border-radius:8px"></canvas>
+      <div style="background:#1a1e28;border-radius:8px;padding:10px;font-family:monospace;font-size:11px;color:var(--accent);word-break:break-all;margin-bottom:10px" id="subWallet"></div>
+      <button class="mb s" style="flex:none;width:auto;padding:0 14px;height:32px;font-size:11px" onclick="copyWallet()">Copier l'adresse</button>
+    </div>
+    <div style="font-size:11px;color:var(--dim);line-height:1.5;text-align:center">
+      Le montant unique permet d'identifier ton paiement.<br>
+      L'abonnement sera activé automatiquement après confirmation.
+    </div>
+  </div>
+  <div class="ft" style="margin-top:16px">
+    <button class="mb s" onclick="$('ovSub').classList.remove('open')">Fermer</button>
+  </div>
+</div></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let A=[],C={groups:[]},I=[],cur=null;
+let sel=new Set(JSON.parse(localStorage.getItem('sel')||'[]'));
+let lang=localStorage.getItem('lang')||'fr';
+const $=id=>document.getElementById(id);
+function saveSel(){localStorage.setItem('sel',JSON.stringify([...sel]))}
+const API_BASE='http://localhost:3000';
+let exeConnected=false;
+async function api(m,p,b){
+  const o={method:m,headers:{'Content-Type':'application/json'}};
+  if(b)o.body=JSON.stringify(b);
+  try{const r=await fetch(API_BASE+'/api/'+p,o);const j=await r.json();if(!r.ok)throw j;exeConnected=true;updConn();return j}
+  catch(e){if(e.message&&(e.message.includes('Failed to fetch')||e.message.includes('NetworkError'))){exeConnected=false;updConn();throw new Error('STAKK non détecté')}throw e}
+}
+function updConn(){const el=$('connStatus');if(!el)return;el.innerHTML=exeConnected?'<span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--accent)"><span style="width:6px;height:6px;border-radius:50%;background:var(--accent)"></span>Connecté</span>':'<span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--red)"><span style="width:6px;height:6px;border-radius:50%;background:var(--red);animation:pulse 2s infinite"></span>Lance STAKK.exe</span>'}
+
+// i18n
+const L={
+  fr:{
+    play:'JOUER',accounts:'Comptes',network:'Réseau',logs:'Logs',account:'Compte',
+    import:'Importer',all:'Tout',launch:'Lancer',stop:'Arrêter',shield:'Shield',
+    delete:'Supprimer',save:'Sauvegarder',group:'Groupe',addGroup:'+ Groupe',
+    mode:'Mode',defaultIp:'IP par défaut',proxy:'Proxy SOCKS5',address:'Adresse',port:'Port',
+    accountsInGroup:'Comptes',noAccount:'Aucun compte. Clique Importer.',noGroup:'Aucun groupe.',
+    login:'Login',password:'Mot de passe',connect:'Se connecter',cancel:'Annuler',
+    validate:'Valider',close:'Fermer',retry:'Réessayer',
+    shieldDesc:'Générer un certificat pour les serveurs monocompte.',
+    codeEmail:'Code reçu par email',codeOtp:'Code Authenticator (OTP)',
+    certOk:'Certificat enregistré !',codeSent:'Code envoyé',
+    shieldActive:'Shield actif',noShield:'Sans Shield',custom:'Custom',
+    keyOk:'Clé OK',keyOld:'Clé ancienne',keyExpired:'Clé expirée',
+    inGame:'En jeu',launches:'lancement',lastLaunch:'Dernier',key:'Clé',
+    ago:'il y a',now:'à l\'instant',min:'min',hours:'h',days:'j',
+    logTitle:'Journal d\'activité',entries:'entrées',export:'Exporter',
+    netTitle:'Groupes réseau',selectAccount:'Sélectionne un compte.',
+    confirmDelete:'Supprimer',launchAll:'Tout lancer',
+    updateAvail:'Mise à jour disponible',update:'Mettre à jour',upToDate:'À jour',
+    launched:'lancé(s)',error:'Erreur',imported:'importé(s)',saved:'Sauvegardé',deleted:'Supprimé',
+    apiError:'Clé API invalide. Réimporte depuis le launcher puis refais le Shield.',
+    subRequired:'Abonnement requis.',serverDown:'Serveur inaccessible.',
+  },
+  en:{
+    play:'PLAY',accounts:'Accounts',network:'Network',logs:'Logs',account:'Account',
+    import:'Import',all:'All',launch:'Launch',stop:'Stop',shield:'Shield',
+    delete:'Delete',save:'Save',group:'Group',addGroup:'+ Group',
+    mode:'Mode',defaultIp:'Default IP',proxy:'SOCKS5 Proxy',address:'Address',port:'Port',
+    accountsInGroup:'Accounts',noAccount:'No accounts. Click Import.',noGroup:'No groups.',
+    login:'Login',password:'Password',connect:'Connect',cancel:'Cancel',
+    validate:'Validate',close:'Close',retry:'Retry',
+    shieldDesc:'Generate a certificate for mono-account servers.',
+    codeEmail:'Code received by email',codeOtp:'Authenticator code (OTP)',
+    certOk:'Certificate saved!',codeSent:'Code sent',
+    shieldActive:'Shield active',noShield:'No Shield',custom:'Custom',
+    keyOk:'Key OK',keyOld:'Key old',keyExpired:'Key expired',
+    inGame:'In game',launches:'launch',lastLaunch:'Last',key:'Key',
+    ago:'ago',now:'just now',min:'min',hours:'h',days:'d',
+    logTitle:'Activity log',entries:'entries',export:'Export',
+    netTitle:'Network groups',selectAccount:'Select an account.',
+    confirmDelete:'Delete',launchAll:'Launch all',
+    updateAvail:'Update available',update:'Update',upToDate:'Up to date',
+    launched:'launched',error:'Error',imported:'imported',saved:'Saved',deleted:'Deleted',
+    apiError:'API key invalid. Re-import from launcher then redo Shield.',
+    subRequired:'Subscription required.',serverDown:'Server unreachable.',
+  },
+  es:{
+    play:'JUGAR',accounts:'Cuentas',network:'Red',logs:'Logs',account:'Cuenta',
+    import:'Importar',all:'Todo',launch:'Lanzar',stop:'Detener',shield:'Shield',
+    delete:'Eliminar',save:'Guardar',group:'Grupo',addGroup:'+ Grupo',
+    mode:'Modo',defaultIp:'IP por defecto',proxy:'Proxy SOCKS5',address:'Dirección',port:'Puerto',
+    accountsInGroup:'Cuentas',noAccount:'Sin cuentas. Haz clic en Importar.',noGroup:'Sin grupos.',
+    login:'Usuario',password:'Contraseña',connect:'Conectar',cancel:'Cancelar',
+    validate:'Validar',close:'Cerrar',retry:'Reintentar',
+    shieldDesc:'Generar un certificado para servidores mono-cuenta.',
+    codeEmail:'Código recibido por email',codeOtp:'Código Authenticator (OTP)',
+    certOk:'¡Certificado guardado!',codeSent:'Código enviado',
+    shieldActive:'Shield activo',noShield:'Sin Shield',custom:'Custom',
+    keyOk:'Clave OK',keyOld:'Clave antigua',keyExpired:'Clave expirada',
+    inGame:'En juego',launches:'lanzamiento',lastLaunch:'Último',key:'Clave',
+    ago:'hace',now:'ahora',min:'min',hours:'h',days:'d',
+    logTitle:'Registro de actividad',entries:'entradas',export:'Exportar',
+    netTitle:'Grupos de red',selectAccount:'Selecciona una cuenta.',
+    confirmDelete:'Eliminar',launchAll:'Lanzar todo',
+    updateAvail:'Actualización disponible',update:'Actualizar',upToDate:'Al día',
+    launched:'lanzado(s)',error:'Error',imported:'importado(s)',saved:'Guardado',deleted:'Eliminado',
+    apiError:'Clave API inválida. Reimporta desde el launcher y rehaz el Shield.',
+    subRequired:'Suscripción requerida.',serverDown:'Servidor inaccesible.',
+  },
+  de:{
+    play:'SPIELEN',accounts:'Konten',network:'Netzwerk',logs:'Logs',account:'Konto',
+    import:'Importieren',all:'Alle',launch:'Starten',stop:'Stoppen',shield:'Shield',
+    delete:'Löschen',save:'Speichern',group:'Gruppe',addGroup:'+ Gruppe',
+    mode:'Modus',defaultIp:'Standard-IP',proxy:'SOCKS5 Proxy',address:'Adresse',port:'Port',
+    accountsInGroup:'Konten',noAccount:'Keine Konten. Klicke auf Importieren.',noGroup:'Keine Gruppen.',
+    login:'Login',password:'Passwort',connect:'Verbinden',cancel:'Abbrechen',
+    validate:'Bestätigen',close:'Schließen',retry:'Erneut versuchen',
+    shieldDesc:'Zertifikat für Mono-Account-Server generieren.',
+    codeEmail:'Code per E-Mail erhalten',codeOtp:'Authenticator-Code (OTP)',
+    certOk:'Zertifikat gespeichert!',codeSent:'Code gesendet',
+    shieldActive:'Shield aktiv',noShield:'Kein Shield',custom:'Custom',
+    keyOk:'Schlüssel OK',keyOld:'Schlüssel alt',keyExpired:'Schlüssel abgelaufen',
+    inGame:'Im Spiel',launches:'Start',lastLaunch:'Letzter',key:'Schlüssel',
+    ago:'vor',now:'gerade',min:'Min',hours:'Std',days:'T',
+    logTitle:'Aktivitätsprotokoll',entries:'Einträge',export:'Exportieren',
+    netTitle:'Netzwerkgruppen',selectAccount:'Wähle ein Konto.',
+    confirmDelete:'Löschen',launchAll:'Alle starten',
+    updateAvail:'Update verfügbar',update:'Aktualisieren',upToDate:'Aktuell',
+    launched:'gestartet',error:'Fehler',imported:'importiert',saved:'Gespeichert',deleted:'Gelöscht',
+    apiError:'API-Schlüssel ungültig. Vom Launcher neu importieren und Shield wiederholen.',
+    subRequired:'Abonnement erforderlich.',serverDown:'Server nicht erreichbar.',
+  },
+  pt:{
+    play:'JOGAR',accounts:'Contas',network:'Rede',logs:'Logs',account:'Conta',
+    import:'Importar',all:'Tudo',launch:'Lançar',stop:'Parar',shield:'Shield',
+    delete:'Excluir',save:'Salvar',group:'Grupo',addGroup:'+ Grupo',
+    mode:'Modo',defaultIp:'IP padrão',proxy:'Proxy SOCKS5',address:'Endereço',port:'Porta',
+    accountsInGroup:'Contas',noAccount:'Sem contas. Clique em Importar.',noGroup:'Sem grupos.',
+    login:'Login',password:'Senha',connect:'Conectar',cancel:'Cancelar',
+    validate:'Validar',close:'Fechar',retry:'Tentar novamente',
+    shieldDesc:'Gerar certificado para servidores mono-conta.',
+    codeEmail:'Código recebido por email',codeOtp:'Código Authenticator (OTP)',
+    certOk:'Certificado salvo!',codeSent:'Código enviado',
+    shieldActive:'Shield ativo',noShield:'Sem Shield',custom:'Custom',
+    keyOk:'Chave OK',keyOld:'Chave antiga',keyExpired:'Chave expirada',
+    inGame:'Em jogo',launches:'lançamento',lastLaunch:'Último',key:'Chave',
+    ago:'atrás',now:'agora',min:'min',hours:'h',days:'d',
+    logTitle:'Registro de atividade',entries:'entradas',export:'Exportar',
+    netTitle:'Grupos de rede',selectAccount:'Selecione uma conta.',
+    confirmDelete:'Excluir',launchAll:'Lançar tudo',
+    updateAvail:'Atualização disponível',update:'Atualizar',upToDate:'Atualizado',
+    launched:'lançado(s)',error:'Erro',imported:'importado(s)',saved:'Salvo',deleted:'Excluído',
+    apiError:'Chave API inválida. Reimporte do launcher e refaça o Shield.',
+    subRequired:'Assinatura necessária.',serverDown:'Servidor inacessível.',
+  },
+};
+function t(k){return L[lang]?.[k]||L.fr[k]||k}
+function setLang(l){lang=l;localStorage.setItem('lang',l);refreshAll();renderStatic()}
+const langs=['fr','en','es','de','pt'];
+function cycleLang(){const i=(langs.indexOf(lang)+1)%langs.length;setLang(langs[i])}
+
+function timeAgo(ts){const d=Date.now()-ts;const m=Math.floor(d/60000);if(m<1)return t('now');if(m<60)return t('ago')+' '+m+t('min');const h=Math.floor(m/60);if(h<24)return t('ago')+' '+h+t('hours');const j=Math.floor(h/24);return t('ago')+' '+j+t('days')}
+function toast(m){const t=$('toast');t.textContent=m;t.className='toast show';setTimeout(()=>t.classList.remove('show'),3000)}
+
+function renderStatic(){
+  $('rn-detail').textContent=t('account');
+  $('rn-net').textContent=t('network');
+  $('rn-logs').textContent=t('logs');
+  $('fbImport').querySelector('span').textContent=t('import');
+  $('fbAll').querySelector('span').textContent=t('all');
+  $('langBtn').textContent=lang.toUpperCase();
+}
+function showR(n){document.querySelectorAll('.rn').forEach(b=>b.classList.remove('on'));$('rn-'+n).classList.add('on');document.querySelectorAll('.rv').forEach(v=>v.classList.remove('on'));$('rv-'+n).classList.add('on');if(n==='net')renderNet();if(n==='logs')pollLogs()}
+
+async function refreshAll(){[A,C,I]=await Promise.all([api('GET','accounts'),api('GET','config'),api('GET','interfaces')]);renderList();renderDet();renderNet()}
+
+function renderList(){
+  $('cnt').textContent=A.length;
+  const selCount=A.filter(a=>sel.has(a.accountId)).length;
+  $('playBtn').innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><polygon points="5,3 19,12 5,21"/></svg>JOUER${selCount?' ('+selCount+')':''}`;
+
+  if(!A.length){$('list').innerHTML='<div style="padding:30px 20px;text-align:center;color:var(--dim);font-size:12px">Aucun compte. Clique Importer.</div>';return}
+  $('list').innerHTML=A.map((a,i)=>{
+    const on=sel.has(a.accountId);
+    const ini=(a.login||'?')[0].toUpperCase();
+    const avUrl='https://avatar.ankama.com/users/'+a.accountId+'.png';
+    return`<div class="acc-row${on?' on':''}" onclick="tgl(${a.accountId})" ondblclick="event.stopPropagation();qp(${a.accountId})">
+      <div class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <div class="av"><img src="${avUrl}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="ini av${i%8}" style="display:none">${ini}</div></div>
+      <div class="acc-info">
+        <div class="acc-name">${a.login}
+          <svg class="sh-icon ${a.hasCertificate?'yes':'no'}" viewBox="0 0 24 24" fill="${a.hasCertificate?'currentColor':'none'}" stroke="currentColor" stroke-width="${a.hasCertificate?'0':'2'}"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          ${a.health==='expired'?'<span style="width:6px;height:6px;border-radius:50%;background:var(--red);display:inline-block;margin-left:2px" title="Clé expirée"></span>':a.health==='warn'?'<span style="width:6px;height:6px;border-radius:50%;background:var(--orange);display:inline-block;margin-left:2px" title="Clé bientôt expirée"></span>':''}
+        </div>
+        <div class="acc-id">ID ${a.accountId}${a.launchCount?' · '+a.launchCount+' lancement'+(a.launchCount>1?'s':''):''}</div>
+      </div>
+      ${a.running?'<div class="running-dot" title="En cours"></div>':''}
+      ${a.running
+        ?`<button class="qplay stop" onclick="event.stopPropagation();killAcc(${a.accountId})" title="Arrêter">
+            <svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="1"/></svg>
+          </button>`
+        :`<button class="qplay" onclick="event.stopPropagation();qp(${a.accountId})" title="Lancer">
+            <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+          </button>`
+      }
+    </div>`}).join('');
+}
+
+function tgl(id){if(sel.has(id)){sel.delete(id);if(cur===id)cur=null}else{sel.add(id);cur=id}saveSel();renderList();renderDet()}
+function toggleAll(){if(sel.size===A.length){sel.clear();cur=null}else{A.forEach(a=>sel.add(a.accountId));if(A.length)cur=A[0].accountId}saveSel();renderList();renderDet()}
+
+function renderDet(){
+  const el=$('rv-detail');
+  if(!cur&&sel.size)cur=[...sel][0];
+  if(!cur&&A.length)cur=A[0].accountId;
+  const a=A.find(x=>x.accountId===cur);
+  if(!a){el.innerHTML='<div class="det-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg><p>Sélectionne un compte.</p></div>';return}
+  const ci=A.indexOf(a)%4;
+  const avUrl='https://avatar.ankama.com/users/'+a.accountId+'.png';
+  const net=[];if(a.groupName)net.push(a.groupName);if(a.localAddress)net.push(a.localAddress);if(a.proxyUri)net.push('Proxy');
+  el.innerHTML=`<div class="det"><div class="det-top g${ci}"><div class="bg"></div></div>
+    <div class="det-av-wrap"><div class="det-av"><img src="${avUrl}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="ini" style="display:none">${(a.login||'?')[0].toUpperCase()}</div></div><div class="det-av-name">${a.login}</div></div>
+    <div class="det-body"><div class="det-sub">ID ${a.accountId}${net.length?' &middot; '+net.join(' / '):''}</div>
+      <div class="det-tags">
+        ${a.hasCertificate?'<span class="dt dt-g">Shield actif</span>':'<span class="dt dt-r">Sans Shield</span>'}
+        ${a.customShield?'<span class="dt dt-g">Custom</span>':''}
+        ${a.health==='ok'?'<span class="dt dt-g">Clé OK</span>':a.health==='warn'?'<span class="dt" style="background:rgba(243,156,18,.1);color:var(--orange)">Clé ancienne</span>':'<span class="dt dt-r">Clé expirée</span>'}
+        ${a.proxyUri?'<span class="dt dt-b">Proxy</span>':''}
+        ${a.localAddress?'<span class="dt dt-b">'+a.localAddress+'</span>':''}
+        ${a.running?'<span class="dt dt-g">En jeu</span>':''}
+      </div>
+      <div style="margin-top:12px;font-size:11px;color:var(--dim);display:flex;gap:16px;flex-wrap:wrap">
+        ${a.launchCount?'<span>'+a.launchCount+' lancement'+(a.launchCount>1?'s':'')+'</span>':''}
+        ${a.lastLaunch?'<span>Dernier: '+new Date(a.lastLaunch).toLocaleString('fr-FR')+'</span>':''}
+        ${a.refreshDate?'<span>Cle: '+timeAgo(a.refreshDate)+'</span>':''}
+      </div>
+    </div>
+    <div class="det-acts">
+      ${a.running
+        ?`<button class="da da-3" style="color:var(--red)" onclick="killAcc(${a.accountId})"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="1"/></svg>Arrêter</button>`
+        :`<button class="da da-1" onclick="qp(${a.accountId})"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>Jouer</button>`
+      }
+      <button class="da da-2" onclick="openSh(${a.accountId},'${a.login.replace(/'/g,"\\'")}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Shield</button>
+      <button class="da da-3" onclick="delAcc(${a.accountId},'${a.login.replace(/'/g,"\\'")}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>Supprimer</button>
+    </div></div>`;
+}
+
+async function checkSubBeforeLaunch(){
+  if(!authUser?.loggedIn){toast('Connecte-toi avec Discord');return false}
+  try{const lic=await api('GET','license');if(!lic.valid){openSub();return false}return true}
+  catch{return true} // offline grace
+}
+async function qp(id){if(!await checkSubBeforeLaunch())return;try{const r=await api('POST','launch',{accountIds:[id],gameKey:$('game').value});toast(r.launched?'Lance !':'Erreur')}catch{toast('Erreur')}}
+async function launchSelected(){
+  if(!await checkSubBeforeLaunch())return;
+  const ids=sel.size?[...sel]:A.map(a=>a.accountId);if(!ids.length)return;
+  const b=$('playBtn');b.disabled=true;b.textContent='LANCEMENT...';
+  try{const r=await api('POST','launch',{accountIds:ids,gameKey:$('game').value});toast(r.launched+' lancé(s)')}catch{toast('Erreur')}
+  b.disabled=false;renderList();
+}
+async function killAcc(id){try{await api('POST','kill',{accountId:id});toast('Arrete');refreshAll()}catch{toast('Erreur')}}
+async function importAccounts(){toast('Import...');try{const r=await api('POST','import');toast(r.count+' importé(s)');refreshAll()}catch{toast('Erreur')}}
+async function delAcc(id,l){if(!confirm('Supprimer '+l+' ?'))return;try{await api('POST','account/delete',{accountId:id});sel.delete(id);saveSel();if(cur===id)cur=null;toast('Supprimé');refreshAll()}catch{toast('Erreur')}}
+
+// Network
+function renderNet(){
+  const el=$('rv-net');
+  if(!C.groups.length){el.innerHTML='<div class="net-title">Groupes réseau</div><div style="color:var(--dim);padding:40px;text-align:center;background:var(--panel);border:1px solid var(--border);border-radius:var(--radius)">Aucun groupe configuré. Crée un groupe pour assigner des IPs ou proxies a tes comptes.</div><div class="nb"><button class="nbo" onclick="addG()">+ Groupe</button></div>';return}
+  el.innerHTML='<div class="net-title">Groupes réseau</div><div class="ng">'+C.groups.map((g,i)=>{
+    const dotColor=g.proxy?'var(--blue)':g.localAddress?'var(--orange)':'var(--accent)';
+    return`<div class="nc">
+      <h4><span class="dot" style="background:${dotColor};box-shadow:0 0 8px ${dotColor}"></span>
+        <input type="text" value="${g.name||''}" style="background:transparent;border:none;color:#fff;font-size:14px;font-weight:700;flex:1;padding:0;font-family:inherit" onchange="C.groups[${i}].name=this.value">
+        <button class="del" onclick="C.groups.splice(${i},1);renderNet()">&times;</button>
+      </h4>
+      <label class="f">Mode</label>
+      <select onchange="setM(${i},this.value)">
+        <option value="default" ${!g.proxy&&!g.localAddress?'selected':''}>IP par défaut</option>
+        ${I.map(f=>`<option value="l:${f.address}" ${g.localAddress===f.address?'selected':''}>${f.name} (${f.address})</option>`).join('')}
+        <option value="proxy" ${g.proxy?'selected':''}>Proxy SOCKS5</option>
+      </select>
+      ${g.proxy?`<label class="f">Adresse</label><input type="text" value="${g.proxy.host||''}" onchange="setPx(${i},'host',this.value)" placeholder="127.0.0.1">
+        <label class="f">Port</label><input type="text" value="${g.proxy.port||1080}" onchange="setPx(${i},'port',+this.value)" placeholder="1080">`:''}
+      <label class="f">Comptes</label>
+      <div class="accs">${A.map(a=>`<label><input type="checkbox" ${(g.accounts||[]).includes(a.accountId)?'checked':''} onchange="tgA(${i},${a.accountId},this.checked)"><span class="nck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>${a.login}</label>`).join('')}</div>
+    </div>`}).join('')+'</div><div class="nb"><button class="nbo" onclick="addG()">+ Groupe</button><div style="flex:1"></div><button class="nbs" onclick="saveN()">Sauvegarder</button></div>';
+}
+function setM(i,v){const g=C.groups[i];if(v==='default'){g.proxy=null;g.localAddress=null}else if(v==='proxy'){g.proxy={type:'socks5',host:'127.0.0.1',port:1080};g.localAddress=null}else{g.proxy=null;g.localAddress=v.slice(2)}renderNet()}
+function setPx(i,k,v){if(!C.groups[i].proxy)C.groups[i].proxy={type:'socks5',host:'127.0.0.1',port:1080};C.groups[i].proxy[k]=v}
+function tgA(i,id,on){C.groups.forEach(g=>{g.accounts=(g.accounts||[]).filter(x=>x!==id)});if(on)C.groups[i].accounts.push(id)}
+function addG(){C.groups.push({id:Date.now(),name:'Groupe '+(C.groups.length+1),proxy:null,localAddress:null,accounts:[]});renderNet()}
+async function saveN(){await api('POST','config',C);toast('Sauvegardé');refreshAll()}
+
+// Logs
+async function exportLogs(){window.open('/api/logs/download','_blank')}
+async function pollLogs(){try{const l=await api('GET','logs');const b=$('rv-logs');const lbox=b.querySelector('.lbox');const at=lbox?lbox.scrollHeight-lbox.scrollTop-lbox.clientHeight<40:true;
+  b.innerHTML='<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px"><div class="log-title" style="margin:0">Journal d\'activité</div><span style="font-size:12px;color:var(--dim)">'+l.length+' entrée'+(l.length>1?'s':'')+'</span><div style="flex:1"></div><button class="nbo" onclick="exportLogs()" style="height:32px;font-size:11px;padding:0 12px;gap:4px;display:flex;align-items:center"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Exporter</button></div><div class="lbox">'+l.map(x=>{
+    const m=x.match(/^\[([^\]]+)\]\s*(.*)/);if(!m)return'<div>'+x.replace(/</g,'&lt;')+'</div>';
+    let c='';const t=m[2];
+    if(t.includes('lance')||t.includes('token')||t.includes('OK')||t.includes('session'))c=' hi';
+    else if(t.includes('Erreur')||t.includes('error')||t.includes('echoue'))c=' er';
+    else if(t.includes('Proxy')||t.includes('Frida')||t.includes('REDIRECT'))c=' wr';
+    return'<div><span class="ts">['+m[1]+']</span><span class="'+c+'">'+m[2].replace(/</g,'&lt;')+'</span></div>'
+  }).join('')+'</div>';
+  if(at){const lb=b.querySelector('.lbox');if(lb)lb.scrollTop=lb.scrollHeight}
+}catch{}}
+
+// Shield
+let mId=null;
+function openSh(id,l){mId=id;$('mT').textContent='Shield — '+l;$('mL').value=l;$('mP').value='';$('mC').value='';stp(1);$('ov').classList.add('open')}
+function closeM(){$('ov').classList.remove('open');refreshAll()}
+function stp(n){document.querySelectorAll('.step').forEach(s=>s.classList.remove('active'));$('s'+n).classList.add('active')}
+async function doLogin(){const b=$('mB1');b.disabled=true;b.textContent='...';try{const r=await api('POST','shield/login',{accountId:mId,login:$('mL').value.trim(),password:$('mP').value});stp(2);if(r.method==='otp'){$('mCLabel').textContent='Code Authenticator (OTP)';toast('Entre le code de ton app')}else{$('mCLabel').textContent='Code reçu par email';toast('Code envoyé par email')}}catch(e){$('mE').textContent=e.error||'Échec';stp(4)}b.disabled=false;b.textContent='Se connecter'}
+async function doVal(){const c=$('mC').value.trim();if(c.length<4)return;try{await api('POST','shield/validate',{accountId:mId,shieldCode:c});stp(3);toast('Certificat OK')}catch(e){$('mE').textContent=e.error||'Invalide';stp(4)}}
+
+// Subscription
+async function openSub(){
+  if(!authUser?.loggedIn){toast('Connecte-toi avec Discord d\'abord');return}
+  $('ovSub').classList.add('open');
+  $('subPayment').style.display='none';
+  try{
+    const [lic,pricing]=await Promise.all([api('GET','license'),api('GET','auth/pricing')]);
+    let statusHtml='';
+    if(lic.valid){
+      const expDate=new Date(lic.expires*1000).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});
+      const expTime=new Date(lic.expires*1000).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+      statusHtml=`<div style="background:rgba(26,188,156,.08);border:1px solid rgba(26,188,156,.15);border-radius:8px;padding:14px;margin-bottom:16px;display:flex;align-items:center;gap:10px"><svg viewBox="0 0 24 24" width="20" height="20" fill="var(--accent)"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg><div><div style="color:var(--accent);font-weight:700;font-size:14px">Abonnement actif — ${lic.remaining} jours</div><div style="font-size:12px;color:var(--dim);margin-top:2px">Expire le ${expDate} a ${expTime}</div></div></div>`;
+    }else{
+      statusHtml=`<div style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.15);border-radius:8px;padding:14px;margin-bottom:16px;display:flex;align-items:center;gap:10px"><svg viewBox="0 0 24 24" width="20" height="20" fill="var(--red)"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15" stroke="#fff" stroke-width="2"/><line x1="9" y1="9" x2="15" y2="15" stroke="#fff" stroke-width="2"/></svg><div><div style="color:var(--red);font-weight:700;font-size:14px">Pas d'abonnement</div><div style="font-size:12px;color:var(--dim);margin-top:2px">Choisis une offre ci-dessous</div></div></div>`;
+    }
+    $('subStatus').innerHTML=statusHtml;
+    $('subContent').innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px">${pricing.map(p=>
+      `<button onclick="selectPlan(${p.amount})" style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px 8px;cursor:pointer;text-align:center;transition:all .15s;font-family:inherit" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+        <div style="font-size:20px;font-weight:700;color:#fff">${p.days}j</div>
+        <div style="font-size:13px;color:var(--accent);font-weight:600;margin-top:4px">${p.amount}$</div>
+        <div style="font-size:10px;color:var(--dim);margin-top:2px">${p.currency}</div>
+      </button>`
+    ).join('')}</div>`;
+  }catch(e){$('subStatus').innerHTML='<div style="color:var(--red)">'+e.message+'</div>';$('subContent').innerHTML=''}
+}
+
+async function selectPlan(amount){
+  try{
+    const r=await api('POST','auth/payment',{amount});
+    $('subAmount').textContent=r.amount+' '+r.currency;
+    $('subWallet').textContent=r.wallet;
+    $('subPayment').style.display='block';
+    $('subContent').style.display='none';
+    drawQR($('qrCanvas'),r.wallet,180);
+  }catch(e){toast(e.message||'Erreur')}
+}
+
+function copyWallet(){
+  navigator.clipboard.writeText($('subWallet').textContent);
+  toast('Adresse copiée');
+}
+
+// QR Code generator (minimal, no dependency)
+function drawQR(canvas,text,size){
+  // Use an image from a public QR API
+  const img=new Image();
+  img.crossOrigin='anonymous';
+  img.onload=function(){
+    canvas.width=size;canvas.height=size;
+    const ctx=canvas.getContext('2d');
+    ctx.fillStyle='#fff';ctx.fillRect(0,0,size,size);
+    ctx.drawImage(img,0,0,size,size);
+  };
+  img.onerror=function(){
+    // Fallback: afficher le texte
+    canvas.width=size;canvas.height=size;
+    const ctx=canvas.getContext('2d');
+    ctx.fillStyle='#1a1e28';ctx.fillRect(0,0,size,size);
+    ctx.fillStyle='#666';ctx.font='11px monospace';ctx.textAlign='center';
+    ctx.fillText('QR indisponible',size/2,size/2);
+  };
+  img.src='https://api.qrserver.com/v1/create-qr-code/?size='+size+'x'+size+'&data='+encodeURIComponent(text)+'&bgcolor=ffffff&color=000000';
+}
+
+// Discord callback handler — detecter ?token=xxx dans l'URL
+(function handleDiscordCallback(){
+  const params=new URLSearchParams(window.location.search);
+  const token=params.get('token');
+  const user=params.get('user');
+  if(token){
+    api('POST','auth/token',{token,username:user}).then(()=>{
+      window.history.replaceState({},'','/');
+      toast('Connecté en tant que '+(user||'utilisateur'));
+      checkAuth();
+    }).catch(()=>toast('Erreur de connexion'));
+  }
+})();
+
+// Auth state
+let authUser=null;
+async function checkAuth(){
+  try{
+    const r=await api('GET','auth/status');
+    authUser=r.loggedIn?r:null;
+    if(authUser){try{authUser.license=await api('GET','license')}catch{}}
+    renderAuthUI();
+  }catch{authUser=null;renderAuthUI()}
+}
+async function discordLogin(){
+  try{const r=await api('GET','auth/discord');if(r.url)window.location.href=r.url}catch(e){toast('Serveur inaccessible')}
+}
+async function logout(){
+  await api('POST','auth/logout');authUser=null;renderAuthUI();toast('Déconnecté');
+}
+function renderAuthUI(){
+  const el=$('authArea');if(!el)return;
+  if(authUser?.loggedIn){
+    const lic=authUser.license||{};
+    const expStr=lic.expires?new Date(lic.expires*1000).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'})+' '+new Date(lic.expires*1000).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):'';
+    const subHtml=lic.valid
+      ?`<span style="color:var(--accent);font-size:11px;font-weight:600">${lic.remaining}j</span>`
+      :`<span style="color:var(--red);font-size:11px;font-weight:600">Expire</span>`;
+    el.innerHTML=`<div style="display:flex;align-items:center;gap:8px">
+      <button onclick="openSub()" title="${lic.valid?'Expire le '+expStr:'Aucun abonnement'}" style="height:34px;padding:0 14px;background:${lic.valid?'rgba(26,188,156,.08)':'rgba(239,68,68,.08)'};border:1px solid ${lic.valid?'rgba(26,188,156,.15)':'rgba(239,68,68,.15)'};border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px;white-space:nowrap;color:${lic.valid?'var(--accent)':'var(--red)'}"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>${subHtml}</button>
+      <div style="display:flex;align-items:center;gap:8px;height:34px;padding:0 12px;background:rgba(88,101,242,.08);border:1px solid rgba(88,101,242,.12);border-radius:8px;font-size:12px;white-space:nowrap"><svg viewBox="0 0 24 24" width="14" height="14" fill="#7289da"><path d="M20.317 4.37a19.791 19.791 0 00-4.885-1.515.074.074 0 00-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 00-5.487 0 12.64 12.64 0 00-.617-1.25.077.077 0 00-.079-.037A19.736 19.736 0 003.677 4.37a.07.07 0 00-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 00.031.057 19.9 19.9 0 005.993 3.03.078.078 0 00.084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 00-.041-.106 13.107 13.107 0 01-1.872-.892.077.077 0 01-.008-.128 10.2 10.2 0 00.372-.292.074.074 0 01.077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 01.078.01c.12.098.246.198.373.292a.077.077 0 01-.006.127 12.299 12.299 0 01-1.873.892.077.077 0 00-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 00.084.028 19.839 19.839 0 006.002-3.03.077.077 0 00.032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 00-.031-.03z"/></svg><span style="color:#fff;font-weight:600">${authUser.username}</span><button onclick="logout()" style="background:none;border:none;color:var(--dim);cursor:pointer;font-size:14px;line-height:1;margin-left:2px" title="Déconnexion">&times;</button></div>
+    </div>`;
+  }else{
+    el.innerHTML=`<button onclick="discordLogin()" style="height:36px;padding:0 18px;background:#5865F2;border:none;color:#fff;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:8px;white-space:nowrap;transition:background .15s" onmouseover="this.style.background='#4752c4'" onmouseout="this.style.background='#5865F2'"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 00-4.885-1.515.074.074 0 00-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 00-5.487 0 12.64 12.64 0 00-.617-1.25.077.077 0 00-.079-.037A19.736 19.736 0 003.677 4.37a.07.07 0 00-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 00.031.057 19.9 19.9 0 005.993 3.03.078.078 0 00.084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 00-.041-.106 13.107 13.107 0 01-1.872-.892.077.077 0 01-.008-.128 10.2 10.2 0 00.372-.292.074.074 0 01.077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 01.078.01c.12.098.246.198.373.292a.077.077 0 01-.006.127 12.299 12.299 0 01-1.873.892.077.077 0 00-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 00.084.028 19.839 19.839 0 006.002-3.03.077.077 0 00.032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 00-.031-.03z"/></svg>Se connecter</button>`;
+  }
+}
+
+refreshAll();renderStatic();checkAuth();setInterval(pollLogs,2000);setTimeout(pollLogs,500);
+// Poll running state every 3 seconds
+setInterval(async()=>{try{const fresh=await api('GET','accounts');const changed=A.some((a,i)=>a.running!==fresh[i]?.running);if(changed){A=fresh;renderList();renderDet()}}catch{}},3000);
+</script>
+</body>
+</html>
