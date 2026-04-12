@@ -176,7 +176,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .mb.p{background:var(--accent);color:#fff}.mb.p:disabled{opacity:.4}
 .mb.s{background:rgba(255,255,255,.05);color:var(--dim);border:1px solid var(--border)}
 
-.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(60px);padding:10px 24px;border-radius:8px;font-size:13px;font-weight:500;z-index:200;opacity:0;transition:all .3s;pointer-events:none;background:var(--panel2);color:#fff;border:1px solid var(--border);box-shadow:0 8px 32px rgba(0,0,0,.4);font-family:inherit}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(60px);padding:12px 24px;border-radius:8px;font-size:13px;font-weight:500;z-index:200;opacity:0;transition:all .3s;pointer-events:none;background:var(--panel2);color:#fff;border:1px solid var(--border);box-shadow:0 8px 32px rgba(0,0,0,.4);font-family:inherit;max-width:600px;text-align:center;line-height:1.5}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
 .av0{background:linear-gradient(135deg,#f97316,#ea580c)}.av1{background:linear-gradient(135deg,#3b82f6,#2563eb)}.av2{background:linear-gradient(135deg,#22c55e,#16a34a)}.av3{background:linear-gradient(135deg,#a855f7,#9333ea)}.av4{background:linear-gradient(135deg,#ef4444,#dc2626)}.av5{background:linear-gradient(135deg,#eab308,#ca8a04)}.av6{background:linear-gradient(135deg,#06b6d4,#0891b2)}.av7{background:linear-gradient(135deg,#ec4899,#db2777)}
@@ -402,7 +402,7 @@ const langs=['fr','en','es','de','pt'];
 function cycleLang(){const i=(langs.indexOf(lang)+1)%langs.length;setLang(langs[i])}
 
 function timeAgo(ts){const d=Date.now()-ts;const m=Math.floor(d/60000);if(m<1)return t('now');if(m<60)return t('ago')+' '+m+t('min');const h=Math.floor(m/60);if(h<24)return t('ago')+' '+h+t('hours');const j=Math.floor(h/24);return t('ago')+' '+j+t('days')}
-function toast(m){const t=$('toast');t.textContent=m;t.className='toast show';setTimeout(()=>t.classList.remove('show'),3000)}
+function toast(m,dur){const t=$('toast');t.textContent=m;t.className='toast show';setTimeout(()=>t.classList.remove('show'),dur||4000)}
 
 function renderStatic(){
   $('rn-detail').textContent=t('account');
@@ -492,15 +492,15 @@ async function checkSubBeforeLaunch(){
   try{const lic=await api('GET','license');if(!lic.valid){openSub();return false}return true}
   catch{return true} // offline grace
 }
-async function qp(id){if(!await checkSubBeforeLaunch())return;try{const r=await api('POST','launch',{accountIds:[id],gameKey:$('game').value});toast(r.launched?'Lance !':'Erreur')}catch{toast('Erreur')}}
+async function qp(id){if(!await checkSubBeforeLaunch())return;try{const r=await api('POST','launch',{accountIds:[id],gameKey:$('game').value});toast(r.launched?'Lancé !':'Erreur')}catch(e){toast(e.error||e.message||'Erreur')}}
 async function launchSelected(){
   if(!await checkSubBeforeLaunch())return;
   const ids=sel.size?[...sel]:A.map(a=>a.accountId);if(!ids.length)return;
   const b=$('playBtn');b.disabled=true;b.textContent='LANCEMENT...';
-  try{const r=await api('POST','launch',{accountIds:ids,gameKey:$('game').value});toast(r.launched+' lancé(s)')}catch{toast('Erreur')}
+  try{const r=await api('POST','launch',{accountIds:ids,gameKey:$('game').value});toast(r.launched+' lancé(s)')}catch(e){toast(e.error||e.message||'Erreur')}
   b.disabled=false;renderList();
 }
-async function killAcc(id){try{await api('POST','kill',{accountId:id});toast('Arrete');refreshAll()}catch{toast('Erreur')}}
+async function killAcc(id){try{await api('POST','kill',{accountId:id});toast('Arrêté');refreshAll()}catch{toast('Erreur')}}
 async function importAccounts(){toast('Import...');try{const r=await api('POST','import');toast(r.count+' importé(s)');refreshAll()}catch{toast('Erreur')}}
 async function delAcc(id,l){if(!confirm('Supprimer '+l+' ?'))return;try{await api('POST','account/delete',{accountId:id});sel.delete(id);saveSel();if(cur===id)cur=null;toast('Supprimé');refreshAll()}catch{toast('Erreur')}}
 
