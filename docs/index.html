@@ -720,7 +720,7 @@ async function installUpdate(url){
   }catch(e){toast('Erreur: '+(e.error||e.message))}
 }
 
-refreshAll();renderStatic();checkAuth();setTimeout(checkUpdate,3000);setInterval(pollLogs,2000);setTimeout(pollLogs,500);
+refreshAll();renderStatic();checkAuth();setTimeout(checkUpdate,500);setInterval(pollLogs,2000);setTimeout(pollLogs,500);
 // Poll running state every 3 seconds
 setInterval(async()=>{try{const fresh=await api('GET','accounts');const changed=A.some((a,i)=>a.running!==fresh[i]?.running);if(changed){A=fresh;renderList();renderDet()}}catch{}},3000);
 </script>
