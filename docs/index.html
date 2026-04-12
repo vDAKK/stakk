@@ -178,6 +178,12 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(60px);padding:12px 24px;border-radius:8px;font-size:13px;font-weight:500;z-index:200;opacity:0;transition:all .3s;pointer-events:none;background:var(--panel2);color:#fff;border:1px solid var(--border);box-shadow:0 8px 32px rgba(0,0,0,.4);font-family:inherit;max-width:600px;text-align:center;line-height:1.5}
 
+/* Info banner (limite monocompte) */
+.info-banner{margin:0 14px 10px;padding:10px 12px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.18);border-radius:10px;display:flex;align-items:flex-start;gap:8px;font-size:11px;color:#f5a623;line-height:1.5;cursor:help;transition:all .2s}
+.info-banner:hover{background:rgba(245,158,11,.12)}
+.info-banner svg{width:14px;height:14px;flex-shrink:0;margin-top:1px}
+.info-banner span{flex:1;font-weight:500}
+
 /* Language selector */
 .lang-sel{flex:0 0 auto;height:32px;padding:0 10px;display:flex;align-items:center;gap:6px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:11px;color:var(--dim);position:relative;user-select:none;transition:all .15s}
 .lang-sel:hover{color:#fff;border-color:#444;background:rgba(255,255,255,.03)}
@@ -208,6 +214,10 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
     <button class="btn-play-big" id="playBtn" onclick="launchSelected()">
       <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>JOUER
     </button>
+  </div>
+  <div class="info-banner" id="limitBanner" title="">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+    <span id="limitBannerText"></span>
   </div>
   <div class="sec-title">Comptes <span>&mdash; <span id="cnt">0</span></span></div>
   <div class="acc-list" id="list"></div>
@@ -504,6 +514,8 @@ function renderStatic(){
   $('fbImport').querySelector('span').textContent=t('import');
   $('fbAll').querySelector('span').textContent=t('all');
   $('langBtn').textContent=lang.toUpperCase();
+  $('limitBannerText').textContent=t('limitTitle');
+  $('limitBanner').title=t('limitText');
   const cur=LANGS.find(l=>l.code===lang);
   if(cur)$('langFlag').textContent=cur.flag;
   // Rendre le menu langue
