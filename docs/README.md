@@ -1,6 +1,6 @@
 # STAKK
 
-> Multi-account launcher for Dofus 3 — Launch multiple accounts on mono-account servers.
+> Multi-account launcher for Dofus 3 - Launch multiple accounts on mono-account servers.
 
 ![STAKK](https://raw.githubusercontent.com/vDAKK/stakk/main/docs/preview.png)
 
