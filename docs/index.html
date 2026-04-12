@@ -585,7 +585,9 @@ async function selectPlan(amount){
     $('subWallet').textContent=r.wallet;
     $('subPayment').style.display='block';
     $('subContent').style.display='none';
-    drawQR($('qrCanvas'),r.wallet,180);
+    // QR code avec URI tron pour que les wallets reconnaissent le montant
+    const tronUri='tron:'+r.wallet+'?amount='+r.amount+'&token=USDT';
+    drawQR($('qrCanvas'),tronUri,180);
   }catch(e){toast(e.message||'Erreur')}
 }
 
