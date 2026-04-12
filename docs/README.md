@@ -19,10 +19,6 @@
 
 **[Download latest release](https://github.com/vDAKK/stakk/releases/latest)**
 
-| Version | Date | Download |
-|---------|------|----------|
-| v1.1.0 | 2026-04-11 | [stakk-v1.1.0.zip](https://github.com/vDAKK/stakk/releases/download/v1.1.0/stakk-v1.1.0.zip) |
-
 ## Quick Start
 
 1. Download and extract the latest release
