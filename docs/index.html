@@ -695,7 +695,28 @@ async function installUpdate(url){
   toast('Téléchargement et installation...');
   try{
     await api('POST','update/apply',{downloadUrl:url});
-    document.body.innerHTML='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;color:var(--text);gap:16px"><div style="font-size:20px;font-weight:700">Mise à jour en cours...</div><div style="color:var(--dim)">STAKK va redémarrer automatiquement.</div></div>';
+    document.body.innerHTML='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;color:var(--text);gap:16px"><div style="font-size:20px;font-weight:700">Mise à jour en cours...</div><div style="color:var(--dim)" id="updStat">STAKK va redémarrer automatiquement.</div></div>';
+    // Attendre que le nouvel exe soit lancé et rafraichir
+    let tries=0;
+    const check=async()=>{
+      tries++;
+      try{
+        const r=await fetch('http://localhost:3000/api/version',{cache:'no-store'});
+        if(r.ok){
+          const j=await r.json();
+          const stat=document.getElementById('updStat');
+          if(stat)stat.textContent='STAKK v'+j.version+' prêt, rechargement...';
+          setTimeout(()=>location.reload(),1000);
+          return;
+        }
+      }catch{}
+      if(tries<30)setTimeout(check,2000);
+      else{
+        const stat=document.getElementById('updStat');
+        if(stat)stat.innerHTML='STAKK ne répond pas. <button onclick="location.reload()" style="background:var(--accent);color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-family:inherit;margin-left:8px">Recharger</button>';
+      }
+    };
+    setTimeout(check,5000);
   }catch(e){toast('Erreur: '+(e.error||e.message))}
 }
 
