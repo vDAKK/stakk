@@ -177,6 +177,17 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .mb.s{background:rgba(255,255,255,.05);color:var(--dim);border:1px solid var(--border)}
 
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(60px);padding:12px 24px;border-radius:8px;font-size:13px;font-weight:500;z-index:200;opacity:0;transition:all .3s;pointer-events:none;background:var(--panel2);color:#fff;border:1px solid var(--border);box-shadow:0 8px 32px rgba(0,0,0,.4);font-family:inherit;max-width:600px;text-align:center;line-height:1.5}
+
+/* Language selector */
+.lang-sel{flex:0 0 auto;height:32px;padding:0 10px;display:flex;align-items:center;gap:6px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:11px;color:var(--dim);position:relative;user-select:none;transition:all .15s}
+.lang-sel:hover{color:#fff;border-color:#444;background:rgba(255,255,255,.03)}
+.lang-sel svg{opacity:.5}
+.lang-menu{position:absolute;bottom:calc(100% + 6px);right:0;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:4px;min-width:150px;box-shadow:0 8px 24px rgba(0,0,0,.4);display:none;z-index:50}
+.lang-menu.open{display:block}
+.lang-item{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:6px;cursor:pointer;font-size:13px;color:var(--text);transition:background .12s}
+.lang-item:hover{background:rgba(255,255,255,.05)}
+.lang-item.on{background:rgba(26,188,156,.1);color:var(--accent);font-weight:600}
+.lang-item .l-flag{font-size:16px}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
 .av0{background:linear-gradient(135deg,#f97316,#ea580c)}.av1{background:linear-gradient(135deg,#3b82f6,#2563eb)}.av2{background:linear-gradient(135deg,#22c55e,#16a34a)}.av3{background:linear-gradient(135deg,#a855f7,#9333ea)}.av4{background:linear-gradient(135deg,#ef4444,#dc2626)}.av5{background:linear-gradient(135deg,#eab308,#ca8a04)}.av6{background:linear-gradient(135deg,#06b6d4,#0891b2)}.av7{background:linear-gradient(135deg,#ec4899,#db2777)}
@@ -203,7 +214,12 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
   <div class="left-foot">
     <button class="fb" id="fbImport" onclick="importAccounts()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Importer</span></button>
     <button class="fb" id="fbAll" onclick="toggleAll()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg><span>Tout</span></button>
-    <button class="fb" onclick="cycleLang()" title="FR/EN" style="flex:0;padding:0 10px"><span id="langBtn" style="font-weight:700">FR</span></button>
+    <div class="lang-sel" onclick="toggleLangMenu(event)">
+      <span id="langFlag">🇫🇷</span>
+      <span id="langBtn" style="font-weight:600">FR</span>
+      <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"/></svg>
+      <div class="lang-menu" id="langMenu"></div>
+    </div>
   </div>
 </div>
 
@@ -239,24 +255,21 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 </div></div>
 <!-- Modal Abonnement -->
 <div class="ov" id="ovSub"><div class="mod" style="width:440px">
-  <h3>Abonnement STAKK</h3>
+  <h3 id="subTitle">Abonnement STAKK</h3>
   <div class="dsc" id="subStatus"></div>
   <div id="subContent"></div>
   <div id="subPayment" style="display:none">
     <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:20px;text-align:center;margin-bottom:16px">
-      <div style="font-size:12px;color:var(--dim);margin-bottom:8px">Envoie exactement ce montant en USDT (TRC20)</div>
+      <div id="payAmountLabel" style="font-size:12px;color:var(--dim);margin-bottom:8px"></div>
       <div id="subAmount" style="font-size:28px;font-weight:700;color:#fff;margin-bottom:12px"></div>
       <canvas id="qrCanvas" style="margin:0 auto 12px;display:block;border-radius:8px"></canvas>
       <div style="background:#1a1e28;border-radius:8px;padding:10px;font-family:monospace;font-size:11px;color:var(--accent);word-break:break-all;margin-bottom:10px" id="subWallet"></div>
-      <button class="mb s" style="flex:none;width:auto;padding:0 14px;height:32px;font-size:11px" onclick="copyWallet()">Copier l'adresse</button>
+      <button class="mb s" id="copyBtn" style="flex:none;width:auto;padding:0 14px;height:32px;font-size:11px" onclick="copyWallet()"></button>
     </div>
-    <div style="font-size:11px;color:var(--dim);line-height:1.5;text-align:center">
-      Le montant unique permet d'identifier ton paiement.<br>
-      L'abonnement sera activé automatiquement après confirmation.
-    </div>
+    <div id="payUniqueText" style="font-size:11px;color:var(--dim);line-height:1.5;text-align:center"></div>
   </div>
   <div class="ft" style="margin-top:16px">
-    <button class="mb s" onclick="$('ovSub').classList.remove('open')">Fermer</button>
+    <button class="mb s" id="closeSubBtn" onclick="$('ovSub').classList.remove('open')"></button>
   </div>
 </div></div>
 
@@ -274,132 +287,212 @@ async function api(m,p,b){
   const o={method:m,headers:{'Content-Type':'application/json'}};
   if(b)o.body=JSON.stringify(b);
   try{const r=await fetch(API_BASE+'/api/'+p,o);const j=await r.json();if(!r.ok)throw j;exeConnected=true;updConn();return j}
-  catch(e){if(e.message&&(e.message.includes('Failed to fetch')||e.message.includes('NetworkError'))){exeConnected=false;updConn();throw new Error('STAKK non détecté')}throw e}
+  catch(e){if(e.message&&(e.message.includes('Failed to fetch')||e.message.includes('NetworkError'))){exeConnected=false;updConn();throw new Error(t('stakkNotDetected'))}throw e}
 }
-function updConn(){const el=$('connStatus');if(!el)return;el.innerHTML=exeConnected?'<span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--accent)"><span style="width:6px;height:6px;border-radius:50%;background:var(--accent)"></span>Connecté</span>':'<span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--red)"><span style="width:6px;height:6px;border-radius:50%;background:var(--red);animation:pulse 2s infinite"></span>Lance STAKK.exe</span>'}
+function updConn(){const el=$('connStatus');if(!el)return;el.innerHTML=exeConnected?'<span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--accent)"><span style="width:6px;height:6px;border-radius:50%;background:var(--accent)"></span>'+t('connected')+'</span>':'<span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--red)"><span style="width:6px;height:6px;border-radius:50%;background:var(--red);animation:pulse 2s infinite"></span>'+t('exeNotDetected')+'</span>'}
 
-// i18n
+// i18n — complet
 const L={
   fr:{
     play:'JOUER',accounts:'Comptes',network:'Réseau',logs:'Logs',account:'Compte',
     import:'Importer',all:'Tout',launch:'Lancer',stop:'Arrêter',shield:'Shield',
     delete:'Supprimer',save:'Sauvegarder',group:'Groupe',addGroup:'+ Groupe',
     mode:'Mode',defaultIp:'IP par défaut',proxy:'Proxy SOCKS5',address:'Adresse',port:'Port',
-    accountsInGroup:'Comptes',noAccount:'Aucun compte. Clique Importer.',noGroup:'Aucun groupe.',
+    accountsInGroup:'Comptes',noAccount:'Aucun compte. Clique Importer.',noGroup:'Aucun groupe. Ajoute-en un pour configurer les connexions.',
     login:'Login',password:'Mot de passe',connect:'Se connecter',cancel:'Annuler',
     validate:'Valider',close:'Fermer',retry:'Réessayer',
     shieldDesc:'Générer un certificat pour les serveurs monocompte.',
     codeEmail:'Code reçu par email',codeOtp:'Code Authenticator (OTP)',
     certOk:'Certificat enregistré !',codeSent:'Code envoyé',
     shieldActive:'Shield actif',noShield:'Sans Shield',custom:'Custom',
-    keyOk:'Clé OK',keyOld:'Clé ancienne',keyExpired:'Clé expirée',
+    keyOk:'Clé OK',keyOld:'Clé ancienne',keyExpired:'Clé expirée',keyExpiredSoon:'Clé bientôt expirée',
     inGame:'En jeu',launches:'lancement',lastLaunch:'Dernier',key:'Clé',
     ago:'il y a',now:'à l\'instant',min:'min',hours:'h',days:'j',
     logTitle:'Journal d\'activité',entries:'entrées',export:'Exporter',
     netTitle:'Groupes réseau',selectAccount:'Sélectionne un compte.',
-    confirmDelete:'Supprimer',launchAll:'Tout lancer',
-    updateAvail:'Mise à jour disponible',update:'Mettre à jour',upToDate:'À jour',
-    launched:'lancé(s)',error:'Erreur',imported:'importé(s)',saved:'Sauvegardé',deleted:'Supprimé',
+    confirmDelete:'Supprimer',launchAll:'Tout lancer',deleteConfirm:'Supprimer',
+    updateAvail:'Nouvelle version disponible',update:'Installer',upToDate:'À jour',updateInProgress:'Mise à jour en cours...',updateRestart:'STAKK va redémarrer automatiquement.',
+    launched:'lancé(s)',error:'Erreur',imported:'importé(s)',saved:'Sauvegardé',deleted:'Supprimé',stopped:'Arrêté',launchedOne:'Lancé !',
     apiError:'Clé API invalide. Réimporte depuis le launcher puis refais le Shield.',
     subRequired:'Abonnement requis.',serverDown:'Serveur inaccessible.',
+    connected:'Connecté',exeNotDetected:'Lance STAKK.exe',
+    loginRequired:'Connecte-toi avec Discord',codeEmailSent:'Code envoyé par email',codeOtpPrompt:'Entre le code de ton app',
+    certOkToast:'Certificat Shield enregistré !',loginFailed:'Échec',codeInvalid:'Code invalide',
+    installStart:'Téléchargement et installation...',urlMissing:'URL indisponible',
+    stakkClosed:'STAKK fermé. Tu peux fermer cet onglet.',confirmQuit:'Fermer STAKK ?',
+    addressCopied:'Adresse copiée',loggedInAs:'Connecté en tant que',disconnected:'Déconnecté',
+    subTitle:'Abonnement STAKK',subActive:'Abonnement actif',subExpires:'Expire le',subInactive:'Pas d\'abonnement',subChoose:'Choisis une offre ci-dessous',
+    payAmount:'Envoie exactement ce montant en USDT (TRC20)',payUnique:'Le montant unique permet d\'identifier ton paiement.',payAuto:'L\'abonnement sera activé automatiquement après confirmation.',
+    copyAddress:'Copier l\'adresse',daysRemaining:'jours restants',noSubTitle:'Aucun abonnement',
+    expire:'Expiré',daysShort:'j',accountLabel:'Compte',idLabel:'ID',
+    noGroupNet:'Aucun groupe configuré. Cré un groupe pour assigner des IPs ou proxies à tes comptes.',
+    importOngoing:'Import en cours...',importError:'Erreur import',stakkNotDetected:'STAKK non détecté',
+    connectionLost:'Connexion perdue',deleteAccount:'Supprimer',launchError:'Erreur de lancement',
+    subRequiredToast:'Connecte-toi avec Discord',
+    limitTitle:'Limite 2 comptes par IP',limitText:'Sur les serveurs monocompte, tu ne peux jouer que 2 comptes par IP. Pour 2 comptes supplémentaires, utilise une seconde carte réseau (par ex. 4G USB) et crée un groupe réseau dédié.',
   },
   en:{
     play:'PLAY',accounts:'Accounts',network:'Network',logs:'Logs',account:'Account',
     import:'Import',all:'All',launch:'Launch',stop:'Stop',shield:'Shield',
     delete:'Delete',save:'Save',group:'Group',addGroup:'+ Group',
     mode:'Mode',defaultIp:'Default IP',proxy:'SOCKS5 Proxy',address:'Address',port:'Port',
-    accountsInGroup:'Accounts',noAccount:'No accounts. Click Import.',noGroup:'No groups.',
+    accountsInGroup:'Accounts',noAccount:'No accounts. Click Import.',noGroup:'No groups. Add one to configure connections.',
     login:'Login',password:'Password',connect:'Connect',cancel:'Cancel',
     validate:'Validate',close:'Close',retry:'Retry',
     shieldDesc:'Generate a certificate for mono-account servers.',
     codeEmail:'Code received by email',codeOtp:'Authenticator code (OTP)',
     certOk:'Certificate saved!',codeSent:'Code sent',
     shieldActive:'Shield active',noShield:'No Shield',custom:'Custom',
-    keyOk:'Key OK',keyOld:'Key old',keyExpired:'Key expired',
+    keyOk:'Key OK',keyOld:'Key old',keyExpired:'Key expired',keyExpiredSoon:'Key expiring soon',
     inGame:'In game',launches:'launch',lastLaunch:'Last',key:'Key',
     ago:'ago',now:'just now',min:'min',hours:'h',days:'d',
     logTitle:'Activity log',entries:'entries',export:'Export',
     netTitle:'Network groups',selectAccount:'Select an account.',
-    confirmDelete:'Delete',launchAll:'Launch all',
-    updateAvail:'Update available',update:'Update',upToDate:'Up to date',
-    launched:'launched',error:'Error',imported:'imported',saved:'Saved',deleted:'Deleted',
+    confirmDelete:'Delete',launchAll:'Launch all',deleteConfirm:'Delete',
+    updateAvail:'New version available',update:'Install',upToDate:'Up to date',updateInProgress:'Update in progress...',updateRestart:'STAKK will restart automatically.',
+    launched:'launched',error:'Error',imported:'imported',saved:'Saved',deleted:'Deleted',stopped:'Stopped',launchedOne:'Launched!',
     apiError:'API key invalid. Re-import from launcher then redo Shield.',
     subRequired:'Subscription required.',serverDown:'Server unreachable.',
+    connected:'Connected',exeNotDetected:'Launch STAKK.exe',
+    loginRequired:'Sign in with Discord',codeEmailSent:'Code sent by email',codeOtpPrompt:'Enter your app code',
+    certOkToast:'Shield certificate saved!',loginFailed:'Failed',codeInvalid:'Invalid code',
+    installStart:'Downloading and installing...',urlMissing:'URL unavailable',
+    stakkClosed:'STAKK closed. You can close this tab.',confirmQuit:'Close STAKK?',
+    addressCopied:'Address copied',loggedInAs:'Signed in as',disconnected:'Signed out',
+    subTitle:'STAKK Subscription',subActive:'Active subscription',subExpires:'Expires on',subInactive:'No subscription',subChoose:'Choose a plan below',
+    payAmount:'Send exactly this amount in USDT (TRC20)',payUnique:'The unique amount allows identifying your payment.',payAuto:'The subscription will activate automatically after confirmation.',
+    copyAddress:'Copy address',daysRemaining:'days remaining',noSubTitle:'No subscription',
+    expire:'Expired',daysShort:'d',accountLabel:'Account',idLabel:'ID',
+    noGroupNet:'No group configured. Create one to assign IPs or proxies to accounts.',
+    importOngoing:'Importing...',importError:'Import error',stakkNotDetected:'STAKK not detected',
+    connectionLost:'Connection lost',deleteAccount:'Delete',launchError:'Launch error',
+    subRequiredToast:'Sign in with Discord',
+    limitTitle:'Limit 2 accounts per IP',limitText:'On mono-account servers, only 2 accounts per IP are allowed. For 2 additional accounts, use a second network adapter (e.g. 4G USB) and create a dedicated network group.',
   },
   es:{
     play:'JUGAR',accounts:'Cuentas',network:'Red',logs:'Logs',account:'Cuenta',
     import:'Importar',all:'Todo',launch:'Lanzar',stop:'Detener',shield:'Shield',
     delete:'Eliminar',save:'Guardar',group:'Grupo',addGroup:'+ Grupo',
     mode:'Modo',defaultIp:'IP por defecto',proxy:'Proxy SOCKS5',address:'Dirección',port:'Puerto',
-    accountsInGroup:'Cuentas',noAccount:'Sin cuentas. Haz clic en Importar.',noGroup:'Sin grupos.',
+    accountsInGroup:'Cuentas',noAccount:'Sin cuentas. Haz clic en Importar.',noGroup:'Sin grupos. Añade uno para configurar las conexiones.',
     login:'Usuario',password:'Contraseña',connect:'Conectar',cancel:'Cancelar',
     validate:'Validar',close:'Cerrar',retry:'Reintentar',
     shieldDesc:'Generar un certificado para servidores mono-cuenta.',
     codeEmail:'Código recibido por email',codeOtp:'Código Authenticator (OTP)',
     certOk:'¡Certificado guardado!',codeSent:'Código enviado',
     shieldActive:'Shield activo',noShield:'Sin Shield',custom:'Custom',
-    keyOk:'Clave OK',keyOld:'Clave antigua',keyExpired:'Clave expirada',
+    keyOk:'Clave OK',keyOld:'Clave antigua',keyExpired:'Clave expirada',keyExpiredSoon:'Clave próxima a expirar',
     inGame:'En juego',launches:'lanzamiento',lastLaunch:'Último',key:'Clave',
     ago:'hace',now:'ahora',min:'min',hours:'h',days:'d',
     logTitle:'Registro de actividad',entries:'entradas',export:'Exportar',
     netTitle:'Grupos de red',selectAccount:'Selecciona una cuenta.',
-    confirmDelete:'Eliminar',launchAll:'Lanzar todo',
-    updateAvail:'Actualización disponible',update:'Actualizar',upToDate:'Al día',
-    launched:'lanzado(s)',error:'Error',imported:'importado(s)',saved:'Guardado',deleted:'Eliminado',
+    confirmDelete:'Eliminar',launchAll:'Lanzar todo',deleteConfirm:'Eliminar',
+    updateAvail:'Nueva versión disponible',update:'Instalar',upToDate:'Al día',updateInProgress:'Actualización en curso...',updateRestart:'STAKK se reiniciará automáticamente.',
+    launched:'lanzado(s)',error:'Error',imported:'importado(s)',saved:'Guardado',deleted:'Eliminado',stopped:'Detenido',launchedOne:'¡Lanzado!',
     apiError:'Clave API inválida. Reimporta desde el launcher y rehaz el Shield.',
     subRequired:'Suscripción requerida.',serverDown:'Servidor inaccesible.',
+    connected:'Conectado',exeNotDetected:'Inicia STAKK.exe',
+    loginRequired:'Inicia sesión con Discord',codeEmailSent:'Código enviado por email',codeOtpPrompt:'Introduce el código de tu app',
+    certOkToast:'¡Certificado Shield guardado!',loginFailed:'Fallido',codeInvalid:'Código inválido',
+    installStart:'Descargando e instalando...',urlMissing:'URL no disponible',
+    stakkClosed:'STAKK cerrado. Puedes cerrar esta pestaña.',confirmQuit:'¿Cerrar STAKK?',
+    addressCopied:'Dirección copiada',loggedInAs:'Conectado como',disconnected:'Desconectado',
+    subTitle:'Suscripción STAKK',subActive:'Suscripción activa',subExpires:'Expira el',subInactive:'Sin suscripción',subChoose:'Elige un plan abajo',
+    payAmount:'Envía exactamente este importe en USDT (TRC20)',payUnique:'El importe único permite identificar tu pago.',payAuto:'La suscripción se activará automáticamente tras la confirmación.',
+    copyAddress:'Copiar dirección',daysRemaining:'días restantes',noSubTitle:'Sin suscripción',
+    expire:'Expirado',daysShort:'d',accountLabel:'Cuenta',idLabel:'ID',
+    noGroupNet:'Ningún grupo configurado. Crea uno para asignar IPs o proxies a tus cuentas.',
+    importOngoing:'Importando...',importError:'Error de importación',stakkNotDetected:'STAKK no detectado',
+    connectionLost:'Conexión perdida',deleteAccount:'Eliminar',launchError:'Error de lanzamiento',
+    subRequiredToast:'Inicia sesión con Discord',
+    limitTitle:'Límite 2 cuentas por IP',limitText:'En servidores mono-cuenta, solo se permiten 2 cuentas por IP. Para 2 cuentas adicionales, usa un segundo adaptador de red (p.ej. 4G USB) y crea un grupo de red dedicado.',
   },
   de:{
     play:'SPIELEN',accounts:'Konten',network:'Netzwerk',logs:'Logs',account:'Konto',
     import:'Importieren',all:'Alle',launch:'Starten',stop:'Stoppen',shield:'Shield',
     delete:'Löschen',save:'Speichern',group:'Gruppe',addGroup:'+ Gruppe',
     mode:'Modus',defaultIp:'Standard-IP',proxy:'SOCKS5 Proxy',address:'Adresse',port:'Port',
-    accountsInGroup:'Konten',noAccount:'Keine Konten. Klicke auf Importieren.',noGroup:'Keine Gruppen.',
+    accountsInGroup:'Konten',noAccount:'Keine Konten. Klicke auf Importieren.',noGroup:'Keine Gruppen. Füge eine hinzu, um Verbindungen zu konfigurieren.',
     login:'Login',password:'Passwort',connect:'Verbinden',cancel:'Abbrechen',
     validate:'Bestätigen',close:'Schließen',retry:'Erneut versuchen',
     shieldDesc:'Zertifikat für Mono-Account-Server generieren.',
     codeEmail:'Code per E-Mail erhalten',codeOtp:'Authenticator-Code (OTP)',
     certOk:'Zertifikat gespeichert!',codeSent:'Code gesendet',
     shieldActive:'Shield aktiv',noShield:'Kein Shield',custom:'Custom',
-    keyOk:'Schlüssel OK',keyOld:'Schlüssel alt',keyExpired:'Schlüssel abgelaufen',
+    keyOk:'Schlüssel OK',keyOld:'Schlüssel alt',keyExpired:'Schlüssel abgelaufen',keyExpiredSoon:'Schlüssel läuft bald ab',
     inGame:'Im Spiel',launches:'Start',lastLaunch:'Letzter',key:'Schlüssel',
     ago:'vor',now:'gerade',min:'Min',hours:'Std',days:'T',
     logTitle:'Aktivitätsprotokoll',entries:'Einträge',export:'Exportieren',
     netTitle:'Netzwerkgruppen',selectAccount:'Wähle ein Konto.',
-    confirmDelete:'Löschen',launchAll:'Alle starten',
-    updateAvail:'Update verfügbar',update:'Aktualisieren',upToDate:'Aktuell',
-    launched:'gestartet',error:'Fehler',imported:'importiert',saved:'Gespeichert',deleted:'Gelöscht',
+    confirmDelete:'Löschen',launchAll:'Alle starten',deleteConfirm:'Löschen',
+    updateAvail:'Neue Version verfügbar',update:'Installieren',upToDate:'Aktuell',updateInProgress:'Update läuft...',updateRestart:'STAKK wird automatisch neu gestartet.',
+    launched:'gestartet',error:'Fehler',imported:'importiert',saved:'Gespeichert',deleted:'Gelöscht',stopped:'Gestoppt',launchedOne:'Gestartet!',
     apiError:'API-Schlüssel ungültig. Vom Launcher neu importieren und Shield wiederholen.',
     subRequired:'Abonnement erforderlich.',serverDown:'Server nicht erreichbar.',
+    connected:'Verbunden',exeNotDetected:'Starte STAKK.exe',
+    loginRequired:'Mit Discord anmelden',codeEmailSent:'Code per E-Mail gesendet',codeOtpPrompt:'Gib den Code deiner App ein',
+    certOkToast:'Shield-Zertifikat gespeichert!',loginFailed:'Fehlgeschlagen',codeInvalid:'Ungültiger Code',
+    installStart:'Download und Installation...',urlMissing:'URL nicht verfügbar',
+    stakkClosed:'STAKK geschlossen. Du kannst diesen Tab schließen.',confirmQuit:'STAKK schließen?',
+    addressCopied:'Adresse kopiert',loggedInAs:'Angemeldet als',disconnected:'Abgemeldet',
+    subTitle:'STAKK Abonnement',subActive:'Aktives Abonnement',subExpires:'Läuft ab am',subInactive:'Kein Abonnement',subChoose:'Wähle unten einen Plan',
+    payAmount:'Sende genau diesen Betrag in USDT (TRC20)',payUnique:'Der eindeutige Betrag identifiziert deine Zahlung.',payAuto:'Das Abonnement wird nach Bestätigung automatisch aktiviert.',
+    copyAddress:'Adresse kopieren',daysRemaining:'Tage verbleibend',noSubTitle:'Kein Abonnement',
+    expire:'Abgelaufen',daysShort:'T',accountLabel:'Konto',idLabel:'ID',
+    noGroupNet:'Keine Gruppe konfiguriert. Erstelle eine, um IPs oder Proxies zuzuweisen.',
+    importOngoing:'Importiere...',importError:'Import-Fehler',stakkNotDetected:'STAKK nicht erkannt',
+    connectionLost:'Verbindung verloren',deleteAccount:'Löschen',launchError:'Startfehler',
+    subRequiredToast:'Mit Discord anmelden',
+    limitTitle:'Limit 2 Konten pro IP',limitText:'Auf Mono-Account-Servern sind nur 2 Konten pro IP erlaubt. Für 2 zusätzliche Konten verwende einen zweiten Netzwerkadapter (z.B. 4G USB) und erstelle eine dedizierte Netzwerkgruppe.',
   },
   pt:{
     play:'JOGAR',accounts:'Contas',network:'Rede',logs:'Logs',account:'Conta',
     import:'Importar',all:'Tudo',launch:'Lançar',stop:'Parar',shield:'Shield',
     delete:'Excluir',save:'Salvar',group:'Grupo',addGroup:'+ Grupo',
     mode:'Modo',defaultIp:'IP padrão',proxy:'Proxy SOCKS5',address:'Endereço',port:'Porta',
-    accountsInGroup:'Contas',noAccount:'Sem contas. Clique em Importar.',noGroup:'Sem grupos.',
+    accountsInGroup:'Contas',noAccount:'Sem contas. Clique em Importar.',noGroup:'Sem grupos. Adicione um para configurar as conexões.',
     login:'Login',password:'Senha',connect:'Conectar',cancel:'Cancelar',
     validate:'Validar',close:'Fechar',retry:'Tentar novamente',
     shieldDesc:'Gerar certificado para servidores mono-conta.',
     codeEmail:'Código recebido por email',codeOtp:'Código Authenticator (OTP)',
     certOk:'Certificado salvo!',codeSent:'Código enviado',
     shieldActive:'Shield ativo',noShield:'Sem Shield',custom:'Custom',
-    keyOk:'Chave OK',keyOld:'Chave antiga',keyExpired:'Chave expirada',
+    keyOk:'Chave OK',keyOld:'Chave antiga',keyExpired:'Chave expirada',keyExpiredSoon:'Chave prestes a expirar',
     inGame:'Em jogo',launches:'lançamento',lastLaunch:'Último',key:'Chave',
     ago:'atrás',now:'agora',min:'min',hours:'h',days:'d',
     logTitle:'Registro de atividade',entries:'entradas',export:'Exportar',
     netTitle:'Grupos de rede',selectAccount:'Selecione uma conta.',
-    confirmDelete:'Excluir',launchAll:'Lançar tudo',
-    updateAvail:'Atualização disponível',update:'Atualizar',upToDate:'Atualizado',
-    launched:'lançado(s)',error:'Erro',imported:'importado(s)',saved:'Salvo',deleted:'Excluído',
+    confirmDelete:'Excluir',launchAll:'Lançar tudo',deleteConfirm:'Excluir',
+    updateAvail:'Nova versão disponível',update:'Instalar',upToDate:'Atualizado',updateInProgress:'Atualização em andamento...',updateRestart:'STAKK será reiniciado automaticamente.',
+    launched:'lançado(s)',error:'Erro',imported:'importado(s)',saved:'Salvo',deleted:'Excluído',stopped:'Parado',launchedOne:'Lançado!',
     apiError:'Chave API inválida. Reimporte do launcher e refaça o Shield.',
     subRequired:'Assinatura necessária.',serverDown:'Servidor inacessível.',
+    connected:'Conectado',exeNotDetected:'Inicie STAKK.exe',
+    loginRequired:'Faça login com Discord',codeEmailSent:'Código enviado por email',codeOtpPrompt:'Digite o código do seu app',
+    certOkToast:'Certificado Shield salvo!',loginFailed:'Falhou',codeInvalid:'Código inválido',
+    installStart:'Baixando e instalando...',urlMissing:'URL indisponível',
+    stakkClosed:'STAKK fechado. Você pode fechar esta aba.',confirmQuit:'Fechar STAKK?',
+    addressCopied:'Endereço copiado',loggedInAs:'Conectado como',disconnected:'Desconectado',
+    subTitle:'Assinatura STAKK',subActive:'Assinatura ativa',subExpires:'Expira em',subInactive:'Sem assinatura',subChoose:'Escolha um plano abaixo',
+    payAmount:'Envie exatamente este valor em USDT (TRC20)',payUnique:'O valor único permite identificar seu pagamento.',payAuto:'A assinatura será ativada automaticamente após confirmação.',
+    copyAddress:'Copiar endereço',daysRemaining:'dias restantes',noSubTitle:'Sem assinatura',
+    expire:'Expirado',daysShort:'d',accountLabel:'Conta',idLabel:'ID',
+    noGroupNet:'Nenhum grupo configurado. Crie um para atribuir IPs ou proxies.',
+    importOngoing:'Importando...',importError:'Erro de importação',stakkNotDetected:'STAKK não detectado',
+    connectionLost:'Conexão perdida',deleteAccount:'Excluir',launchError:'Erro de lançamento',
+    subRequiredToast:'Faça login com Discord',
+    limitTitle:'Limite 2 contas por IP',limitText:'Em servidores mono-conta, apenas 2 contas por IP são permitidas. Para 2 contas adicionais, use um segundo adaptador de rede (ex: 4G USB) e crie um grupo de rede dedicado.',
   },
 };
 function t(k){return L[lang]?.[k]||L.fr[k]||k}
-function setLang(l){lang=l;localStorage.setItem('lang',l);refreshAll();renderStatic()}
-const langs=['fr','en','es','de','pt'];
-function cycleLang(){const i=(langs.indexOf(lang)+1)%langs.length;setLang(langs[i])}
+function setLang(l){lang=l;localStorage.setItem('lang',l);refreshAll();renderStatic();if($('ovSub').classList.contains('open'))openSub()}
+const LANGS=[
+  {code:'fr',label:'Français',flag:'🇫🇷'},
+  {code:'en',label:'English',flag:'🇬🇧'},
+  {code:'es',label:'Español',flag:'🇪🇸'},
+  {code:'de',label:'Deutsch',flag:'🇩🇪'},
+  {code:'pt',label:'Português',flag:'🇵🇹'},
+];
 
 function timeAgo(ts){const d=Date.now()-ts;const m=Math.floor(d/60000);if(m<1)return t('now');if(m<60)return t('ago')+' '+m+t('min');const h=Math.floor(m/60);if(h<24)return t('ago')+' '+h+t('hours');const j=Math.floor(h/24);return t('ago')+' '+j+t('days')}
 function toast(m,dur){const t=$('toast');t.textContent=m;t.className='toast show';setTimeout(()=>t.classList.remove('show'),dur||4000)}
@@ -411,7 +504,18 @@ function renderStatic(){
   $('fbImport').querySelector('span').textContent=t('import');
   $('fbAll').querySelector('span').textContent=t('all');
   $('langBtn').textContent=lang.toUpperCase();
+  const cur=LANGS.find(l=>l.code===lang);
+  if(cur)$('langFlag').textContent=cur.flag;
+  // Rendre le menu langue
+  $('langMenu').innerHTML=LANGS.map(l=>`<div class="lang-item${l.code===lang?' on':''}" onclick="event.stopPropagation();setLang('${l.code}');$('langMenu').classList.remove('open')">
+    <span class="l-flag">${l.flag}</span><span>${l.label}</span>
+  </div>`).join('');
 }
+function toggleLangMenu(e){
+  e.stopPropagation();
+  $('langMenu').classList.toggle('open');
+}
+document.addEventListener('click',()=>$('langMenu')?.classList.remove('open'));
 function showR(n){document.querySelectorAll('.rn').forEach(b=>b.classList.remove('on'));$('rn-'+n).classList.add('on');document.querySelectorAll('.rv').forEach(v=>v.classList.remove('on'));$('rv-'+n).classList.add('on');if(n==='net')renderNet();if(n==='logs')pollLogs()}
 
 async function refreshAll(){[A,C,I]=await Promise.all([api('GET','accounts'),api('GET','config'),api('GET','interfaces')]);renderList();renderDet();renderNet()}
@@ -419,9 +523,9 @@ async function refreshAll(){[A,C,I]=await Promise.all([api('GET','accounts'),api
 function renderList(){
   $('cnt').textContent=A.length;
   const selCount=A.filter(a=>sel.has(a.accountId)).length;
-  $('playBtn').innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><polygon points="5,3 19,12 5,21"/></svg>JOUER${selCount?' ('+selCount+')':''}`;
+  $('playBtn').innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><polygon points="5,3 19,12 5,21"/></svg>${t('play')}${selCount?' ('+selCount+')':''}`;
 
-  if(!A.length){$('list').innerHTML='<div style="padding:30px 20px;text-align:center;color:var(--dim);font-size:12px">Aucun compte. Clique Importer.</div>';return}
+  if(!A.length){$('list').innerHTML='<div style="padding:30px 20px;text-align:center;color:var(--dim);font-size:12px">'+t('noAccount')+'</div>';return}
   $('list').innerHTML=A.map((a,i)=>{
     const on=sel.has(a.accountId);
     const ini=(a.login||'?')[0].toUpperCase();
@@ -432,16 +536,16 @@ function renderList(){
       <div class="acc-info">
         <div class="acc-name">${a.login}
           <svg class="sh-icon ${a.hasCertificate?'yes':'no'}" viewBox="0 0 24 24" fill="${a.hasCertificate?'currentColor':'none'}" stroke="currentColor" stroke-width="${a.hasCertificate?'0':'2'}"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          ${a.health==='expired'?'<span style="width:6px;height:6px;border-radius:50%;background:var(--red);display:inline-block;margin-left:2px" title="Clé expirée"></span>':a.health==='warn'?'<span style="width:6px;height:6px;border-radius:50%;background:var(--orange);display:inline-block;margin-left:2px" title="Clé bientôt expirée"></span>':''}
+          ${a.health==='expired'?'<span style="width:6px;height:6px;border-radius:50%;background:var(--red);display:inline-block;margin-left:2px" title="'+t('keyExpired')+'"></span>':a.health==='warn'?'<span style="width:6px;height:6px;border-radius:50%;background:var(--orange);display:inline-block;margin-left:2px" title="'+t('keyExpiredSoon')+'"></span>':''}
         </div>
-        <div class="acc-id">ID ${a.accountId}${a.launchCount?' · '+a.launchCount+' lancement'+(a.launchCount>1?'s':''):''}</div>
+        <div class="acc-id">${t('idLabel')} ${a.accountId}${a.launchCount?' · '+a.launchCount+' '+t('launches')+(a.launchCount>1?'s':''):''}</div>
       </div>
-      ${a.running?'<div class="running-dot" title="En cours"></div>':''}
+      ${a.running?'<div class="running-dot" title="'+t('inGame')+'"></div>':''}
       ${a.running
-        ?`<button class="qplay stop" onclick="event.stopPropagation();killAcc(${a.accountId})" title="Arrêter">
+        ?`<button class="qplay stop" onclick="event.stopPropagation();killAcc(${a.accountId})" title="${t('stop')}">
             <svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="1"/></svg>
           </button>`
-        :`<button class="qplay" onclick="event.stopPropagation();qp(${a.accountId})" title="Lancer">
+        :`<button class="qplay" onclick="event.stopPropagation();qp(${a.accountId})" title="${t('launch')}">
             <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
           </button>`
       }
@@ -456,87 +560,88 @@ function renderDet(){
   if(!cur&&sel.size)cur=[...sel][0];
   if(!cur&&A.length)cur=A[0].accountId;
   const a=A.find(x=>x.accountId===cur);
-  if(!a){el.innerHTML='<div class="det-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg><p>Sélectionne un compte.</p></div>';return}
+  if(!a){el.innerHTML='<div class="det-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg><p>'+t('selectAccount')+'</p></div>';return}
   const ci=A.indexOf(a)%4;
   const avUrl='https://avatar.ankama.com/users/'+a.accountId+'.png';
   const net=[];if(a.groupName)net.push(a.groupName);if(a.localAddress)net.push(a.localAddress);if(a.proxyUri)net.push('Proxy');
+  const locale=lang==='fr'?'fr-FR':lang==='en'?'en-US':lang==='es'?'es-ES':lang==='de'?'de-DE':'pt-PT';
   el.innerHTML=`<div class="det"><div class="det-top g${ci}"><div class="bg"></div></div>
     <div class="det-av-wrap"><div class="det-av"><img src="${avUrl}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="ini" style="display:none">${(a.login||'?')[0].toUpperCase()}</div></div><div class="det-av-name">${a.login}</div></div>
-    <div class="det-body"><div class="det-sub">ID ${a.accountId}${net.length?' &middot; '+net.join(' / '):''}</div>
+    <div class="det-body"><div class="det-sub">${t('idLabel')} ${a.accountId}${net.length?' &middot; '+net.join(' / '):''}</div>
       <div class="det-tags">
-        ${a.hasCertificate?'<span class="dt dt-g">Shield actif</span>':'<span class="dt dt-r">Sans Shield</span>'}
-        ${a.customShield?'<span class="dt dt-g">Custom</span>':''}
-        ${a.health==='ok'?'<span class="dt dt-g">Clé OK</span>':a.health==='warn'?'<span class="dt" style="background:rgba(243,156,18,.1);color:var(--orange)">Clé ancienne</span>':'<span class="dt dt-r">Clé expirée</span>'}
+        ${a.hasCertificate?'<span class="dt dt-g">'+t('shieldActive')+'</span>':'<span class="dt dt-r">'+t('noShield')+'</span>'}
+        ${a.customShield?'<span class="dt dt-g">'+t('custom')+'</span>':''}
+        ${a.health==='ok'?'<span class="dt dt-g">'+t('keyOk')+'</span>':a.health==='warn'?'<span class="dt" style="background:rgba(243,156,18,.1);color:var(--orange)">'+t('keyOld')+'</span>':'<span class="dt dt-r">'+t('keyExpired')+'</span>'}
         ${a.proxyUri?'<span class="dt dt-b">Proxy</span>':''}
         ${a.localAddress?'<span class="dt dt-b">'+a.localAddress+'</span>':''}
-        ${a.running?'<span class="dt dt-g">En jeu</span>':''}
+        ${a.running?'<span class="dt dt-g">'+t('inGame')+'</span>':''}
       </div>
       <div style="margin-top:12px;font-size:11px;color:var(--dim);display:flex;gap:16px;flex-wrap:wrap">
-        ${a.launchCount?'<span>'+a.launchCount+' lancement'+(a.launchCount>1?'s':'')+'</span>':''}
-        ${a.lastLaunch?'<span>Dernier: '+new Date(a.lastLaunch).toLocaleString('fr-FR')+'</span>':''}
-        ${a.refreshDate?'<span>Cle: '+timeAgo(a.refreshDate)+'</span>':''}
+        ${a.launchCount?'<span>'+a.launchCount+' '+t('launches')+(a.launchCount>1?'s':'')+'</span>':''}
+        ${a.lastLaunch?'<span>'+t('lastLaunch')+': '+new Date(a.lastLaunch).toLocaleString(locale)+'</span>':''}
+        ${a.refreshDate?'<span>'+t('key')+': '+timeAgo(a.refreshDate)+'</span>':''}
       </div>
     </div>
     <div class="det-acts">
       ${a.running
-        ?`<button class="da da-3" style="color:var(--red)" onclick="killAcc(${a.accountId})"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="1"/></svg>Arrêter</button>`
-        :`<button class="da da-1" onclick="qp(${a.accountId})"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>Jouer</button>`
+        ?`<button class="da da-3" style="color:var(--red)" onclick="killAcc(${a.accountId})"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="1"/></svg>${t('stop')}</button>`
+        :`<button class="da da-1" onclick="qp(${a.accountId})"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>${t('launch')}</button>`
       }
-      <button class="da da-2" onclick="openSh(${a.accountId},'${a.login.replace(/'/g,"\\'")}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Shield</button>
-      <button class="da da-3" onclick="delAcc(${a.accountId},'${a.login.replace(/'/g,"\\'")}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>Supprimer</button>
+      <button class="da da-2" onclick="openSh(${a.accountId},'${a.login.replace(/'/g,"\\'")}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>${t('shield')}</button>
+      <button class="da da-3" onclick="delAcc(${a.accountId},'${a.login.replace(/'/g,"\\'")}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>${t('delete')}</button>
     </div></div>`;
 }
 
 async function checkSubBeforeLaunch(){
-  if(!authUser?.loggedIn){toast('Connecte-toi avec Discord');return false}
+  if(!authUser?.loggedIn){toast(t('subRequiredToast'));return false}
   try{const lic=await api('GET','license');if(!lic.valid){openSub();return false}return true}
   catch{return true} // offline grace
 }
-async function qp(id){if(!await checkSubBeforeLaunch())return;try{const r=await api('POST','launch',{accountIds:[id],gameKey:$('game').value});toast(r.launched?'Lancé !':'Erreur')}catch(e){toast(e.error||e.message||'Erreur')}}
+async function qp(id){if(!await checkSubBeforeLaunch())return;try{const r=await api('POST','launch',{accountIds:[id],gameKey:$('game').value});toast(r.launched?t('launchedOne'):t('error'))}catch(e){toast(e.error||e.message||t('error'))}}
 async function launchSelected(){
   if(!await checkSubBeforeLaunch())return;
   const ids=sel.size?[...sel]:A.map(a=>a.accountId);if(!ids.length)return;
-  const b=$('playBtn');b.disabled=true;b.textContent='LANCEMENT...';
-  try{const r=await api('POST','launch',{accountIds:ids,gameKey:$('game').value});toast(r.launched+' lancé(s)')}catch(e){toast(e.error||e.message||'Erreur')}
+  const b=$('playBtn');b.disabled=true;b.textContent=t('play')+'...';
+  try{const r=await api('POST','launch',{accountIds:ids,gameKey:$('game').value});toast(r.launched+' '+t('launched'))}catch(e){toast(e.error||e.message||t('error'))}
   b.disabled=false;renderList();
 }
-async function killAcc(id){try{await api('POST','kill',{accountId:id});toast('Arrêté');refreshAll()}catch{toast('Erreur')}}
-async function importAccounts(){toast('Import...');try{const r=await api('POST','import');toast(r.count+' importé(s)');refreshAll()}catch{toast('Erreur')}}
-async function delAcc(id,l){if(!confirm('Supprimer '+l+' ?'))return;try{await api('POST','account/delete',{accountId:id});sel.delete(id);saveSel();if(cur===id)cur=null;toast('Supprimé');refreshAll()}catch{toast('Erreur')}}
+async function killAcc(id){try{await api('POST','kill',{accountId:id});toast(t('stopped'));refreshAll()}catch{toast(t('error'))}}
+async function importAccounts(){toast(t('importOngoing'));try{const r=await api('POST','import');toast(r.count+' '+t('imported'));refreshAll()}catch{toast(t('importError'))}}
+async function delAcc(id,l){if(!confirm(t('deleteConfirm')+' '+l+' ?'))return;try{await api('POST','account/delete',{accountId:id});sel.delete(id);saveSel();if(cur===id)cur=null;toast(t('deleted'));refreshAll()}catch{toast(t('error'))}}
 
 // Network
 function renderNet(){
   const el=$('rv-net');
-  if(!C.groups.length){el.innerHTML='<div class="net-title">Groupes réseau</div><div style="color:var(--dim);padding:40px;text-align:center;background:var(--panel);border:1px solid var(--border);border-radius:var(--radius)">Aucun groupe configuré. Crée un groupe pour assigner des IPs ou proxies a tes comptes.</div><div class="nb"><button class="nbo" onclick="addG()">+ Groupe</button></div>';return}
-  el.innerHTML='<div class="net-title">Groupes réseau</div><div class="ng">'+C.groups.map((g,i)=>{
+  if(!C.groups.length){el.innerHTML='<div class="net-title">'+t('netTitle')+'</div><div style="color:var(--dim);padding:40px;text-align:center;background:var(--panel);border:1px solid var(--border);border-radius:var(--radius)">'+t('noGroupNet')+'</div><div class="nb"><button class="nbo" onclick="addG()">'+t('addGroup')+'</button></div>';return}
+  el.innerHTML='<div class="net-title">'+t('netTitle')+'</div><div class="ng">'+C.groups.map((g,i)=>{
     const dotColor=g.proxy?'var(--blue)':g.localAddress?'var(--orange)':'var(--accent)';
     return`<div class="nc">
       <h4><span class="dot" style="background:${dotColor};box-shadow:0 0 8px ${dotColor}"></span>
         <input type="text" value="${g.name||''}" style="background:transparent;border:none;color:#fff;font-size:14px;font-weight:700;flex:1;padding:0;font-family:inherit" onchange="C.groups[${i}].name=this.value">
         <button class="del" onclick="C.groups.splice(${i},1);renderNet()">&times;</button>
       </h4>
-      <label class="f">Mode</label>
+      <label class="f">${t('mode')}</label>
       <select onchange="setM(${i},this.value)">
-        <option value="default" ${!g.proxy&&!g.localAddress?'selected':''}>IP par défaut</option>
+        <option value="default" ${!g.proxy&&!g.localAddress?'selected':''}>${t('defaultIp')}</option>
         ${I.map(f=>`<option value="l:${f.address}" ${g.localAddress===f.address?'selected':''}>${f.name} (${f.address})</option>`).join('')}
-        <option value="proxy" ${g.proxy?'selected':''}>Proxy SOCKS5</option>
+        <option value="proxy" ${g.proxy?'selected':''}>${t('proxy')}</option>
       </select>
-      ${g.proxy?`<label class="f">Adresse</label><input type="text" value="${g.proxy.host||''}" onchange="setPx(${i},'host',this.value)" placeholder="127.0.0.1">
-        <label class="f">Port</label><input type="text" value="${g.proxy.port||1080}" onchange="setPx(${i},'port',+this.value)" placeholder="1080">`:''}
-      <label class="f">Comptes</label>
+      ${g.proxy?`<label class="f">${t('address')}</label><input type="text" value="${g.proxy.host||''}" onchange="setPx(${i},'host',this.value)" placeholder="127.0.0.1">
+        <label class="f">${t('port')}</label><input type="text" value="${g.proxy.port||1080}" onchange="setPx(${i},'port',+this.value)" placeholder="1080">`:''}
+      <label class="f">${t('accountsInGroup')}</label>
       <div class="accs">${A.map(a=>`<label><input type="checkbox" ${(g.accounts||[]).includes(a.accountId)?'checked':''} onchange="tgA(${i},${a.accountId},this.checked)"><span class="nck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>${a.login}</label>`).join('')}</div>
-    </div>`}).join('')+'</div><div class="nb"><button class="nbo" onclick="addG()">+ Groupe</button><div style="flex:1"></div><button class="nbs" onclick="saveN()">Sauvegarder</button></div>';
+    </div>`}).join('')+'</div><div class="nb"><button class="nbo" onclick="addG()">'+t('addGroup')+'</button><div style="flex:1"></div><button class="nbs" onclick="saveN()">'+t('save')+'</button></div>';
 }
 function setM(i,v){const g=C.groups[i];if(v==='default'){g.proxy=null;g.localAddress=null}else if(v==='proxy'){g.proxy={type:'socks5',host:'127.0.0.1',port:1080};g.localAddress=null}else{g.proxy=null;g.localAddress=v.slice(2)}renderNet()}
 function setPx(i,k,v){if(!C.groups[i].proxy)C.groups[i].proxy={type:'socks5',host:'127.0.0.1',port:1080};C.groups[i].proxy[k]=v}
 function tgA(i,id,on){C.groups.forEach(g=>{g.accounts=(g.accounts||[]).filter(x=>x!==id)});if(on)C.groups[i].accounts.push(id)}
-function addG(){C.groups.push({id:Date.now(),name:'Groupe '+(C.groups.length+1),proxy:null,localAddress:null,accounts:[]});renderNet()}
-async function saveN(){await api('POST','config',C);toast('Sauvegardé');refreshAll()}
+function addG(){C.groups.push({id:Date.now(),name:t('group')+' '+(C.groups.length+1),proxy:null,localAddress:null,accounts:[]});renderNet()}
+async function saveN(){await api('POST','config',C);toast(t('saved'));refreshAll()}
 
 // Logs
 async function exportLogs(){window.open(API_BASE+'/api/logs/download','_blank')}
 async function pollLogs(){try{const l=await api('GET','logs');const b=$('rv-logs');const lbox=b.querySelector('.lbox');const at=lbox?lbox.scrollHeight-lbox.scrollTop-lbox.clientHeight<40:true;
-  b.innerHTML='<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px"><div class="log-title" style="margin:0">Journal d\'activité</div><span style="font-size:12px;color:var(--dim)">'+l.length+' entrée'+(l.length>1?'s':'')+'</span><div style="flex:1"></div><button class="nbo" onclick="exportLogs()" style="height:32px;font-size:11px;padding:0 12px;gap:4px;display:flex;align-items:center"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Exporter</button></div><div class="lbox">'+l.map(x=>{
+  b.innerHTML='<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px"><div class="log-title" style="margin:0">'+t('logTitle')+'</div><span style="font-size:12px;color:var(--dim)">'+l.length+' '+t('entries')+'</span><div style="flex:1"></div><button class="nbo" onclick="exportLogs()" style="height:32px;font-size:11px;padding:0 12px;gap:4px;display:flex;align-items:center"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>'+t('export')+'</button></div><div class="lbox">'+l.map(x=>{
     const m=x.match(/^\[([^\]]+)\]\s*(.*)/);if(!m)return'<div>'+x.replace(/</g,'&lt;')+'</div>';
     let c='';const t=m[2];
     if(t.includes('lance')||t.includes('token')||t.includes('OK')||t.includes('session'))c=' hi';
@@ -552,33 +657,44 @@ let mId=null;
 function openSh(id,l){mId=id;$('mT').textContent='Shield — '+l;$('mL').value=l;$('mP').value='';$('mC').value='';stp(1);$('ov').classList.add('open')}
 function closeM(){$('ov').classList.remove('open');refreshAll()}
 function stp(n){document.querySelectorAll('.step').forEach(s=>s.classList.remove('active'));$('s'+n).classList.add('active')}
-async function doLogin(){const b=$('mB1');b.disabled=true;b.textContent='...';try{const r=await api('POST','shield/login',{accountId:mId,login:$('mL').value.trim(),password:$('mP').value});stp(2);if(r.method==='otp'){$('mCLabel').textContent='Code Authenticator (OTP)';toast('Entre le code de ton app')}else{$('mCLabel').textContent='Code reçu par email';toast('Code envoyé par email')}}catch(e){$('mE').textContent=e.error||'Échec';stp(4)}b.disabled=false;b.textContent='Se connecter'}
-async function doVal(){const c=$('mC').value.trim();if(c.length<4)return;try{await api('POST','shield/validate',{accountId:mId,shieldCode:c});stp(3);toast('Certificat OK')}catch(e){$('mE').textContent=e.error||'Invalide';stp(4)}}
+async function doLogin(){const b=$('mB1');b.disabled=true;b.textContent='...';try{const r=await api('POST','shield/login',{accountId:mId,login:$('mL').value.trim(),password:$('mP').value});stp(2);if(r.method==='otp'){$('mCLabel').textContent=t('codeOtp');toast(t('codeOtpPrompt'))}else{$('mCLabel').textContent=t('codeEmail');toast(t('codeEmailSent'))}}catch(e){$('mE').textContent=e.error||t('loginFailed');stp(4)}b.disabled=false;b.textContent=t('connect')}
+async function doVal(){const c=$('mC').value.trim();if(c.length<4)return;try{await api('POST','shield/validate',{accountId:mId,shieldCode:c});stp(3);toast(t('certOkToast'))}catch(e){$('mE').textContent=e.error||t('codeInvalid');stp(4)}}
 
 // Subscription
 async function openSub(){
-  if(!authUser?.loggedIn){toast('Connecte-toi avec Discord d\'abord');return}
+  if(!authUser?.loggedIn){toast(t('subRequiredToast'));return}
   $('ovSub').classList.add('open');
   $('subPayment').style.display='none';
+  $('subContent').style.display='';
+  $('subTitle').textContent=t('subTitle');
   try{
     const [lic,pricing]=await Promise.all([api('GET','license'),api('GET','auth/pricing')]);
+    const locale=lang==='fr'?'fr-FR':lang==='en'?'en-US':lang==='es'?'es-ES':lang==='de'?'de-DE':'pt-PT';
     let statusHtml='';
     if(lic.valid){
-      const expDate=new Date(lic.expires*1000).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});
-      const expTime=new Date(lic.expires*1000).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
-      statusHtml=`<div style="background:rgba(26,188,156,.08);border:1px solid rgba(26,188,156,.15);border-radius:8px;padding:14px;margin-bottom:16px;display:flex;align-items:center;gap:10px"><svg viewBox="0 0 24 24" width="20" height="20" fill="var(--accent)"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg><div><div style="color:var(--accent);font-weight:700;font-size:14px">Abonnement actif — ${lic.remaining} jours</div><div style="font-size:12px;color:var(--dim);margin-top:2px">Expire le ${expDate} a ${expTime}</div></div></div>`;
+      const expDate=new Date(lic.expires*1000).toLocaleDateString(locale,{day:'2-digit',month:'2-digit',year:'numeric'});
+      const expTime=new Date(lic.expires*1000).toLocaleTimeString(locale,{hour:'2-digit',minute:'2-digit'});
+      statusHtml=`<div style="background:rgba(26,188,156,.08);border:1px solid rgba(26,188,156,.15);border-radius:8px;padding:14px;margin-bottom:16px;display:flex;align-items:center;gap:10px"><svg viewBox="0 0 24 24" width="20" height="20" fill="var(--accent)"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg><div><div style="color:var(--accent);font-weight:700;font-size:14px">${t('subActive')} — ${lic.remaining} ${t('daysRemaining')}</div><div style="font-size:12px;color:var(--dim);margin-top:2px">${t('subExpires')} ${expDate} — ${expTime}</div></div></div>`;
     }else{
-      statusHtml=`<div style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.15);border-radius:8px;padding:14px;margin-bottom:16px;display:flex;align-items:center;gap:10px"><svg viewBox="0 0 24 24" width="20" height="20" fill="var(--red)"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15" stroke="#fff" stroke-width="2"/><line x1="9" y1="9" x2="15" y2="15" stroke="#fff" stroke-width="2"/></svg><div><div style="color:var(--red);font-weight:700;font-size:14px">Pas d'abonnement</div><div style="font-size:12px;color:var(--dim);margin-top:2px">Choisis une offre ci-dessous</div></div></div>`;
+      statusHtml=`<div style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.15);border-radius:8px;padding:14px;margin-bottom:16px;display:flex;align-items:center;gap:10px"><svg viewBox="0 0 24 24" width="20" height="20" fill="var(--red)"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15" stroke="#fff" stroke-width="2"/><line x1="9" y1="9" x2="15" y2="15" stroke="#fff" stroke-width="2"/></svg><div><div style="color:var(--red);font-weight:700;font-size:14px">${t('subInactive')}</div><div style="font-size:12px;color:var(--dim);margin-top:2px">${t('subChoose')}</div></div></div>`;
     }
     $('subStatus').innerHTML=statusHtml;
     $('subContent').innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px">${pricing.map(p=>
       `<button onclick="selectPlan(${p.amount})" style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px 8px;cursor:pointer;text-align:center;transition:all .15s;font-family:inherit" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
-        <div style="font-size:20px;font-weight:700;color:#fff">${p.days}j</div>
+        <div style="font-size:20px;font-weight:700;color:#fff">${p.days}${t('daysShort')}</div>
         <div style="font-size:13px;color:var(--accent);font-weight:600;margin-top:4px">${p.amount}$</div>
         <div style="font-size:10px;color:var(--dim);margin-top:2px">${p.currency}</div>
       </button>`
-    ).join('')}</div>`;
-  }catch(e){$('subStatus').innerHTML='<div style="color:var(--red)">'+e.message+'</div>';$('subContent').innerHTML=''}
+    ).join('')}</div>
+    <div style="margin-top:14px;padding:10px 12px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.15);border-radius:8px;font-size:11px;color:var(--dim);line-height:1.5">
+      <strong style="color:#f59e0b">⚠ ${t('limitTitle')}</strong><br>${t('limitText')}
+    </div>`;
+    // Maj des textes statiques du modal
+    $('payAmountLabel').textContent=t('payAmount');
+    $('payUniqueText').innerHTML=t('payUnique')+'<br>'+t('payAuto');
+    $('copyBtn').textContent=t('copyAddress');
+    $('closeSubBtn').textContent=t('close');
+  }catch(e){$('subStatus').innerHTML='<div style="color:var(--red)">'+(e.message||t('error'))+'</div>';$('subContent').innerHTML=''}
 }
 
 async function selectPlan(amount){
@@ -588,14 +704,13 @@ async function selectPlan(amount){
     $('subWallet').textContent=r.wallet;
     $('subPayment').style.display='block';
     $('subContent').style.display='none';
-    // QR code avec juste l'adresse (format universellement reconnu)
     drawQR($('qrCanvas'),r.wallet,180);
-  }catch(e){toast(e.message||'Erreur')}
+  }catch(e){toast(e.message||t('error'))}
 }
 
 function copyWallet(){
   navigator.clipboard.writeText($('subWallet').textContent);
-  toast('Adresse copiée');
+  toast(t('addressCopied'));
 }
 
 // QR Code generator (minimal, no dependency)
@@ -628,11 +743,10 @@ function drawQR(canvas,text,size){
   if(token){
     api('POST','auth/token',{token,username:user}).then(()=>{
       window.history.replaceState({},'',window.location.pathname);
-      toast('Connecté en tant que '+(user||'utilisateur'));
+      toast(t('loggedInAs')+' '+(user||''));
       checkAuth();
-      // Auto-import à la première connexion
-      api('POST','import').then(r=>{if(r.count>0){toast(r.count+' compte(s) importé(s)');refreshAll()}}).catch(()=>{});
-    }).catch(()=>toast('Erreur de connexion'));
+      api('POST','import').then(r=>{if(r.count>0){toast(r.count+' '+t('imported'));refreshAll()}}).catch(()=>{});
+    }).catch(()=>toast(t('error')));
   }
 })();
 
@@ -647,15 +761,15 @@ async function checkAuth(){
   }catch{authUser=null;renderAuthUI()}
 }
 async function discordLogin(){
-  try{const r=await api('GET','auth/discord');if(r.url)window.location.href=r.url}catch(e){toast('Serveur inaccessible')}
+  try{const r=await api('GET','auth/discord');if(r.url)window.location.href=r.url}catch(e){toast(t('serverDown'))}
 }
 async function logout(){
-  await api('POST','auth/logout');authUser=null;renderAuthUI();toast('Déconnecté');
+  await api('POST','auth/logout');authUser=null;renderAuthUI();toast(t('disconnected'));
 }
 async function quitApp(){
-  if(!confirm('Fermer STAKK ?'))return;
+  if(!confirm(t('confirmQuit')))return;
   try{await api('POST','exit')}catch{}
-  setTimeout(()=>{document.body.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100vh;color:var(--dim);font-size:14px">STAKK fermé. Tu peux fermer cet onglet.</div>'},500);
+  setTimeout(()=>{document.body.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100vh;color:var(--dim);font-size:14px">'+t('stakkClosed')+'</div>'},500);
 }
 function renderAuthUI(){
   const el=$('authArea');if(!el)return;
@@ -683,19 +797,19 @@ async function checkUpdate(){
       el.id='updateBanner';
       el.style.cssText='position:fixed;top:0;left:0;right:0;background:linear-gradient(135deg,#1abc9c,#16a085);color:#fff;padding:10px 20px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:12px;z-index:999;justify-content:center';
       el.innerHTML=`<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10" fill="none" stroke="currentColor" stroke-width="2"/><line x1="12" y1="15" x2="12" y2="3" fill="none" stroke="currentColor" stroke-width="2"/></svg>
-        Nouvelle version ${r.latest} disponible ! (actuelle: ${r.current})
-        <button onclick="installUpdate('${r.downloadUrl||''}')" style="color:#fff;background:rgba(0,0,0,.2);padding:5px 14px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-family:inherit;font-weight:600">Installer</button>
+        ${t('updateAvail')} ${r.latest} (${r.current})
+        <button onclick="installUpdate('${r.downloadUrl||''}')" style="color:#fff;background:rgba(0,0,0,.2);padding:5px 14px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-family:inherit;font-weight:600">${t('update')}</button>
         <button onclick="this.parentElement.remove()" style="background:none;border:none;color:rgba(255,255,255,.7);cursor:pointer;font-size:18px;margin-left:8px">&times;</button>`;
       document.body.prepend(el);
     }
   }catch{}
 }
 async function installUpdate(url){
-  if(!url)return toast('URL indisponible');
-  toast('Téléchargement et installation...');
+  if(!url)return toast(t('urlMissing'));
+  toast(t('installStart'));
   try{
     await api('POST','update/apply',{downloadUrl:url});
-    document.body.innerHTML='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;color:var(--text);gap:16px"><div style="font-size:20px;font-weight:700">Mise à jour en cours...</div><div style="color:var(--dim)" id="updStat">STAKK va redémarrer automatiquement.</div></div>';
+    document.body.innerHTML='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;color:var(--text);gap:16px"><div style="font-size:20px;font-weight:700">'+t('updateInProgress')+'</div><div style="color:var(--dim)" id="updStat">'+t('updateRestart')+'</div></div>';
     // Attendre que le nouvel exe soit lancé et rafraichir
     let tries=0;
     const check=async()=>{
