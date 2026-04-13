@@ -56,6 +56,15 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .acc-info{flex:1;min-width:0}
 .acc-name{font-size:13px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:5px}
 .acc-id{font-size:10.5px;color:var(--dim);margin-top:1px}
+.acc-char{font-size:11px;color:var(--accent);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.acc-char .lvl{color:var(--dim);font-weight:500}
+.char-box{margin-top:14px;padding-top:12px;border-top:1px solid var(--border)}
+.char-title{font-size:10px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.char-inputs{display:flex;gap:6px;flex-wrap:wrap}
+.char-inputs input{background:var(--panel2);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-size:12px;font-family:inherit;flex:1;min-width:90px;outline:none}
+.char-inputs input:focus{border-color:var(--accent)}
+.char-save{background:var(--accent);border:none;color:#0a0d12;padding:6px 14px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit}
+.char-save:hover{filter:brightness(1.1)}
 
 /* Shield icon inline */
 .sh-icon{width:14px;height:14px;flex-shrink:0}
@@ -306,7 +315,7 @@ const L={
   fr:{
     play:'JOUER',accounts:'Comptes',network:'Réseau',logs:'Logs',account:'Compte',
     import:'Importer',all:'Tout',launch:'Lancer',stop:'Arrêter',shield:'Shield',
-    delete:'Supprimer',save:'Sauvegarder',group:'Groupe',addGroup:'+ Groupe',
+    delete:'Supprimer',save:'Sauvegarder',group:'Groupe',addGroup:'+ Groupe',character:'Personnage',charName:'Nom du perso',charClass:'Classe',
     mode:'Mode',defaultIp:'IP par défaut',proxy:'Proxy SOCKS5',address:'Adresse',port:'Port',
     accountsInGroup:'Comptes',noAccount:'Aucun compte. Clique Importer.',noGroup:'Aucun groupe. Ajoute-en un pour configurer les connexions.',
     login:'Login',password:'Mot de passe',connect:'Se connecter',cancel:'Annuler',
@@ -344,7 +353,7 @@ const L={
   en:{
     play:'PLAY',accounts:'Accounts',network:'Network',logs:'Logs',account:'Account',
     import:'Import',all:'All',launch:'Launch',stop:'Stop',shield:'Shield',
-    delete:'Delete',save:'Save',group:'Group',addGroup:'+ Group',
+    delete:'Delete',save:'Save',group:'Group',addGroup:'+ Group',character:'Character',charName:'Character name',charClass:'Class',
     mode:'Mode',defaultIp:'Default IP',proxy:'SOCKS5 Proxy',address:'Address',port:'Port',
     accountsInGroup:'Accounts',noAccount:'No accounts. Click Import.',noGroup:'No groups. Add one to configure connections.',
     login:'Login',password:'Password',connect:'Connect',cancel:'Cancel',
@@ -382,7 +391,7 @@ const L={
   es:{
     play:'JUGAR',accounts:'Cuentas',network:'Red',logs:'Logs',account:'Cuenta',
     import:'Importar',all:'Todo',launch:'Lanzar',stop:'Detener',shield:'Shield',
-    delete:'Eliminar',save:'Guardar',group:'Grupo',addGroup:'+ Grupo',
+    delete:'Eliminar',save:'Guardar',group:'Grupo',addGroup:'+ Grupo',character:'Personaje',charName:'Nombre del personaje',charClass:'Clase',
     mode:'Modo',defaultIp:'IP por defecto',proxy:'Proxy SOCKS5',address:'Dirección',port:'Puerto',
     accountsInGroup:'Cuentas',noAccount:'Sin cuentas. Haz clic en Importar.',noGroup:'Sin grupos. Añade uno para configurar las conexiones.',
     login:'Usuario',password:'Contraseña',connect:'Conectar',cancel:'Cancelar',
@@ -420,7 +429,7 @@ const L={
   de:{
     play:'SPIELEN',accounts:'Konten',network:'Netzwerk',logs:'Logs',account:'Konto',
     import:'Importieren',all:'Alle',launch:'Starten',stop:'Stoppen',shield:'Shield',
-    delete:'Löschen',save:'Speichern',group:'Gruppe',addGroup:'+ Gruppe',
+    delete:'Löschen',save:'Speichern',group:'Gruppe',addGroup:'+ Gruppe',character:'Charakter',charName:'Charaktername',charClass:'Klasse',
     mode:'Modus',defaultIp:'Standard-IP',proxy:'SOCKS5 Proxy',address:'Adresse',port:'Port',
     accountsInGroup:'Konten',noAccount:'Keine Konten. Klicke auf Importieren.',noGroup:'Keine Gruppen. Füge eine hinzu, um Verbindungen zu konfigurieren.',
     login:'Login',password:'Passwort',connect:'Verbinden',cancel:'Abbrechen',
@@ -458,7 +467,7 @@ const L={
   pt:{
     play:'JOGAR',accounts:'Contas',network:'Rede',logs:'Logs',account:'Conta',
     import:'Importar',all:'Tudo',launch:'Lançar',stop:'Parar',shield:'Shield',
-    delete:'Excluir',save:'Salvar',group:'Grupo',addGroup:'+ Grupo',
+    delete:'Excluir',save:'Salvar',group:'Grupo',addGroup:'+ Grupo',character:'Personagem',charName:'Nome do personagem',charClass:'Classe',
     mode:'Modo',defaultIp:'IP padrão',proxy:'Proxy SOCKS5',address:'Endereço',port:'Porta',
     accountsInGroup:'Contas',noAccount:'Sem contas. Clique em Importar.',noGroup:'Sem grupos. Adicione um para configurar as conexões.',
     login:'Login',password:'Senha',connect:'Conectar',cancel:'Cancelar',
@@ -551,6 +560,7 @@ function renderList(){
           ${a.health==='expired'?'<span style="width:6px;height:6px;border-radius:50%;background:var(--red);display:inline-block;margin-left:2px" title="'+t('keyExpired')+'"></span>':a.health==='warn'?'<span style="width:6px;height:6px;border-radius:50%;background:var(--orange);display:inline-block;margin-left:2px" title="'+t('keyExpiredSoon')+'"></span>':''}
         </div>
         <div class="acc-id">${t('idLabel')} ${a.accountId}${a.launchCount?' · '+a.launchCount+' '+t('launches')+(a.launchCount>1?'s':''):''}</div>
+        ${a.characterName?`<div class="acc-char">${a.characterName}${a.characterLevel?' <span class="lvl">lvl '+a.characterLevel+'</span>':''}${a.characterClass?' · '+a.characterClass:''}</div>`:''}
       </div>
       ${a.running?'<div class="running-dot" title="'+t('inGame')+'"></div>':''}
       ${a.running
@@ -564,7 +574,7 @@ function renderList(){
     </div>`}).join('');
 }
 
-function tgl(id){if(sel.has(id)){sel.delete(id);if(cur===id)cur=null}else{sel.add(id);cur=id}saveSel();renderList();renderDet()}
+function tgl(id){if(sel.has(id))sel.delete(id);else sel.add(id);cur=id;saveSel();renderList();renderDet()}
 function toggleAll(){if(sel.size===A.length){sel.clear();cur=null}else{A.forEach(a=>sel.add(a.accountId));if(A.length)cur=A[0].accountId}saveSel();renderList();renderDet()}
 
 function renderDet(){
@@ -593,6 +603,15 @@ function renderDet(){
         ${a.lastLaunch?'<span>'+t('lastLaunch')+': '+new Date(a.lastLaunch).toLocaleString(locale)+'</span>':''}
         ${a.refreshDate?'<span>'+t('key')+': '+timeAgo(a.refreshDate)+'</span>':''}
       </div>
+      <div class="char-box">
+        <div class="char-title">${t('character')}</div>
+        <div class="char-inputs">
+          <input type="text" id="chName" placeholder="${t('charName')}" value="${(a.characterName||'').replace(/"/g,'&quot;')}" maxlength="30">
+          <input type="number" id="chLevel" placeholder="lvl" value="${a.characterLevel||''}" min="1" max="200" style="width:60px">
+          <input type="text" id="chClass" placeholder="${t('charClass')}" value="${(a.characterClass||'').replace(/"/g,'&quot;')}" maxlength="20">
+          <button class="char-save" onclick="saveCharacter(${a.accountId})">${t('save')}</button>
+        </div>
+      </div>
     </div>
     <div class="det-acts">
       ${a.running
@@ -620,6 +639,18 @@ async function launchSelected(){
 async function killAcc(id){try{await api('POST','kill',{accountId:id});toast(t('stopped'));refreshAll()}catch{toast(t('error'))}}
 async function importAccounts(){toast(t('importOngoing'));try{const r=await api('POST','import');toast(r.count+' '+t('imported'));refreshAll()}catch{toast(t('importError'))}}
 async function delAcc(id,l){if(!confirm(t('deleteConfirm')+' '+l+' ?'))return;try{await api('POST','account/delete',{accountId:id});sel.delete(id);saveSel();if(cur===id)cur=null;toast(t('deleted'));refreshAll()}catch{toast(t('error'))}}
+async function saveCharacter(id){
+  const name=$('chName').value.trim();
+  const level=$('chLevel').value.trim();
+  const charClass=$('chClass').value.trim();
+  try{
+    await api('POST','account/character',{accountId:id,name,level,charClass});
+    toast(t('saved'));
+    const a=A.find(x=>x.accountId===id);
+    if(a){a.characterName=name||null;a.characterLevel=level?parseInt(level):null;a.characterClass=charClass||null}
+    renderList();renderDet();
+  }catch(e){toast(e.error||e.message||t('error'))}
+}
 
 // Network
 function renderNet(){
