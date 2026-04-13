@@ -6,6 +6,7 @@
 
 ## Features
 
+- Import yours accounts from official launcher
 - Launch multiple Dofus 3 accounts simultaneously
 - Mono-account server bypass
 - Shield certificate management (Email & OTP/Authenticator)
