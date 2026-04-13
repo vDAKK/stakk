@@ -683,7 +683,10 @@ async function saveN(){await api('POST','config',C);toast(t('saved'));refreshAll
 
 // Logs
 async function exportLogs(){window.open(API_BASE+'/api/logs/download','_blank')}
-async function pollLogs(){try{const l=await api('GET','logs');const b=$('rv-logs');const lbox=b.querySelector('.lbox');const at=lbox?lbox.scrollHeight-lbox.scrollTop-lbox.clientHeight<40:true;
+async function pollLogs(){try{const l=await api('GET','logs');const b=$('rv-logs');const oldLbox=b.querySelector('.lbox');
+  // Snapshot position scroll AVANT re-render. Tolerance 40px = "au fond".
+  const wasAtBottom=oldLbox?oldLbox.scrollHeight-oldLbox.scrollTop-oldLbox.clientHeight<40:true;
+  const oldScrollTop=oldLbox?oldLbox.scrollTop:0;
   b.innerHTML='<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px"><div class="log-title" style="margin:0">'+t('logTitle')+'</div><span style="font-size:12px;color:var(--dim)">'+l.length+' '+t('entries')+'</span><div style="flex:1"></div><button class="nbo" onclick="exportLogs()" style="height:32px;font-size:11px;padding:0 12px;gap:4px;display:flex;align-items:center"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>'+t('export')+'</button></div><div class="lbox">'+l.map(x=>{
     const m=x.match(/^\[([^\]]+)\]\s*(.*)/);if(!m)return'<div>'+x.replace(/</g,'&lt;')+'</div>';
     let c='';const t=m[2];
@@ -692,7 +695,11 @@ async function pollLogs(){try{const l=await api('GET','logs');const b=$('rv-logs
     else if(t.includes('Proxy')||t.includes('Frida')||t.includes('REDIRECT'))c=' wr';
     return'<div><span class="ts">['+m[1]+']</span><span class="'+c+'">'+m[2].replace(/</g,'&lt;')+'</span></div>'
   }).join('')+'</div>';
-  if(at){const lb=b.querySelector('.lbox');if(lb)lb.scrollTop=lb.scrollHeight}
+  const lb=b.querySelector('.lbox');
+  if(lb){
+    // Si l'user etait au fond → stick au fond. Sinon restaure la position precedente.
+    lb.scrollTop=wasAtBottom?lb.scrollHeight:oldScrollTop;
+  }
 }catch{}}
 
 // Shield
