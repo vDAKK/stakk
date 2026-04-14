@@ -252,8 +252,9 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
     <span class="sp"></span>
     <div id="connStatus" style="margin-right:8px"></div>
     <div id="authArea"></div>
-    <button onclick="quitApp()" title="Fermer STAKK" style="margin-left:8px;height:34px;width:34px;border:1px solid var(--border);background:transparent;color:var(--dim);border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit" onmouseover="this.style.color='var(--red)';this.style.borderColor='rgba(239,68,68,.3)'" onmouseout="this.style.color='var(--dim)';this.style.borderColor='var(--border)'">
+    <button id="quitBtn" onclick="quitApp()" title="Fermer STAKK" style="margin-left:8px;height:34px;padding:0 12px;border:1px solid var(--border);background:transparent;color:var(--dim);border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:6px;font-family:inherit;font-size:12px;font-weight:600;white-space:nowrap" onmouseover="this.style.color='var(--red)';this.style.borderColor='rgba(239,68,68,.3)'" onmouseout="this.style.color='var(--dim)';this.style.borderColor='var(--border)'">
       <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      <span id="quitBtnLbl">Fermer STAKK</span>
     </button>
   </div>
   <div class="right-body">
@@ -353,7 +354,7 @@ const L={
     loginRequired:'Connecte-toi avec Discord',codeEmailSent:'Code envoyé par email',codeOtpPrompt:'Entre le code de ton app',
     certOkToast:'Certificat Shield enregistré !',loginFailed:'Échec',codeInvalid:'Code invalide',
     installStart:'Téléchargement et installation...',urlMissing:'URL indisponible',
-    stakkClosed:'STAKK fermé. Tu peux fermer cet onglet.',confirmQuit:'Fermer STAKK ?',
+    stakkClosed:'STAKK fermé. Tu peux fermer cet onglet.',confirmQuit:'Fermer STAKK ?',closeStakk:'Fermer STAKK',
     addressCopied:'Adresse copiée',amountCopied:'Montant copié',copyAmount:'Copier le montant',loggedInAs:'Connecté en tant que',disconnected:'Déconnecté',
     subTitle:'Abonnement STAKK',subActive:'Abonnement actif',subExpires:'Expire le',subInactive:'Pas d\'abonnement',subChoose:'Choisis une offre ci-dessous',
     payAmount:'Envoie exactement ce montant en USDC sur Arbitrum — sélectionne bien USDC (pas ETH) et le réseau Arbitrum One',payUnique:'Le montant unique permet d\'identifier ton paiement.',payAuto:'L\'abonnement sera activé automatiquement après confirmation.',
@@ -395,7 +396,7 @@ const L={
     loginRequired:'Sign in with Discord',codeEmailSent:'Code sent by email',codeOtpPrompt:'Enter your app code',
     certOkToast:'Shield certificate saved!',loginFailed:'Failed',codeInvalid:'Invalid code',
     installStart:'Downloading and installing...',urlMissing:'URL unavailable',
-    stakkClosed:'STAKK closed. You can close this tab.',confirmQuit:'Close STAKK?',
+    stakkClosed:'STAKK closed. You can close this tab.',confirmQuit:'Close STAKK?',closeStakk:'Close STAKK',
     addressCopied:'Address copied',amountCopied:'Amount copied',copyAmount:'Copy amount',loggedInAs:'Signed in as',disconnected:'Signed out',
     subTitle:'STAKK Subscription',subActive:'Active subscription',subExpires:'Expires on',subInactive:'No subscription',subChoose:'Choose a plan below',
     payAmount:'Send exactly this amount in USDC on Arbitrum — make sure to pick USDC (not ETH) and the Arbitrum One network',payUnique:'The unique amount allows identifying your payment.',payAuto:'The subscription will activate automatically after confirmation.',
@@ -437,7 +438,7 @@ const L={
     loginRequired:'Inicia sesión con Discord',codeEmailSent:'Código enviado por email',codeOtpPrompt:'Introduce el código de tu app',
     certOkToast:'¡Certificado Shield guardado!',loginFailed:'Fallido',codeInvalid:'Código inválido',
     installStart:'Descargando e instalando...',urlMissing:'URL no disponible',
-    stakkClosed:'STAKK cerrado. Puedes cerrar esta pestaña.',confirmQuit:'¿Cerrar STAKK?',
+    stakkClosed:'STAKK cerrado. Puedes cerrar esta pestaña.',confirmQuit:'¿Cerrar STAKK?',closeStakk:'Cerrar STAKK',
     addressCopied:'Dirección copiada',amountCopied:'Importe copiado',copyAmount:'Copiar el importe',loggedInAs:'Conectado como',disconnected:'Desconectado',
     subTitle:'Suscripción STAKK',subActive:'Suscripción activa',subExpires:'Expira el',subInactive:'Sin suscripción',subChoose:'Elige un plan abajo',
     payAmount:'Envía exactamente este importe en USDC en Arbitrum — selecciona USDC (no ETH) y la red Arbitrum One',payUnique:'El importe único permite identificar tu pago.',payAuto:'La suscripción se activará automáticamente tras la confirmación.',
@@ -479,7 +480,7 @@ const L={
     loginRequired:'Mit Discord anmelden',codeEmailSent:'Code per E-Mail gesendet',codeOtpPrompt:'Gib den Code deiner App ein',
     certOkToast:'Shield-Zertifikat gespeichert!',loginFailed:'Fehlgeschlagen',codeInvalid:'Ungültiger Code',
     installStart:'Download und Installation...',urlMissing:'URL nicht verfügbar',
-    stakkClosed:'STAKK geschlossen. Du kannst diesen Tab schließen.',confirmQuit:'STAKK schließen?',
+    stakkClosed:'STAKK geschlossen. Du kannst diesen Tab schließen.',confirmQuit:'STAKK schließen?',closeStakk:'STAKK schließen',
     addressCopied:'Adresse kopiert',amountCopied:'Betrag kopiert',copyAmount:'Betrag kopieren',loggedInAs:'Angemeldet als',disconnected:'Abgemeldet',
     subTitle:'STAKK Abonnement',subActive:'Aktives Abonnement',subExpires:'Läuft ab am',subInactive:'Kein Abonnement',subChoose:'Wähle unten einen Plan',
     payAmount:'Sende genau diesen Betrag in USDC auf Arbitrum — wähle USDC (nicht ETH) und das Arbitrum One Netzwerk',payUnique:'Der eindeutige Betrag identifiziert deine Zahlung.',payAuto:'Das Abonnement wird nach Bestätigung automatisch aktiviert.',
@@ -521,7 +522,7 @@ const L={
     loginRequired:'Faça login com Discord',codeEmailSent:'Código enviado por email',codeOtpPrompt:'Digite o código do seu app',
     certOkToast:'Certificado Shield salvo!',loginFailed:'Falhou',codeInvalid:'Código inválido',
     installStart:'Baixando e instalando...',urlMissing:'URL indisponível',
-    stakkClosed:'STAKK fechado. Você pode fechar esta aba.',confirmQuit:'Fechar STAKK?',
+    stakkClosed:'STAKK fechado. Você pode fechar esta aba.',confirmQuit:'Fechar STAKK?',closeStakk:'Fechar STAKK',
     addressCopied:'Endereço copiado',amountCopied:'Valor copiado',copyAmount:'Copiar valor',loggedInAs:'Conectado como',disconnected:'Desconectado',
     subTitle:'Assinatura STAKK',subActive:'Assinatura ativa',subExpires:'Expira em',subInactive:'Sem assinatura',subChoose:'Escolha um plano abaixo',
     payAmount:'Envie exatamente este valor em USDC na Arbitrum — selecione USDC (não ETH) e a rede Arbitrum One',payUnique:'O valor único permite identificar seu pagamento.',payAuto:'A assinatura será ativada automaticamente após confirmação.',
@@ -558,6 +559,8 @@ function renderStatic(){
   $('fbImport').querySelector('span').textContent=t('import');
   $('fbAll').querySelector('span').textContent=t('all');
   $('langBtn').textContent=lang.toUpperCase();
+  $('quitBtnLbl').textContent=t('closeStakk');
+  $('quitBtn').title=t('closeStakk');
   $('limitBannerText').textContent=t('limitTitle');
   $('limitBanner').title=t('limitText');
   const cur=LANGS.find(l=>l.code===lang);
@@ -717,7 +720,17 @@ function addG(){C.groups.push({id:Date.now(),name:t('group')+' '+(C.groups.lengt
 async function saveN(){await api('POST','config',C);toast(t('saved'));refreshAll()}
 
 // Logs
-async function exportLogs(){window.open(API_BASE+'/api/logs/download','_blank')}
+async function exportLogs(){
+  try{
+    const l=await api('GET','logs');
+    const blob=new Blob([l.join('\n')],{type:'text/plain'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;a.download='stakk-logs-'+new Date().toISOString().slice(0,10)+'.txt';
+    document.body.appendChild(a);a.click();a.remove();
+    URL.revokeObjectURL(url);
+  }catch(e){toast(t('error'))}
+}
 async function pollLogs(){try{const l=await api('GET','logs');const b=$('rv-logs');const oldLbox=b.querySelector('.lbox');
   // Snapshot position scroll AVANT re-render. Tolerance 40px = "au fond".
   const wasAtBottom=oldLbox?oldLbox.scrollHeight-oldLbox.scrollTop-oldLbox.clientHeight<40:true;
