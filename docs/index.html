@@ -770,7 +770,7 @@ async function openSub(){
     $('subContent').innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px">${pricing.map(p=>
       `<button onclick="selectPlan(${p.amount})" style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px 8px;cursor:pointer;text-align:center;transition:all .15s;font-family:inherit" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
         <div style="font-size:20px;font-weight:700;color:#fff">${p.days}${t('daysShort')}</div>
-        <div style="font-size:13px;color:var(--accent);font-weight:600;margin-top:4px">${p.amount}$</div>
+        <div style="font-size:13px;color:var(--accent);font-weight:600;margin-top:4px">≈ ${p.amount}$</div>
         <div style="font-size:10px;color:var(--dim);margin-top:2px">${p.currency}</div>
       </button>`
     ).join('')}</div>
