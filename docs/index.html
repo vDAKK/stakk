@@ -341,10 +341,10 @@ const L={
     stakkClosed:'STAKK fermé. Tu peux fermer cet onglet.',confirmQuit:'Fermer STAKK ?',
     addressCopied:'Adresse copiée',loggedInAs:'Connecté en tant que',disconnected:'Déconnecté',
     subTitle:'Abonnement STAKK',subActive:'Abonnement actif',subExpires:'Expire le',subInactive:'Pas d\'abonnement',subChoose:'Choisis une offre ci-dessous',
-    payAmount:'Envoie exactement ce montant en USDT (TRC20)',payUnique:'Le montant unique permet d\'identifier ton paiement.',payAuto:'L\'abonnement sera activé automatiquement après confirmation.',
+    payAmount:'Envoie exactement ce montant en USDC (TRC20)',payUnique:'Le montant unique permet d\'identifier ton paiement.',payAuto:'L\'abonnement sera activé automatiquement après confirmation.',
     copyAddress:'Copier l\'adresse',daysRemaining:'jours restants',noSubTitle:'Aucun abonnement',
     expire:'Expiré',daysShort:'j',accountLabel:'Compte',idLabel:'ID',
-    noGroupNet:'Aucun groupe configuré. Cré un groupe pour assigner des IPs ou proxies à tes comptes.',
+    noGroupNet:'Aucun groupe configuré. Crée un groupe pour assigner des IPs ou proxies à tes comptes.',
     importOngoing:'Import en cours...',importError:'Erreur import',stakkNotDetected:'STAKK non détecté',
     connectionLost:'Connexion perdue',deleteAccount:'Supprimer',launchError:'Erreur de lancement',
     subRequiredToast:'Connecte-toi avec Discord',
@@ -379,7 +379,7 @@ const L={
     stakkClosed:'STAKK closed. You can close this tab.',confirmQuit:'Close STAKK?',
     addressCopied:'Address copied',loggedInAs:'Signed in as',disconnected:'Signed out',
     subTitle:'STAKK Subscription',subActive:'Active subscription',subExpires:'Expires on',subInactive:'No subscription',subChoose:'Choose a plan below',
-    payAmount:'Send exactly this amount in USDT (TRC20)',payUnique:'The unique amount allows identifying your payment.',payAuto:'The subscription will activate automatically after confirmation.',
+    payAmount:'Send exactly this amount in USDC (TRC20)',payUnique:'The unique amount allows identifying your payment.',payAuto:'The subscription will activate automatically after confirmation.',
     copyAddress:'Copy address',daysRemaining:'days remaining',noSubTitle:'No subscription',
     expire:'Expired',daysShort:'d',accountLabel:'Account',idLabel:'ID',
     noGroupNet:'No group configured. Create one to assign IPs or proxies to accounts.',
@@ -417,7 +417,7 @@ const L={
     stakkClosed:'STAKK cerrado. Puedes cerrar esta pestaña.',confirmQuit:'¿Cerrar STAKK?',
     addressCopied:'Dirección copiada',loggedInAs:'Conectado como',disconnected:'Desconectado',
     subTitle:'Suscripción STAKK',subActive:'Suscripción activa',subExpires:'Expira el',subInactive:'Sin suscripción',subChoose:'Elige un plan abajo',
-    payAmount:'Envía exactamente este importe en USDT (TRC20)',payUnique:'El importe único permite identificar tu pago.',payAuto:'La suscripción se activará automáticamente tras la confirmación.',
+    payAmount:'Envía exactamente este importe en USDC (TRC20)',payUnique:'El importe único permite identificar tu pago.',payAuto:'La suscripción se activará automáticamente tras la confirmación.',
     copyAddress:'Copiar dirección',daysRemaining:'días restantes',noSubTitle:'Sin suscripción',
     expire:'Expirado',daysShort:'d',accountLabel:'Cuenta',idLabel:'ID',
     noGroupNet:'Ningún grupo configurado. Crea uno para asignar IPs o proxies a tus cuentas.',
@@ -455,7 +455,7 @@ const L={
     stakkClosed:'STAKK geschlossen. Du kannst diesen Tab schließen.',confirmQuit:'STAKK schließen?',
     addressCopied:'Adresse kopiert',loggedInAs:'Angemeldet als',disconnected:'Abgemeldet',
     subTitle:'STAKK Abonnement',subActive:'Aktives Abonnement',subExpires:'Läuft ab am',subInactive:'Kein Abonnement',subChoose:'Wähle unten einen Plan',
-    payAmount:'Sende genau diesen Betrag in USDT (TRC20)',payUnique:'Der eindeutige Betrag identifiziert deine Zahlung.',payAuto:'Das Abonnement wird nach Bestätigung automatisch aktiviert.',
+    payAmount:'Sende genau diesen Betrag in USDC (TRC20)',payUnique:'Der eindeutige Betrag identifiziert deine Zahlung.',payAuto:'Das Abonnement wird nach Bestätigung automatisch aktiviert.',
     copyAddress:'Adresse kopieren',daysRemaining:'Tage verbleibend',noSubTitle:'Kein Abonnement',
     expire:'Abgelaufen',daysShort:'T',accountLabel:'Konto',idLabel:'ID',
     noGroupNet:'Keine Gruppe konfiguriert. Erstelle eine, um IPs oder Proxies zuzuweisen.',
@@ -493,7 +493,7 @@ const L={
     stakkClosed:'STAKK fechado. Você pode fechar esta aba.',confirmQuit:'Fechar STAKK?',
     addressCopied:'Endereço copiado',loggedInAs:'Conectado como',disconnected:'Desconectado',
     subTitle:'Assinatura STAKK',subActive:'Assinatura ativa',subExpires:'Expira em',subInactive:'Sem assinatura',subChoose:'Escolha um plano abaixo',
-    payAmount:'Envie exatamente este valor em USDT (TRC20)',payUnique:'O valor único permite identificar seu pagamento.',payAuto:'A assinatura será ativada automaticamente após confirmação.',
+    payAmount:'Envie exatamente este valor em USDC (TRC20)',payUnique:'O valor único permite identificar seu pagamento.',payAuto:'A assinatura será ativada automaticamente após confirmação.',
     copyAddress:'Copiar endereço',daysRemaining:'dias restantes',noSubTitle:'Sem assinatura',
     expire:'Expirado',daysShort:'d',accountLabel:'Conta',idLabel:'ID',
     noGroupNet:'Nenhum grupo configurado. Crie um para atribuir IPs ou proxies.',
@@ -691,7 +691,7 @@ async function pollLogs(){try{const l=await api('GET','logs');const b=$('rv-logs
     const m=x.match(/^\[([^\]]+)\]\s*(.*)/);if(!m)return'<div>'+x.replace(/</g,'&lt;')+'</div>';
     let c='';const t=m[2];
     if(t.includes('lance')||t.includes('token')||t.includes('OK')||t.includes('session'))c=' hi';
-    else if(t.includes('Erreur')||t.includes('error')||t.includes('echoue'))c=' er';
+    else if(t.includes('Erreur')||t.includes('error')||t.includes('échoué')||t.includes('Échec'))c=' er';
     else if(t.includes('Proxy')||t.includes('Frida')||t.includes('REDIRECT'))c=' wr';
     return'<div><span class="ts">['+m[1]+']</span><span class="'+c+'">'+m[2].replace(/</g,'&lt;')+'</span></div>'
   }).join('')+'</div>';
@@ -828,7 +828,7 @@ function renderAuthUI(){
     const expStr=lic.expires?new Date(lic.expires*1000).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'})+' '+new Date(lic.expires*1000).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):'';
     const subHtml=lic.valid
       ?`<span style="color:var(--accent);font-size:11px;font-weight:600">${lic.remaining}j</span>`
-      :`<span style="color:var(--red);font-size:11px;font-weight:600">Expire</span>`;
+      :`<span style="color:var(--red);font-size:11px;font-weight:600">Expiré</span>`;
     el.innerHTML=`<div style="display:flex;align-items:center;gap:8px">
       <button onclick="openSub()" title="${lic.valid?'Expire le '+expStr:'Aucun abonnement'}" style="height:34px;padding:0 14px;background:${lic.valid?'rgba(26,188,156,.08)':'rgba(239,68,68,.08)'};border:1px solid ${lic.valid?'rgba(26,188,156,.15)':'rgba(239,68,68,.15)'};border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px;white-space:nowrap;color:${lic.valid?'var(--accent)':'var(--red)'}"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>${subHtml}</button>
       <div style="display:flex;align-items:center;gap:8px;height:34px;padding:0 12px;background:rgba(88,101,242,.08);border:1px solid rgba(88,101,242,.12);border-radius:8px;font-size:12px;white-space:nowrap"><svg viewBox="0 0 24 24" width="14" height="14" fill="#7289da"><path d="M20.317 4.37a19.791 19.791 0 00-4.885-1.515.074.074 0 00-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 00-5.487 0 12.64 12.64 0 00-.617-1.25.077.077 0 00-.079-.037A19.736 19.736 0 003.677 4.37a.07.07 0 00-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 00.031.057 19.9 19.9 0 005.993 3.03.078.078 0 00.084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 00-.041-.106 13.107 13.107 0 01-1.872-.892.077.077 0 01-.008-.128 10.2 10.2 0 00.372-.292.074.074 0 01.077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 01.078.01c.12.098.246.198.373.292a.077.077 0 01-.006.127 12.299 12.299 0 01-1.873.892.077.077 0 00-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 00.084.028 19.839 19.839 0 006.002-3.03.077.077 0 00.032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 00-.031-.03z"/></svg><span style="color:#fff;font-weight:600">${authUser.username}</span><button onclick="logout()" style="background:none;border:none;color:var(--dim);cursor:pointer;font-size:14px;line-height:1;margin-left:2px" title="Déconnexion">&times;</button></div>
