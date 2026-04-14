@@ -754,7 +754,7 @@ async function selectPlan(amount){
     $('subWallet').textContent=r.wallet;
     $('subPayment').style.display='block';
     $('subContent').style.display='none';
-    drawQR($('qrCanvas'),r.wallet,180);
+    drawQR($('qrCanvas'),r.qrData||r.wallet,180);
   }catch(e){toast(e.message||t('error'))}
 }
 
