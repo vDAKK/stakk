@@ -81,6 +81,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 /* Running indicator */
 .running-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0;animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes spin{to{transform:rotate(360deg)}}
 
 /* Footer */
 .left-foot{border-top:1px solid var(--border);padding:8px;display:flex;gap:6px;flex-shrink:0}
@@ -278,17 +279,30 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
   <div class="dsc" id="subStatus"></div>
   <div id="subContent"></div>
   <div id="subPayment" style="display:none">
-    <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:20px;text-align:center;margin-bottom:16px">
+    <div id="subPaymentBox" style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:20px;text-align:center;margin-bottom:16px">
       <div id="payAmountLabel" style="font-size:12px;color:var(--dim);margin-bottom:8px"></div>
       <div id="subAmount" style="font-size:28px;font-weight:700;color:#fff;margin-bottom:12px"></div>
       <canvas id="qrCanvas" style="margin:0 auto 12px;display:block;border-radius:8px"></canvas>
       <div style="background:#1a1e28;border-radius:8px;padding:10px;font-family:monospace;font-size:11px;color:var(--accent);word-break:break-all;margin-bottom:10px" id="subWallet"></div>
       <button class="mb s" id="copyBtn" style="flex:none;width:auto;padding:0 14px;height:32px;font-size:11px" onclick="copyWallet()"></button>
     </div>
-    <div id="payUniqueText" style="font-size:11px;color:var(--dim);line-height:1.5;text-align:center"></div>
+    <div id="payUniqueText" style="font-size:11px;color:var(--dim);line-height:1.5;text-align:center;margin-bottom:12px"></div>
+    <button id="paidBtn" class="mb p" style="width:100%;height:40px;font-size:13px;font-weight:600" onclick="markPaid()"></button>
+  </div>
+  <div id="subWaiting" style="display:none;text-align:center;padding:32px 20px">
+    <div class="spinner" style="width:44px;height:44px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 18px"></div>
+    <div id="waitingTitle" style="font-size:15px;color:#fff;font-weight:600;margin-bottom:8px"></div>
+    <div id="waitingHint" style="font-size:12px;color:var(--dim);line-height:1.6;max-width:320px;margin:0 auto"></div>
+  </div>
+  <div id="subSuccess" style="display:none;text-align:center;padding:32px 20px">
+    <div style="width:64px;height:64px;background:rgba(26,188,156,.1);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+      <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <div id="subSuccessTitle" style="font-size:18px;color:var(--accent);font-weight:700;margin-bottom:8px"></div>
+    <div id="subSuccessMsg" style="font-size:13px;color:var(--dim);line-height:1.6"></div>
   </div>
   <div class="ft" style="margin-top:16px">
-    <button class="mb s" id="closeSubBtn" onclick="$('ovSub').classList.remove('open')"></button>
+    <button class="mb s" id="closeSubBtn" onclick="closeSubModal()"></button>
   </div>
 </div></div>
 
@@ -348,6 +362,10 @@ const L={
     importOngoing:'Import en cours...',importError:'Erreur import',stakkNotDetected:'STAKK non détecté',
     connectionLost:'Connexion perdue',deleteAccount:'Supprimer',launchError:'Erreur de lancement',
     subRequiredToast:'Connecte-toi avec Discord',
+    markPaid:'J\'ai envoyé le paiement',verifying:'Vérification du paiement...',
+    verifyingHint:'La détection prend généralement 30-90 secondes. Tu peux fermer cette fenêtre, l\'abonnement sera activé dès que la transaction est confirmée on-chain.',
+    paidConfirmed:'Paiement confirmé !',paidMsg:'Ton abonnement est actif jusqu\'au',paidNotDetected:'Pas encore détecté',
+    paidNotDetectedHint:'Si tu viens d\'envoyer la transaction, elle peut mettre jusqu\'à 5 min à être minée. On continue à vérifier en arrière-plan — tu peux fermer cette fenêtre en toute sécurité.',
     limitTitle:'Limite 2 comptes par IP',limitText:'Sur les serveurs monocompte, tu ne peux jouer que 2 comptes par IP. Pour 2 comptes supplémentaires, utilise une seconde carte réseau (par ex. 4G USB) et crée un groupe réseau dédié.',
   },
   en:{
@@ -386,6 +404,10 @@ const L={
     importOngoing:'Importing...',importError:'Import error',stakkNotDetected:'STAKK not detected',
     connectionLost:'Connection lost',deleteAccount:'Delete',launchError:'Launch error',
     subRequiredToast:'Sign in with Discord',
+    markPaid:'I sent the payment',verifying:'Verifying payment...',
+    verifyingHint:'Detection usually takes 30-90 seconds. You can close this window, the subscription will activate as soon as the transaction is confirmed on-chain.',
+    paidConfirmed:'Payment confirmed!',paidMsg:'Your subscription is active until',paidNotDetected:'Not detected yet',
+    paidNotDetectedHint:'If you just sent the transaction, it may take up to 5 min to be mined. We keep checking in the background — you can safely close this window.',
     limitTitle:'Limit 2 accounts per IP',limitText:'On mono-account servers, only 2 accounts per IP are allowed. For 2 additional accounts, use a second network adapter (e.g. 4G USB) and create a dedicated network group.',
   },
   es:{
@@ -424,6 +446,10 @@ const L={
     importOngoing:'Importando...',importError:'Error de importación',stakkNotDetected:'STAKK no detectado',
     connectionLost:'Conexión perdida',deleteAccount:'Eliminar',launchError:'Error de lanzamiento',
     subRequiredToast:'Inicia sesión con Discord',
+    markPaid:'Ya envié el pago',verifying:'Verificando el pago...',
+    verifyingHint:'La detección suele tardar 30-90 segundos. Puedes cerrar esta ventana, la suscripción se activará en cuanto la transacción sea confirmada on-chain.',
+    paidConfirmed:'¡Pago confirmado!',paidMsg:'Tu suscripción está activa hasta',paidNotDetected:'Aún no detectado',
+    paidNotDetectedHint:'Si acabas de enviar la transacción, puede tardar hasta 5 min en ser minada. Seguimos verificando en segundo plano — puedes cerrar esta ventana con seguridad.',
     limitTitle:'Límite 2 cuentas por IP',limitText:'En servidores mono-cuenta, solo se permiten 2 cuentas por IP. Para 2 cuentas adicionales, usa un segundo adaptador de red (p.ej. 4G USB) y crea un grupo de red dedicado.',
   },
   de:{
@@ -462,6 +488,10 @@ const L={
     importOngoing:'Importiere...',importError:'Import-Fehler',stakkNotDetected:'STAKK nicht erkannt',
     connectionLost:'Verbindung verloren',deleteAccount:'Löschen',launchError:'Startfehler',
     subRequiredToast:'Mit Discord anmelden',
+    markPaid:'Zahlung gesendet',verifying:'Zahlung wird überprüft...',
+    verifyingHint:'Die Erkennung dauert normalerweise 30-90 Sekunden. Du kannst dieses Fenster schließen, das Abonnement wird aktiviert, sobald die Transaktion on-chain bestätigt ist.',
+    paidConfirmed:'Zahlung bestätigt!',paidMsg:'Dein Abonnement ist aktiv bis',paidNotDetected:'Noch nicht erkannt',
+    paidNotDetectedHint:'Wenn du gerade erst gesendet hast, kann es bis zu 5 Min dauern, bis die Transaktion gemined ist. Wir prüfen weiter im Hintergrund — du kannst dieses Fenster sicher schließen.',
     limitTitle:'Limit 2 Konten pro IP',limitText:'Auf Mono-Account-Servern sind nur 2 Konten pro IP erlaubt. Für 2 zusätzliche Konten verwende einen zweiten Netzwerkadapter (z.B. 4G USB) und erstelle eine dedizierte Netzwerkgruppe.',
   },
   pt:{
@@ -500,6 +530,10 @@ const L={
     importOngoing:'Importando...',importError:'Erro de importação',stakkNotDetected:'STAKK não detectado',
     connectionLost:'Conexão perdida',deleteAccount:'Excluir',launchError:'Erro de lançamento',
     subRequiredToast:'Faça login com Discord',
+    markPaid:'Enviei o pagamento',verifying:'Verificando o pagamento...',
+    verifyingHint:'A detecção leva geralmente 30-90 segundos. Você pode fechar esta janela, a assinatura será ativada assim que a transação for confirmada on-chain.',
+    paidConfirmed:'Pagamento confirmado!',paidMsg:'Sua assinatura está ativa até',paidNotDetected:'Ainda não detectado',
+    paidNotDetectedHint:'Se você acabou de enviar a transação, pode levar até 5 min para ser minerada. Continuamos verificando em segundo plano — você pode fechar esta janela com segurança.',
     limitTitle:'Limite 2 contas por IP',limitText:'Em servidores mono-conta, apenas 2 contas por IP são permitidas. Para 2 contas adicionais, use um segundo adaptador de rede (ex: 4G USB) e crie um grupo de rede dedicado.',
   },
 };
@@ -714,6 +748,9 @@ async function doVal(){const c=$('mC').value.trim();if(c.length<4)return;try{awa
 async function openSub(){
   if(!authUser?.loggedIn){toast(t('subRequiredToast'));return}
   $('ovSub').classList.add('open');
+  // Reset tous les sous-états : on revient toujours à la sélection de plan
+  $('subWaiting').style.display='none';
+  $('subSuccess').style.display='none';
   $('subPayment').style.display='none';
   $('subContent').style.display='';
   $('subTitle').textContent=t('subTitle');
@@ -743,12 +780,25 @@ async function openSub(){
     $('payAmountLabel').textContent=t('payAmount');
     $('payUniqueText').innerHTML=t('payUnique')+'<br>'+t('payAuto');
     $('copyBtn').textContent=t('copyAddress');
+    $('paidBtn').textContent=t('markPaid');
     $('closeSubBtn').textContent=t('close');
   }catch(e){$('subStatus').innerHTML='<div style="color:var(--red)">'+(e.message||t('error'))+'</div>';$('subContent').innerHTML=''}
 }
 
+// Reset tous les sous-états du modal de paiement
+function resetSubPaymentStates(){
+  stopPaymentPolling();
+  $('subPayment').style.display='none';
+  $('subPaymentBox').style.display='block';
+  $('payUniqueText').style.display='block';
+  $('paidBtn').style.display='block';
+  $('subWaiting').style.display='none';
+  $('subSuccess').style.display='none';
+}
+
 async function selectPlan(amount){
   try{
+    resetSubPaymentStates();
     const r=await api('POST','auth/payment',{amount});
     $('subAmount').textContent=r.amount+' '+r.currency;
     $('subWallet').textContent=r.wallet;
@@ -761,6 +811,65 @@ async function selectPlan(amount){
 function copyWallet(){
   navigator.clipboard.writeText($('subWallet').textContent);
   toast(t('addressCopied'));
+}
+
+// Bouton "J'ai envoyé" → cache le QR, affiche spinner, poll /api/license
+let paymentPollInterval=null,paymentPollTimeout=null,paymentStartExpires=0;
+
+function stopPaymentPolling(){
+  if(paymentPollInterval){clearInterval(paymentPollInterval);paymentPollInterval=null}
+  if(paymentPollTimeout){clearTimeout(paymentPollTimeout);paymentPollTimeout=null}
+}
+
+async function markPaid(){
+  // Capture l'expiration actuelle pour détecter un changement
+  try{
+    const lic=await api('GET','license');
+    paymentStartExpires=lic.expires||0;
+  }catch{paymentStartExpires=0}
+
+  // Bascule sur l'état "vérification"
+  $('subPaymentBox').style.display='none';
+  $('payUniqueText').style.display='none';
+  $('paidBtn').style.display='none';
+  $('waitingTitle').textContent=t('verifying');
+  $('waitingTitle').style.color='#fff';
+  $('waitingHint').textContent=t('verifyingHint');
+  $('subWaiting').style.display='block';
+
+  // Poll /api/license toutes les 5s
+  paymentPollInterval=setInterval(checkPaymentStatus,5000);
+  // Timeout soft à 5 min → message "pas encore détecté", continue à poller
+  paymentPollTimeout=setTimeout(()=>{
+    $('waitingTitle').textContent=t('paidNotDetected');
+    $('waitingTitle').style.color='var(--orange)';
+    $('waitingHint').textContent=t('paidNotDetectedHint');
+  },5*60*1000);
+}
+
+async function checkPaymentStatus(){
+  try{
+    const lic=await api('GET','license');
+    if(lic&&(lic.expires||0)>paymentStartExpires){
+      stopPaymentPolling();
+      showPaymentSuccess(lic);
+    }
+  }catch{}
+}
+
+function showPaymentSuccess(lic){
+  $('subWaiting').style.display='none';
+  const expStr=new Date((lic.expires||0)*1000).toLocaleDateString(lang==='fr'?'fr-FR':lang,{day:'2-digit',month:'long',year:'numeric'});
+  $('subSuccessTitle').textContent=t('paidConfirmed');
+  $('subSuccessMsg').innerHTML=t('paidMsg')+' <strong style="color:#fff">'+expStr+'</strong><br>('+(lic.remaining||0)+' '+t('daysRemaining')+')';
+  $('subSuccess').style.display='block';
+  checkAuth(); // Refresh badge abonnement en haut
+}
+
+function closeSubModal(){
+  $('ovSub').classList.remove('open');
+  // On garde le polling en arrière-plan si en cours — l'user peut fermer la modal
+  // sans annuler la vérif. checkAuth() sera rappelé au match.
 }
 
 // QR Code generator (minimal, no dependency)
