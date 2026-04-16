@@ -28,6 +28,7 @@
 4. Connect with Discord
 5. Your accounts are imported automatically from the Ankama Launcher
 6. Select accounts and click **PLAY**
+7. To close STAKK, press close STAKK at the top right of the web interface
 
 ## Requirements
 
