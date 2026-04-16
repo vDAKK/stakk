@@ -1,0 +1,19 @@
+# Ce repo (vDAKK/stakk) sert uniquement GitHub Pages depuis docs/.
+# Tout le reste est dans des sous-dossiers qui vivent dans des repos séparés
+# ou en local only.
+
+# Partie desktop (STAKK.exe) — repo privé séparé
+client/
+
+# Partie backend (Fly.io) — repo privé séparé
+server/
+
+# Anciens binaires de release archivés localement
+releases-archive/
+
+# Build output / caches éphémères (pour sécurité si re-générés au root)
+node_modules/
+dist/
+cache/
+.license
+*.log
