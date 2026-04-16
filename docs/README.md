@@ -25,12 +25,11 @@
 - Keyboard forwarding to the game (chat, commands, …)
 - **Key-to-touch macros**: draw a region on the canvas, bind a PC key, press the key → instant tap in-game
 - **Tab shortcuts**: `Alt+1..9` / `Alt+←/→` to switch instances
-- Launch Dofus PC without leaving the Touch view
 
 ### Global
 
 - Discord authentication
-- One-time **3-day free trial** (HWID + IP gated anti-abuse)
+- One-time **3-day free trial**
 - Multi-language UI (FR, EN, ES, DE, PT)
 
 ## Download
