@@ -3,9 +3,44 @@
   "version": 1,
   "modules": {
     "zaap-server": {
-      "url": "https://vdakk.github.io/stakk/modules/zaap-server-f1c1cb49.js",
-      "sha256": "f1c1cb49a2d34d91afde2c16773895767bd736e670cded0c7f9bf96fea972e5a",
-      "publishedAt": "2026-04-17T16:15:42.893Z"
+      "url": "https://vdakk.github.io/stakk/modules/zaap-server-6c65a0a0.js",
+      "sha256": "6c65a0a03458516b2368a1d11ce5f5d38cffd571b9ae2371d5af8d67a5a0ab26",
+      "publishedAt": "2026-04-17T16:45:08.793Z"
+    },
+    "retro-hook": {
+      "url": "https://vdakk.github.io/stakk/modules/retro-hook-9fa6d2dc.js",
+      "sha256": "9fa6d2dc8f6f986378be70691ed2188b57354cb22930ac80390c2725615bf438",
+      "publishedAt": "2026-04-17T16:44:34.512Z"
+    },
+    "haapi": {
+      "url": "https://vdakk.github.io/stakk/modules/haapi-b1116496.js",
+      "sha256": "b1116496da9d8990f5d58e77298142eef49282d55399b61e36af5221a1f1df4c",
+      "publishedAt": "2026-04-17T16:44:34.635Z"
+    },
+    "frida-hook": {
+      "url": "https://vdakk.github.io/stakk/modules/frida-hook-51c8f3bc.js",
+      "sha256": "51c8f3bc5481fe3de1f567ffe0417a041c36445cfc076d37dcd3057b78e11b45",
+      "publishedAt": "2026-04-17T16:44:34.679Z"
+    },
+    "game-proxy": {
+      "url": "https://vdakk.github.io/stakk/modules/game-proxy-7aa3cf75.js",
+      "sha256": "7aa3cf75241da1b3d12474426050c072ac61353b5e5f54852cffdcadb629aaa9",
+      "publishedAt": "2026-04-17T16:44:34.798Z"
+    },
+    "launcher-import": {
+      "url": "https://vdakk.github.io/stakk/modules/launcher-import-084ce565.js",
+      "sha256": "084ce5659ba7ebcdadcb1853c9c5ad9faf3508aadbfd025c0d8ab6c8c72a6145",
+      "publishedAt": "2026-04-17T16:44:34.853Z"
+    },
+    "dt-clone": {
+      "url": "https://vdakk.github.io/stakk/modules/dt-clone-bc2e6b00.js",
+      "sha256": "bc2e6b007f9f77c6bc6f4d7a35821d709aea6d1ddb7b8a5910979644b8b99d8e",
+      "publishedAt": "2026-04-17T16:44:34.924Z"
+    },
+    "oauth-browser": {
+      "url": "https://vdakk.github.io/stakk/modules/oauth-browser-0af19aa8.js",
+      "sha256": "0af19aa86b6915799acaeaa269596cce051e51330d4da2e4195d0b059a58c352",
+      "publishedAt": "2026-04-17T16:44:34.961Z"
     }
   }
 }
