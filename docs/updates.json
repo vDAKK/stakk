@@ -3,9 +3,9 @@
   "version": 1,
   "modules": {
     "zaap-server": {
-      "url": "https://vdakk.github.io/stakk/modules/zaap-server-511942eb.js",
-      "sha256": "511942eb613f7b58c412f63556260311ea43a5ff4348a33b5d223632aefa8f38",
-      "publishedAt": "2026-04-17T14:33:57.280Z"
+      "url": "https://vdakk.github.io/stakk/modules/zaap-server-f1c1cb49.js",
+      "sha256": "f1c1cb49a2d34d91afde2c16773895767bd736e670cded0c7f9bf96fea972e5a",
+      "publishedAt": "2026-04-17T16:15:42.893Z"
     }
   }
 }
