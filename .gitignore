@@ -17,3 +17,7 @@ dist/
 cache/
 .license
 *.log
+
+# Source lisible du frontend — éditée en local, obfusquée par build-docs.js
+# vers docs/index.html au build. La source reste hors du repo public.
+docs/index2.html
