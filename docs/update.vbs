@@ -51,10 +51,40 @@ Function RunWait(cmd)
   LogMsg "    -> exit " & RunWait
 End Function
 
+' Détection que stakk est up = il a fini son boot ET écoute sur :3000
+' (le web server est l'ultime étape du boot). Beaucoup plus fiable que
+' tasklist qui peut ne pas voir le process pour des raisons de session/UAC,
+' et surtout ne dit pas si stakk a bien démarré vs s'il crashe juste après.
 Function StakkRunning()
-  Set exec = WshShell.Exec("tasklist /FI ""IMAGENAME eq stakk.exe"" /FO CSV /NH")
-  StakkRunning = (InStr(exec.StdOut.ReadAll, "stakk.exe") > 0)
+  Set exec = WshShell.Exec("cmd /c ""netstat -ano | findstr :3000 | findstr LISTENING""")
+  If Len(Trim(exec.StdOut.ReadAll)) > 0 Then
+    StakkRunning = True
+    Exit Function
+  End If
+  ' Fallback tasklist au cas où netstat ne marche pas (rare, sandbox corp…)
+  Set exec2 = WshShell.Exec("tasklist /FI ""IMAGENAME eq stakk.exe"" /FO CSV /NH")
+  StakkRunning = (InStr(exec2.StdOut.ReadAll, "stakk.exe") > 0)
 End Function
+
+' Lance stakk.exe détaché. Essaie 3 méthodes en séquence : WshShell.Run,
+' puis explorer.exe (hérite du shell, contourne certaines restrictions de
+' démarrage silencieux), puis powershell Start-Process. Log chaque tentative.
+Sub LaunchStakk()
+  LogMsg "Launch attempt 1 (WshShell.Run)..."
+  WshShell.CurrentDirectory = appDir
+  WshShell.Run Chr(34) & oldExe & Chr(34), 1, False
+End Sub
+Sub LaunchStakkFallback()
+  LogMsg "Launch attempt 2 (explorer.exe)..."
+  ' explorer.exe lance le fichier comme si l'user avait double-cliqué : le
+  ' shell user est le parent, pas wscript. Bypasse les soucis de session 0 /
+  ' context élevé que WshShell.Run peut avoir.
+  WshShell.Run "explorer.exe " & Chr(34) & oldExe & Chr(34), 1, False
+End Sub
+Sub LaunchStakkPS()
+  LogMsg "Launch attempt 3 (powershell Start-Process)..."
+  RunWait "powershell -NoProfile -Command ""Start-Process -FilePath '" & oldExe & "' -WorkingDirectory '" & appDir & "'"""
+End Sub
 
 ' Helper : attend jusqu'à waitSec secondes que stakk.exe apparaisse dans tasklist.
 '          Poll toutes les 2s. Retourne True si trouvé.
@@ -88,7 +118,7 @@ Sub RollbackAndRelaunch(reason)
 End Sub
 
 fso.CreateTextFile(logPath, True).Close
-LogMsg "=== Update start (external v4) ==="
+LogMsg "=== Update start (external v5) ==="
 LogMsg "appDir: " & appDir
 LogMsg "tmpDir: " & tmpDir
 
@@ -183,28 +213,27 @@ End If
 RunWait "cmd /c rmdir /S /Q """ & tmpDir & """"
 RunWait "cmd /c del /Q """ & zipPath & """"
 
-' 7) Relaunch direct (sans cmd /c start pour éviter les soucis de quoting).
-'    WshShell.Run avec Wait=False détache proprement le process enfant.
-WshShell.CurrentDirectory = appDir
+' 7) Relaunch — essai de 3 méthodes successives si les précédentes ne donnent rien.
+'    Détection via port 3000 LISTENING (cf StakkRunning). On attend jusqu'à 30s
+'    entre chaque tentative — cold boot + Defender scan d'un 62 MB peut prendre
+'    ce temps-là.
 LogMsg "Relaunch: " & oldExe
-WshShell.Run Chr(34) & oldExe & Chr(34), 1, False
-
-' 8) Attendre jusqu'à 30s que stakk apparaisse dans tasklist. On est généreux
-'    parce que : (a) cold boot d'un exe pkg-ed de 62 MB, (b) Defender premier-
-'    scan (même avec MotW strippé, le premier exec d'un fichier récemment
-'    modifié déclenche un scan), (c) pkg extrait ses assets dans %TEMP% au
-'    premier run. 30s couvre les cas lents sans frustrer sur machine rapide.
+LaunchStakk
 If Not WaitForStakk(30) Then
-  LogMsg "!! pas dans tasklist après 30s, retry relaunch..."
-  WshShell.Run Chr(34) & oldExe & Chr(34), 1, False
+  LogMsg "!! stakk pas up après 30s, essai méthode 2..."
+  LaunchStakkFallback
   If Not WaitForStakk(20) Then
-    LogMsg "!! 2e tentative échoue, rollback"
-    RollbackAndRelaunch "nouvelle version ne démarre pas après 50s"
-    MsgBox "La mise à jour a échoué (nouvelle version ne démarre pas). Version précédente restaurée." & vbCrLf & vbCrLf & "Logs : " & logPath, 48, "STAKK"
-    WScript.Quit
+    LogMsg "!! méthode 2 échoue, essai méthode 3..."
+    LaunchStakkPS
+    If Not WaitForStakk(20) Then
+      LogMsg "!! 3 méthodes échouent, rollback"
+      RollbackAndRelaunch "nouvelle version ne démarre pas (3 méthodes essayées)"
+      MsgBox "La mise à jour a échoué (nouvelle version ne démarre pas). Version précédente restaurée." & vbCrLf & vbCrLf & "Logs : " & logPath, 48, "STAKK"
+      WScript.Quit
+    End If
   End If
 End If
-LogMsg "stakk.exe est up"
+LogMsg "stakk.exe est up (port 3000 listening)"
 
 ' 10) Cleanup backup (le nouvel exe tourne, on peut supprimer)
 If fso.FileExists(backupExe) Then
