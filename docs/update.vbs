@@ -88,7 +88,7 @@ Sub RollbackAndRelaunch(reason)
 End Sub
 
 fso.CreateTextFile(logPath, True).Close
-LogMsg "=== Update start (external v3) ==="
+LogMsg "=== Update start (external v4) ==="
 LogMsg "appDir: " & appDir
 LogMsg "tmpDir: " & tmpDir
 
@@ -148,8 +148,16 @@ End If
 Set fTmpExe = fso.GetFile(tmpNewExe)
 LogMsg "Extracted stakk.exe size: " & fTmpExe.Size
 
+' 3b) Strip Mark-of-the-Web des fichiers extraits. Sinon : le zip vient de GitHub
+'     (flag Internet dans le stream Zone.Identifier), l'extract propage le flag
+'     à chaque fichier, le nouvel exe déclenche SmartScreen + un scan Defender
+'     complet de 62 MB au premier launch → boot peut prendre 30-60s → notre
+'     wait 22s rate → rollback abusif d'une update qui aurait marché.
+LogMsg "Unblock-File (strip MotW)..."
+RunWait "powershell -NoProfile -Command ""Get-ChildItem -Path '" & tmpDir & "' -File -Recurse | Unblock-File"""
+
 ' 4) Copy via robocopy (résilient aux locks OneDrive/AV).
-'    /NJS retiré temporairement pour voir les stats (nb fichiers copiés/skippés).
+'    /NJS retiré pour voir les stats (nb fichiers copiés/skippés).
 LogMsg "Copying new files..."
 rc = RunWait("cmd /c robocopy """ & tmpDir & """ """ & appDir & """ /E /R:5 /W:2 /NP /NDL /NFL /NJH")
 If rc >= 8 Then
@@ -181,16 +189,18 @@ WshShell.CurrentDirectory = appDir
 LogMsg "Relaunch: " & oldExe
 WshShell.Run Chr(34) & oldExe & Chr(34), 1, False
 
-' 8) Attendre jusqu'à 12s que stakk apparaisse dans tasklist.
-'    Un exe pkg-ed de 62 MB peut être lent à démarrer à froid (HDD + Defender
-'    scanning au premier run), 4s n'était pas suffisant → rollback abusif.
-If Not WaitForStakk(12) Then
-  LogMsg "!! pas dans tasklist après 12s, retry relaunch..."
+' 8) Attendre jusqu'à 30s que stakk apparaisse dans tasklist. On est généreux
+'    parce que : (a) cold boot d'un exe pkg-ed de 62 MB, (b) Defender premier-
+'    scan (même avec MotW strippé, le premier exec d'un fichier récemment
+'    modifié déclenche un scan), (c) pkg extrait ses assets dans %TEMP% au
+'    premier run. 30s couvre les cas lents sans frustrer sur machine rapide.
+If Not WaitForStakk(30) Then
+  LogMsg "!! pas dans tasklist après 30s, retry relaunch..."
   WshShell.Run Chr(34) & oldExe & Chr(34), 1, False
-  If Not WaitForStakk(10) Then
+  If Not WaitForStakk(20) Then
     LogMsg "!! 2e tentative échoue, rollback"
-    RollbackAndRelaunch "nouvelle version ne démarre pas"
-    MsgBox "La mise à jour a échoué (nouvelle version ne démarre pas). Version précédente restaurée.", 48, "STAKK"
+    RollbackAndRelaunch "nouvelle version ne démarre pas après 50s"
+    MsgBox "La mise à jour a échoué (nouvelle version ne démarre pas). Version précédente restaurée." & vbCrLf & vbCrLf & "Logs : " & logPath, 48, "STAKK"
     WScript.Quit
   End If
 End If
