@@ -32,7 +32,12 @@ logPath = appDir & "\update.log"
 oldExe = appDir & "\stakk.exe"
 backupExe = appDir & "\stakk.old.exe"
 zipPath = appDir & "\update.zip"
-tmpDir = appDir & "\update-tmp"
+' CRITIQUE : tmpDir DOIT être hors OneDrive. Si appDir est dans OneDrive (ex:
+' C:\Users\...\OneDrive\Bureau\stakk), écrire update-tmp/ à côté = OneDrive
+' intercepte l'extract, marque les fichiers comme cloud-only placeholders,
+' et robocopy les skip silencieusement (exit 2, rien copié). Utiliser %TEMP%
+' garantit que l'extract se passe sur un disque local normal.
+tmpDir = WshShell.ExpandEnvironmentStrings("%TEMP%") & "\stakk-update-tmp"
 
 Sub LogMsg(msg)
   Set f = fso.OpenTextFile(logPath, 8, True)
@@ -83,8 +88,9 @@ Sub RollbackAndRelaunch(reason)
 End Sub
 
 fso.CreateTextFile(logPath, True).Close
-LogMsg "=== Update start (external v2) ==="
+LogMsg "=== Update start (external v3) ==="
 LogMsg "appDir: " & appDir
+LogMsg "tmpDir: " & tmpDir
 
 ' 0) Laisser stakk.exe s'auto-exit (setTimeout 500ms côté updater.js).
 '    CRITIQUE : wscript.exe tourne comme ENFANT de stakk.exe ; si on faisait
@@ -131,9 +137,21 @@ End If
 LogMsg "Extracting zip..."
 RunWait "powershell -NoProfile -ExecutionPolicy Bypass -Command ""Expand-Archive -LiteralPath '" & zipPath & "' -DestinationPath '" & tmpDir & "' -Force"""
 
-' 4) Copy via robocopy (résilient aux locks OneDrive/AV)
+' Sanity check : vérifier que l'extraction a produit stakk.exe dans tmpDir
+tmpNewExe = tmpDir & "\stakk.exe"
+If Not fso.FileExists(tmpNewExe) Then
+  LogMsg "!! stakk.exe absent de tmpDir après extract"
+  RollbackAndRelaunch "extraction a échoué — stakk.exe introuvable dans tmpDir"
+  MsgBox "Mise à jour échouée (extraction). Version précédente relancée.", 48, "STAKK"
+  WScript.Quit
+End If
+Set fTmpExe = fso.GetFile(tmpNewExe)
+LogMsg "Extracted stakk.exe size: " & fTmpExe.Size
+
+' 4) Copy via robocopy (résilient aux locks OneDrive/AV).
+'    /NJS retiré temporairement pour voir les stats (nb fichiers copiés/skippés).
 LogMsg "Copying new files..."
-rc = RunWait("cmd /c robocopy """ & tmpDir & """ """ & appDir & """ /E /R:5 /W:2 /NP /NDL /NFL /NJH /NJS")
+rc = RunWait("cmd /c robocopy """ & tmpDir & """ """ & appDir & """ /E /R:5 /W:2 /NP /NDL /NFL /NJH")
 If rc >= 8 Then
   LogMsg "!! Robocopy failed (code " & rc & "). Fallback xcopy..."
   RunWait "cmd /c xcopy /E /Y /I /Q /R """ & tmpDir & "\*"" """ & appDir & """"
