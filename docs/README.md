@@ -1,6 +1,6 @@
 # STAKK
 
-> Launcher multi-comptes pour Dofus 3, Dofus Retro, Wakfu et Dofus Touch — joue plus de comptes, sans quitter ton PC.
+> Launcher multi-comptes pour Dofus 3, Dofus Retro, Wakfu et Dofus Touch — joue plus de comptes, sur un seul PC.
 
 ![STAKK](https://raw.githubusercontent.com/vDAKK/stakk/main/docs/preview.png)
 
