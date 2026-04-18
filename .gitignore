@@ -11,6 +11,10 @@ server/
 # Anciens binaires de release archivés localement
 releases-archive/
 
+# Zips de release générés au root avant upload GitHub
+stakk-v*.zip
+stakk-macos-v*.zip
+
 # Build output / caches éphémères (pour sécurité si re-générés au root)
 node_modules/
 dist/
