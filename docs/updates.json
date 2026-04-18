@@ -1,6 +1,7 @@
 {
-  "_doc": "Manifest des modules hot-loadables par stakk.exe. Chaque entrée déclare un module à override (url + sha256 du contenu attendu). Si absent de ce manifest, stakk utilise la version bundlée dans l'exe. Pour pousser un fix rapide : npm run publish-module zaap-server (voir client/build-hot-module.js).",
-  "version": 1,
+  "_doc": "Manifest des modules hot-loadables par stakk.exe. Chaque entrée `modules` déclare un module à override (url + sha256). La clé `plugins` liste les modules qui sont invoqués par hot-modules.loadPlugins() au démarrage — chacun reçoit une deps bag (fs, frida, runningHandles, registerRoute, on…) et peut brancher routes + lifecycle handlers. Ajouter un plugin = publier son JS + ajouter son nom dans plugins[], zéro rebuild exe.",
+  "version": 2,
+  "plugins": [],
   "modules": {
     "zaap-server": {
       "url": "https://vdakk.github.io/stakk/modules/zaap-server-2ee72053.js",
