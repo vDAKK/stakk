@@ -11,14 +11,17 @@
 '   - Aucun argument — le script se repère seul via son propre path
 '
 ' Ce qu'il fait :
-'   1. Kill stakk.exe + tree
+'   0. Sleep 3s pour laisser stakk.exe s'auto-exit (wscript tourne comme
+'      son enfant — un taskkill /T ici nous tuerait nous-mêmes)
+'   1. Kill stakk.exe (sans /T pour épargner les Dofus en cours)
 '   2. Backup stakk.exe → stakk.old.exe (rename, fiable même si handle resté)
 '   3. Extract update.zip → update-tmp/
 '   4. Robocopy update-tmp → appDir (retries auto sur locks, idéal OneDrive)
-'   5. Validation taille du nouvel exe
-'   6. Relaunch stakk.exe
-'   7. Si relaunch échoue : rollback + msgbox
-'   8. Cleanup backup + zip
+'   5. Validation taille du nouvel exe (rollback+relaunch sur échec)
+'   6. Cleanup tmp + zip
+'   7. Relaunch via WshShell.Run direct (Wait=False → détaché)
+'   8. Attendre jusqu'à 12s que le nouveau process apparaisse ; retry 1x
+'   9. Si tout échoue : rollback complet + relaunch backup + msgbox
 
 On Error Resume Next
 Set fso = CreateObject("Scripting.FileSystemObject")
@@ -48,14 +51,54 @@ Function StakkRunning()
   StakkRunning = (InStr(exec.StdOut.ReadAll, "stakk.exe") > 0)
 End Function
 
+' Helper : attend jusqu'à waitSec secondes que stakk.exe apparaisse dans tasklist.
+'          Poll toutes les 2s. Retourne True si trouvé.
+Function WaitForStakk(waitSec)
+  Dim waited
+  waited = 0
+  Do While waited < waitSec
+    If StakkRunning() Then
+      WaitForStakk = True
+      Exit Function
+    End If
+    WScript.Sleep 2000
+    waited = waited + 2
+  Loop
+  WaitForStakk = False
+End Function
+
+' Helper : restaure le backup et relance stakk. Utilisé dans tous les paths
+'          d'erreur pour éviter de laisser l'user sans stakk fonctionnel.
+Sub RollbackAndRelaunch(reason)
+  LogMsg "Rollback: " & reason
+  If fso.FileExists(backupExe) Then
+    If fso.FileExists(oldExe) Then fso.DeleteFile oldExe, True
+    fso.MoveFile backupExe, oldExe
+    WshShell.CurrentDirectory = appDir
+    WshShell.Run Chr(34) & oldExe & Chr(34), 1, False
+    LogMsg "Backup restauré et relancé"
+  Else
+    LogMsg "!! Pas de backup à restaurer"
+  End If
+End Sub
+
 fso.CreateTextFile(logPath, True).Close
-LogMsg "=== Update start (external v1) ==="
+LogMsg "=== Update start (external v2) ==="
 LogMsg "appDir: " & appDir
 
-' 1) Kill stakk.exe + descendants
-LogMsg "Killing stakk.exe..."
-RunWait "taskkill /IM stakk.exe /F /T"
+' 0) Laisser stakk.exe s'auto-exit (setTimeout 500ms côté updater.js).
+'    CRITIQUE : wscript.exe tourne comme ENFANT de stakk.exe ; si on faisait
+'    taskkill /T à ce stade, Windows walk le tree depuis stakk.exe et tue
+'    wscript (nous) avec. Symptôme : log stoppe pile à "Killing...", aucune
+'    étape suivante ne s'exécute. D'où le sleep + pas de /T.
+LogMsg "Waiting for stakk.exe to self-exit (3s)..."
 WScript.Sleep 3000
+
+' 1) Kill stakk.exe si toujours là (normalement plus présent après self-exit).
+'    PAS de /T : on ne veut pas tuer wscript ni les Dofus lancés par l'user.
+LogMsg "Killing stakk.exe (if still running)..."
+RunWait "taskkill /IM stakk.exe /F"
+WScript.Sleep 2000
 
 ' 2) Rename old stakk.exe → backup
 If fso.FileExists(backupExe) Then
@@ -104,10 +147,9 @@ If fso.FileExists(oldExe) Then
   If fNewExe.Size > 10000000 Then validOK = True
 End If
 If Not validOK Then
-  LogMsg "!! New exe invalide, rollback"
   If fso.FileExists(oldExe) Then fso.DeleteFile oldExe, True
-  If fso.FileExists(backupExe) Then fso.MoveFile backupExe, oldExe
-  MsgBox "Mise à jour impossible (exe invalide). Version précédente restaurée.", 48, "STAKK"
+  RollbackAndRelaunch "nouvel exe invalide ou absent"
+  MsgBox "Mise à jour impossible (exe invalide). Version précédente restaurée et relancée.", 48, "STAKK"
   WScript.Quit
 End If
 
@@ -115,35 +157,26 @@ End If
 RunWait "cmd /c rmdir /S /Q """ & tmpDir & """"
 RunWait "cmd /c del /Q """ & zipPath & """"
 
-' 7) Relaunch
+' 7) Relaunch direct (sans cmd /c start pour éviter les soucis de quoting).
+'    WshShell.Run avec Wait=False détache proprement le process enfant.
 WshShell.CurrentDirectory = appDir
-relaunchCmd = "cmd /c start """" /D """ & appDir & """ """ & oldExe & """"
-LogMsg "Relaunch: " & relaunchCmd
-WshShell.Run relaunchCmd, 0, False
-WScript.Sleep 4000
+LogMsg "Relaunch: " & oldExe
+WshShell.Run Chr(34) & oldExe & Chr(34), 1, False
 
-' 8) Si ça n'a pas démarré, retry
-If Not StakkRunning() Then
-  LogMsg "!! not running after first attempt, retrying..."
-  WshShell.Run relaunchCmd, 0, False
-  WScript.Sleep 3000
-End If
-
-' 9) Si TOUJOURS pas démarré → rollback + relaunch backup
-If Not StakkRunning() Then
-  LogMsg "!! RELAUNCH FAILED after 2 attempts, rolling back"
-  If fso.FileExists(backupExe) Then
-    If fso.FileExists(oldExe) Then fso.DeleteFile oldExe, True
-    fso.MoveFile backupExe, oldExe
-    WshShell.Run relaunchCmd, 0, False
-    WScript.Sleep 2500
+' 8) Attendre jusqu'à 12s que stakk apparaisse dans tasklist.
+'    Un exe pkg-ed de 62 MB peut être lent à démarrer à froid (HDD + Defender
+'    scanning au premier run), 4s n'était pas suffisant → rollback abusif.
+If Not WaitForStakk(12) Then
+  LogMsg "!! pas dans tasklist après 12s, retry relaunch..."
+  WshShell.Run Chr(34) & oldExe & Chr(34), 1, False
+  If Not WaitForStakk(10) Then
+    LogMsg "!! 2e tentative échoue, rollback"
+    RollbackAndRelaunch "nouvelle version ne démarre pas"
     MsgBox "La mise à jour a échoué (nouvelle version ne démarre pas). Version précédente restaurée.", 48, "STAKK"
-  Else
-    MsgBox "La mise à jour a échoué et aucun backup disponible. Retélécharge STAKK depuis github.com/vDAKK/stakk/releases.", 16, "STAKK"
+    WScript.Quit
   End If
-  LogMsg "Done (rollback)"
-  WScript.Quit
 End If
+LogMsg "stakk.exe est up"
 
 ' 10) Cleanup backup (le nouvel exe tourne, on peut supprimer)
 If fso.FileExists(backupExe) Then
