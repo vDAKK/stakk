@@ -1,65 +1,85 @@
 # STAKK
 
-> Multi-account launcher for Dofus 3 and Dofus Touch — play more accounts, without leaving your PC.
+> Launcher multi-comptes pour Dofus 3, Dofus Retro, Wakfu et Dofus Touch — joue plus de comptes, sans quitter ton PC.
 
 ![STAKK](https://raw.githubusercontent.com/vDAKK/stakk/main/docs/preview.png)
 
-## Features
+## Description
+
+STAKK est un outil conçu pour les joueurs multi-comptes de l'univers Ankama. Il centralise en une seule interface web le lancement, l'import et la gestion de comptes **Dofus 3**, **Dofus Retro**, **Wakfu** et **Dofus Touch**, tout en contournant les limitations mono-compte des serveurs, en gérant les certificats Shield, les groupes réseau (IP / proxy SOCKS5) et, côté mobile, en permettant de jouer plusieurs comptes Dofus Touch en parallèle dans le navigateur via un téléphone Android branché en USB.
+
+## Fonctionnalités
 
 ### Dofus 3 (PC)
 
-- Import your accounts from the official Ankama launcher
-- Use unlimited accounts
-- Launch multiple Dofus 3 accounts simultaneously
-- Mono-account server bypass
-- Shield certificate management (Email & OTP / Authenticator)
-- Network groups (bind accounts to different IPs or SOCKS5 proxies)
-- Account health indicators
+- Import automatique des comptes depuis le launcher officiel Ankama
+- Nombre de comptes illimité
+- Lancement simultané de plusieurs comptes Dofus 3
+- Contournement des serveurs mono-compte
+- Gestion des certificats Shield (Email & OTP / Authenticator)
+- Groupes réseau (associer des comptes à différentes IP ou proxies SOCKS5)
+- Indicateurs de santé des comptes
+- Possibilité d'assigner des raccourics clavier pour switcher rapidement entre les comptes
+
+### Dofus Retro (PC)
+
+- Import des comptes depuis le launcher Ankama
+- Lancement de plusieurs instances Dofus Retro en parallèle
+- **Limite 1 compte par adresse IP** : sur Dofus Retro, un seul compte par IP est autorisé par Ankama. Pour chaque compte supplémentaire, utilise une seconde carte réseau (ex. clé 4G USB) et crée un groupe réseau dédié
+- Règles réseau distinctes de Dofus 3 (configurables par jeu)
+
+### Wakfu (PC)
+
+- Import des comptes depuis le launcher Ankama
+- Groupes réseau dédiés par compte
 
 ### Dofus Touch (mobile)
 
-- Play Dofus Touch directly in your browser through a USB-tethered Android phone
-- Isolated virtual display — your phone's home screen stays private
-- **Multi-instance via APK cloning**: open several Dofus Touch accounts in parallel tabs on a single phone (APK clone pipeline powered by `apktool` + `uber-apk-signer`)
-- Real-time touch input via scrcpy protocol (bypasses ya-webadb to work on Samsung foldables)
-- Keyboard forwarding to the game (chat, commands, …)
-- **Key-to-touch macros**: draw a region on the canvas, bind a PC key, press the key → instant tap in-game
-- **Tab shortcuts**: `Alt+1..9` / `Alt+←/→` to switch instances
+- Joue à Dofus Touch directement dans le navigateur via un téléphone Android branché en USB
+- Affichage virtuel isolé — l'écran d'accueil du téléphone reste privé
+- **Multi-instance par clonage d'APK** : ouvre plusieurs comptes Dofus Touch en parallèle, chacun dans son propre onglet, sur un seul téléphone (pipeline de clonage APK via `apktool` + `uber-apk-signer`)
+- Input tactile temps réel via le protocole scrcpy (contourne ya-webadb pour fonctionner sur les Samsung pliables)
+- Transfert du clavier vers le jeu (chat, commandes, …)
+- **Macros touche→clic** : dessine une zone sur le canvas, associe-la à une touche PC, appuie sur la touche → tap instantané en jeu
+- **Raccourcis onglets** : `Alt+1..9` / `Alt+←/→` pour changer d'instance
 
 ### Global
 
-- Discord authentication
-- One-time **3-day free trial**
-- Multi-language UI (FR, EN, ES, DE, PT)
+- Authentification Discord
+- **Essai gratuit de 3 jours** (une seule fois par compte)
+- Interface multilingue (FR, EN, ES, DE, PT)
 
-## Download
+## Téléchargement
 
-**[Download latest release](https://github.com/vDAKK/stakk/releases/latest)**
+**[Télécharger la dernière version](https://github.com/vDAKK/stakk/releases/latest)**
 
-## Quick Start — Dofus 3 PC
+## Démarrage rapide — Dofus 3 / Retro / Wakfu (PC)
 
-1. Download and extract the latest release
-2. Run `stakk.exe`
-3. The web interface opens automatically
-4. Connect with Discord
-5. Your accounts are imported automatically from the Ankama Launcher
-6. Select accounts and click **PLAY**
-7. To close STAKK, press close STAKK at the top right of the web interface
+1. Télécharge et extrais la dernière release
+2. Lance `stakk.exe`
+3. L'interface web s'ouvre automatiquement
+4. Connecte-toi avec Discord
+5. Tes comptes sont importés automatiquement depuis le Launcher Ankama
+6. En haut à gauche, choisis le jeu (**Dofus 3**, **Retro** ou **Wakfu**)
+7. Sélectionne les comptes et clique sur **PLAY**
+8. Pour fermer STAKK, clique sur "Fermer STAKK" en haut à droite de l'interface
 
-## Quick Start — Dofus Touch
+> ⚠️ **Dofus Retro** : un seul compte par IP autorisé par Ankama. Utilise une seconde connexion (ex. 4G USB) + un groupe réseau dédié pour lancer un compte supplémentaire.
 
-1. On your phone: enable **Developer options → USB debugging**
-2. Plug the phone into your PC via USB, choose **Transfer files** / **MIDI** as USB mode (not "Charge only")
-3. In STAKK, choose **Dofus Touch** in the top-left game selector
-4. Click **Connecter téléphone** in the sidebar
-5. Accept the USB debugging prompt on the phone
-6. Dofus Touch starts in a clean virtual display inside the browser canvas
-7. Optional — click **Cloner cette instance** to create a second account slot installed side-by-side with the original (uses APK cloning under the hood)
-8. Click **Macro** in the sidebar to bind a PC key to a canvas region (draw → press the key to record)
+## Démarrage rapide — Dofus Touch
 
-## Requirements
+1. Sur le téléphone : active **Options développeur → Débogage USB**
+2. Branche le téléphone en USB, choisis **Transfert de fichiers** / **MIDI** comme mode USB (pas "Charge uniquement")
+3. Dans STAKK, sélectionne **Dofus Touch** dans le sélecteur de jeu en haut à gauche
+4. Clique sur **Connecter téléphone** dans la barre latérale
+5. Accepte l'invite de débogage USB sur le téléphone
+6. Dofus Touch démarre dans un écran virtuel propre à l'intérieur du canvas du navigateur
+7. Optionnel — clique sur **Cloner cette instance** pour créer un second emplacement de compte installé en parallèle de l'original (clonage d'APK sous le capot)
+8. Clique sur **Macro** dans la barre latérale pour associer une touche PC à une zone du canvas (dessine la zone → appuie sur la touche pour l'enregistrer)
+
+## Prérequis
 
 - Windows 10/11
-- Chromium-based browser (Chrome, Edge, Brave) for Dofus Touch — WebUSB is not available on Firefox/Safari
-- Dofus 3 installed via Ankama Launcher (for PC mode)
-- An Android phone with USB debugging enabled (for Dofus Touch mode) — tested on Galaxy Z Fold 4 / Android 15+
+- Navigateur basé sur Chromium (Chrome, Edge, Brave) pour Dofus Touch — WebUSB n'est pas disponible sur Firefox/Safari
+- Dofus 3 / Dofus Retro / Wakfu installés via le Launcher Ankama (pour le mode PC)
+- Un téléphone Android avec le débogage USB activé (pour le mode Dofus Touch) — testé sur Galaxy Z Fold 4 / Android 15+
