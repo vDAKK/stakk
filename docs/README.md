@@ -1,6 +1,6 @@
 # STAKK
 
-> Launcher multi-comptes pour Dofus 3, Dofus Retro, Wakfu et Dofus Touch — joue plus de comptes, sur un seul PC.
+> Bypass les retrictions monocompte pour Dofus 3, Dofus Retro, Wakfu et Dofus Touch — joue plus de comptes, sur un seul PC.
 
 ![STAKK](https://raw.githubusercontent.com/vDAKK/stakk/main/docs/preview.png)
 
