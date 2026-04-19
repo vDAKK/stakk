@@ -2,7 +2,8 @@
   "_doc": "Manifest des modules hot-loadables par stakk.exe. Chaque entrée `modules` déclare un module à override (url + sha256). La clé `plugins` liste les modules qui sont invoqués par hot-modules.loadPlugins() au démarrage — chacun reçoit une deps bag (fs, frida, runningHandles, registerRoute, on…) et peut brancher routes + lifecycle handlers. Ajouter un plugin = publier son JS + ajouter son nom dans plugins[], zéro rebuild exe.",
   "version": 2,
   "plugins": [
-    "organizer"
+    "organizer",
+    "sub-tracker"
   ],
   "modules": {
     "zaap-server": {
@@ -49,6 +50,11 @@
       "url": "https://vdakk.github.io/stakk/modules/organizer-3d69eac8.js",
       "sha256": "3d69eac8058e5933b6c28347b3510a7895cddb4a568f46dd384d8b99791bd420",
       "publishedAt": "2026-04-18T14:25:55.276Z"
+    },
+    "sub-tracker": {
+      "url": "https://vdakk.github.io/stakk/modules/sub-tracker-16ce45a8.js",
+      "sha256": "16ce45a8e0d8c66f23ab6fac51b6bbeb1f8d08216d6053cbbb1605b530cfb089",
+      "publishedAt": "2026-04-19T14:43:23.907Z"
     }
   }
 }
