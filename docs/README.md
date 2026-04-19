@@ -53,6 +53,10 @@ STAKK est un outil conçu pour les joueurs multi-comptes de l'univers Ankama. Il
 
 **[Télécharger la dernière version](https://github.com/vDAKK/stakk/releases/latest)**
 
+## Support & contact
+
+Besoin d'aide, envie de remonter un bug ou une suggestion ? Rejoins le **[Discord STAKK](https://discord.gg/Vg2eckFe)** pour me contacter directement.
+
 ## Démarrage rapide — Dofus 3 / Retro / Wakfu (PC)
 
 1. Télécharge et extrais la dernière release
