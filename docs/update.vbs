@@ -1,20 +1,20 @@
 ' STAKK — universal auto-updater (Windows)
 ' Hosted at https://vdakk.github.io/stakk/update.vbs
 '
-' Le client stakk.exe télécharge ce fichier puis le lance via wscript.exe.
+' Le client STAKK télécharge ce fichier puis le lance via wscript.exe.
 ' Comme ça, les bugs d'updater peuvent être corrigés SANS rebuild/redeploy du
 ' client — il suffit de mettre à jour ce fichier sur GitHub Pages.
 '
 ' Contrat :
-'   - update.vbs est placé dans le dossier de stakk.exe
+'   - update.vbs est placé dans le dossier de STAKK
 '   - update.zip aussi (déjà téléchargé par le client)
 '   - Aucun argument — le script se repère seul via son propre path
 '
 ' Ce qu'il fait :
-'   0. Sleep 3s pour laisser stakk.exe s'auto-exit (wscript tourne comme
+'   0. Sleep 3s pour laisser STAKK s'auto-exit (wscript tourne comme
 '      son enfant — un taskkill /T ici nous tuerait nous-mêmes)
-'   1. Kill stakk.exe (sans /T pour épargner les Dofus en cours)
-'   2. Backup stakk.exe → stakk.old.exe (rename, fiable même si handle resté)
+'   1. Kill STAKK (sans /T pour épargner les Dofus en cours)
+'   2. Backup STAKK → stakk.old.exe (rename, fiable même si handle resté)
 '   3. Extract update.zip → update-tmp/
 '   4. Robocopy update-tmp → appDir (retries auto sur locks, idéal OneDrive)
 '   5. Validation taille du nouvel exe (rollback+relaunch sur échec)

@@ -60,7 +60,7 @@ Plus d'infos sur la **[page de présentation du logiciel](https://vdakk.github.i
 ## Démarrage rapide — Dofus 3 / Retro / Wakfu (PC)
 
 1. Télécharge et extrais la dernière release
-2. Lance `stakk.exe`
+2. Lance `STAKK`
 3. L'interface web s'ouvre automatiquement
 4. Connecte-toi avec Discord
 5. Tes comptes sont importés automatiquement depuis le Launcher Ankama

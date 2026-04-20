@@ -2,7 +2,7 @@
 # Tout le reste est dans des sous-dossiers qui vivent dans des repos séparés
 # ou en local only.
 
-# Partie desktop (STAKK.exe) — repo privé séparé
+# Partie desktop (STAKK) — repo privé séparé
 client/
 
 # Partie backend (Fly.io) — repo privé séparé
