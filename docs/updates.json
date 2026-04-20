@@ -4,7 +4,8 @@
   "plugins": [
     "organizer",
     "sub-tracker",
-    "account-sync"
+    "account-sync",
+    "click-broadcast"
   ],
   "modules": {
     "zaap-server": {
@@ -61,6 +62,11 @@
       "url": "https://vdakk.github.io/stakk/modules/account-sync-24375e10.js",
       "sha256": "24375e10e8ae5e76cf2a0a6e6680229b635c3d41816b4f80b41c95fd96289e62",
       "publishedAt": "2026-04-20T14:06:09.077Z"
+    },
+    "click-broadcast": {
+      "url": "https://vdakk.github.io/stakk/modules/click-broadcast-7e92598c.js",
+      "sha256": "7e92598c42140a096b1b40c126fd8dd49aabf46161a1a566b3d2ca149d308108",
+      "publishedAt": "2026-04-20T17:44:32.086Z"
     }
   }
 }
