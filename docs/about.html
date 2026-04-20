@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>STAKK — Multi-compte pour Dofus 3, Retro, Wakfu & Dofus Touch</title>
+<meta name="description" content="STAKK centralise le lancement, l'import et la gestion de comptes Ankama. Joue plus de comptes, sur un seul PC — Dofus 3, Retro, Wakfu, Dofus Touch.">
+<meta property="og:title" content="STAKK — Multi-compte Ankama">
+<meta property="og:description" content="Bypass les restrictions monocompte. Dofus 3, Retro, Wakfu & Dofus Touch — un seul PC.">
+<meta property="og:image" content="https://raw.githubusercontent.com/vDAKK/stakk/main/docs/preview.png">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231abc9c' stroke-width='2'%3E%3Cpath d='M12 2L2 7l10 5 10-5-10-5z'/%3E%3Cpath d='M2 17l10 5 10-5' opacity='.5'/%3E%3Cpath d='M2 12l10 5 10-5' opacity='.75'/%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0d12;
+  --bg-2:#111318;
+  --panel:#161a22;
+  --panel-2:#1e222c;
+  --border:#242935;
+  --border-soft:#1d212b;
+  --text:#e4e8f2;
+  --text-dim:#8a93a8;
+  --text-mute:#5a6176;
+  --accent:#1abc9c;
+  --accent-soft:#16a085;
+  --accent-glow:rgba(26,188,156,.35);
+  --red:#ef4444;
+  --blue:#3b82f6;
+  --violet:#8b5cf6;
+  --orange:#f59e0b;
+  --radius:14px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Inter',system-ui,-apple-system,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  font-size:15px;
+  line-height:1.6;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+}
+::selection{background:rgba(26,188,156,.25);color:#fff}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:#2a2f3a;border-radius:5px;border:2px solid var(--bg)}
+::-webkit-scrollbar-thumb:hover{background:#353b48}
+
+a{color:inherit;text-decoration:none}
+img{max-width:100%;display:block}
+
+/* ==== BACKGROUND EFFECTS ==== */
+.bg-fx{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
+.bg-grid{
+  position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(36,41,53,.35) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(36,41,53,.35) 1px,transparent 1px);
+  background-size:48px 48px;
+  mask-image:radial-gradient(ellipse at 50% 0%,#000 0%,transparent 70%);
+  -webkit-mask-image:radial-gradient(ellipse at 50% 0%,#000 0%,transparent 70%);
+}
+.bg-glow{
+  position:absolute;
+  width:900px;height:900px;
+  border-radius:50%;
+  filter:blur(120px);
+  opacity:.35;
+}
+.bg-glow.g1{top:-200px;left:-100px;background:radial-gradient(circle,#1abc9c 0%,transparent 60%)}
+.bg-glow.g2{top:400px;right:-200px;background:radial-gradient(circle,#8b5cf6 0%,transparent 60%);opacity:.15}
+.bg-glow.g3{top:1200px;left:30%;background:radial-gradient(circle,#3b82f6 0%,transparent 60%);opacity:.12}
+
+/* ==== CONTAINER ==== */
+.wrap{max-width:1200px;margin:0 auto;padding:0 24px}
+
+/* ==== NAVBAR ==== */
+.nav{
+  position:sticky;top:0;z-index:50;
+  padding:16px 0;
+  backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+  background:rgba(10,13,18,.7);
+  border-bottom:1px solid transparent;
+  transition:border-color .3s;
+}
+.nav.scrolled{border-bottom-color:var(--border-soft)}
+.nav .wrap{display:flex;align-items:center;gap:24px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:16px;letter-spacing:-.3px}
+.logo-ico{
+  width:34px;height:34px;border-radius:9px;
+  background:linear-gradient(135deg,#1abc9c,#16a085);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 16px rgba(26,188,156,.3);
+}
+.logo-ico svg{width:18px;height:18px;color:#fff}
+.nav-links{display:flex;gap:4px;margin-left:auto}
+.nav-links a{
+  padding:8px 14px;font-size:13.5px;color:var(--text-dim);
+  border-radius:8px;transition:all .15s;font-weight:500;
+}
+.nav-links a:hover{color:var(--text);background:rgba(255,255,255,.04)}
+.nav-cta{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:9px 16px;
+  background:linear-gradient(135deg,#1abc9c,#16a085);
+  color:#fff !important;
+  border-radius:9px;
+  font-size:13.5px;font-weight:600;
+  transition:all .15s;
+  box-shadow:0 2px 12px rgba(26,188,156,.2);
+}
+.nav-cta:hover{transform:translateY(-1px);box-shadow:0 4px 18px rgba(26,188,156,.35);background:linear-gradient(135deg,#1dd1a8,#1abc9c) !important}
+.nav-cta svg{width:14px;height:14px}
+.nav-burger{display:none;background:none;border:none;color:var(--text);cursor:pointer;padding:6px;margin-left:auto}
+.nav-burger svg{width:22px;height:22px}
+
+/* ==== HERO ==== */
+.hero{padding:110px 0 120px;text-align:center;position:relative}
+.badge{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:6px 14px;
+  background:rgba(26,188,156,.08);
+  border:1px solid rgba(26,188,156,.2);
+  border-radius:999px;
+  font-size:12.5px;font-weight:600;
+  color:var(--accent);
+  margin-bottom:26px;
+}
+.badge .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(26,188,156,.4)}50%{opacity:.6;box-shadow:0 0 0 6px rgba(26,188,156,0)}}
+.hero h1{
+  font-size:clamp(40px,6.5vw,78px);
+  font-weight:800;
+  letter-spacing:-.04em;
+  line-height:1.02;
+  margin-bottom:24px;
+  color:#fff;
+}
+.hero h1 .grad{
+  background:linear-gradient(135deg,#1abc9c 0%,#3bddba 50%,#1abc9c 100%);
+  background-size:200% 200%;
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;
+  animation:shine 6s ease-in-out infinite;
+}
+@keyframes shine{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+.hero p.lead{
+  font-size:clamp(16px,2vw,19px);
+  color:var(--text-dim);
+  max-width:640px;margin:0 auto 40px;
+  line-height:1.55;
+}
+.hero-cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:16px}
+.btn{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:14px 24px;
+  border-radius:11px;
+  font-size:14.5px;font-weight:600;
+  cursor:pointer;border:none;
+  font-family:inherit;
+  transition:all .18s;
+}
+.btn svg{width:16px;height:16px}
+.btn-primary{
+  background:linear-gradient(135deg,#1abc9c,#16a085);
+  color:#fff;
+  box-shadow:0 6px 24px rgba(26,188,156,.25);
+}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 10px 32px rgba(26,188,156,.4);background:linear-gradient(135deg,#1dd1a8,#1abc9c)}
+.btn-ghost{
+  background:rgba(255,255,255,.04);
+  color:var(--text);
+  border:1px solid var(--border);
+}
+.btn-ghost:hover{background:rgba(255,255,255,.07);border-color:#3a404e}
+.hero-meta{font-size:12.5px;color:var(--text-mute);margin-top:18px;display:flex;gap:18px;justify-content:center;flex-wrap:wrap}
+.hero-meta span{display:inline-flex;align-items:center;gap:6px}
+.hero-meta svg{width:13px;height:13px;color:var(--accent)}
+
+/* ==== PREVIEW ==== */
+.preview{
+  margin:60px auto 0;
+  max-width:1100px;
+  position:relative;
+}
+.preview-frame{
+  border-radius:16px;
+  overflow:hidden;
+  border:1px solid var(--border);
+  background:var(--panel);
+  box-shadow:
+    0 40px 80px -20px rgba(0,0,0,.6),
+    0 0 120px -20px rgba(26,188,156,.2);
+  position:relative;
+}
+.preview-bar{
+  display:flex;align-items:center;gap:8px;
+  padding:12px 16px;
+  background:var(--bg-2);
+  border-bottom:1px solid var(--border);
+}
+.preview-bar .dots{display:flex;gap:6px}
+.preview-bar .dots i{width:11px;height:11px;border-radius:50%;background:#3a404e;display:block}
+.preview-bar .dots i:nth-child(1){background:#ef4444}
+.preview-bar .dots i:nth-child(2){background:#f59e0b}
+.preview-bar .dots i:nth-child(3){background:#10b981}
+.preview-bar .url{
+  flex:1;text-align:center;
+  font-size:12px;color:var(--text-mute);
+  font-family:'JetBrains Mono',monospace;
+}
+.preview img{width:100%;display:block}
+
+/* ==== SECTION ==== */
+section{padding:100px 0;position:relative}
+.sec-head{text-align:center;max-width:680px;margin:0 auto 60px}
+.sec-tag{
+  display:inline-block;
+  padding:4px 12px;
+  background:rgba(26,188,156,.08);
+  color:var(--accent);
+  border-radius:999px;
+  font-size:11.5px;font-weight:700;
+  text-transform:uppercase;letter-spacing:1.2px;
+  margin-bottom:16px;
+}
+.sec-head h2{
+  font-size:clamp(30px,4.5vw,46px);
+  font-weight:800;
+  letter-spacing:-.03em;
+  line-height:1.1;
+  color:#fff;
+  margin-bottom:16px;
+}
+.sec-head p{font-size:17px;color:var(--text-dim);line-height:1.6}
+
+/* ==== FEATURES GRID ==== */
+.feat-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:20px;
+}
+.feat{
+  padding:28px;
+  background:linear-gradient(180deg,var(--panel) 0%,var(--bg-2) 100%);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  transition:all .25s;
+  position:relative;
+  overflow:hidden;
+}
+.feat::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(400px circle at var(--mx,50%) var(--my,0%),rgba(26,188,156,.08),transparent 40%);
+  opacity:0;transition:opacity .3s;
+  pointer-events:none;
+}
+.feat:hover::before{opacity:1}
+.feat:hover{border-color:#2f3544;transform:translateY(-2px)}
+.feat-ico{
+  width:44px;height:44px;border-radius:11px;
+  background:linear-gradient(135deg,rgba(26,188,156,.15),rgba(26,188,156,.05));
+  border:1px solid rgba(26,188,156,.2);
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:18px;
+}
+.feat-ico svg{width:20px;height:20px;color:var(--accent)}
+.feat h3{font-size:16px;font-weight:700;color:#fff;margin-bottom:8px;letter-spacing:-.01em}
+.feat p{font-size:13.5px;color:var(--text-dim);line-height:1.55}
+
+/* ==== GAMES SECTION ==== */
+.games{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.game{
+  padding:32px;
+  background:linear-gradient(180deg,var(--panel) 0%,var(--bg-2) 100%);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  position:relative;
+  overflow:hidden;
+  transition:all .25s;
+}
+.game:hover{border-color:#2f3544;transform:translateY(-3px)}
+.game-bg{
+  position:absolute;
+  top:-60px;right:-60px;
+  width:220px;height:220px;
+  border-radius:50%;
+  filter:blur(60px);
+  opacity:.15;
+  pointer-events:none;
+}
+.game.dofus3 .game-bg{background:#1abc9c}
+.game.retro .game-bg{background:#f59e0b}
+.game.wakfu .game-bg{background:#8b5cf6}
+.game.touch .game-bg{background:#3b82f6}
+.game-head{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+.game-logo{
+  width:56px;height:56px;border-radius:14px;
+  display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:22px;color:#fff;
+  flex-shrink:0;
+}
+.game.dofus3 .game-logo{background:linear-gradient(135deg,#1abc9c,#16a085);box-shadow:0 4px 20px rgba(26,188,156,.3)}
+.game.retro .game-logo{background:linear-gradient(135deg,#f59e0b,#d97706);box-shadow:0 4px 20px rgba(245,158,11,.3)}
+.game.wakfu .game-logo{background:linear-gradient(135deg,#8b5cf6,#7c3aed);box-shadow:0 4px 20px rgba(139,92,246,.3)}
+.game.touch .game-logo{background:linear-gradient(135deg,#3b82f6,#2563eb);box-shadow:0 4px 20px rgba(59,130,246,.3)}
+.game-title h3{font-size:22px;font-weight:800;color:#fff;letter-spacing:-.02em}
+.game-title span{font-size:12px;color:var(--text-mute);text-transform:uppercase;font-weight:600;letter-spacing:1px}
+.game ul{list-style:none;display:flex;flex-direction:column;gap:10px;position:relative;z-index:1}
+.game li{
+  display:flex;align-items:flex-start;gap:10px;
+  font-size:13.5px;color:var(--text-dim);line-height:1.5;
+}
+.game li svg{width:15px;height:15px;color:var(--accent);flex-shrink:0;margin-top:3px}
+.game.retro li svg{color:#f59e0b}
+.game.wakfu li svg{color:#8b5cf6}
+.game.touch li svg{color:#3b82f6}
+.game li b{color:var(--text);font-weight:600}
+.game-note{
+  margin-top:18px;padding:12px 14px;
+  background:rgba(245,158,11,.06);
+  border:1px solid rgba(245,158,11,.15);
+  border-radius:9px;
+  font-size:12.5px;color:var(--text-dim);
+  display:flex;gap:10px;align-items:flex-start;
+}
+.game-note svg{width:14px;height:14px;color:#f59e0b;flex-shrink:0;margin-top:2px}
+
+/* ==== HOW IT WORKS ==== */
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;counter-reset:step}
+.step{
+  padding:24px;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  position:relative;
+  counter-increment:step;
+}
+.step::before{
+  content:counter(step,decimal-leading-zero);
+  display:block;
+  font-size:40px;font-weight:900;
+  background:linear-gradient(135deg,var(--accent),#3bddba);
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;
+  opacity:.9;
+  font-family:'JetBrains Mono',monospace;
+  letter-spacing:-.04em;
+  line-height:1;margin-bottom:14px;
+}
+.step h4{font-size:15px;font-weight:700;color:#fff;margin-bottom:6px}
+.step p{font-size:13px;color:var(--text-dim);line-height:1.55}
+
+/* ==== DOWNLOAD ==== */
+.download-card{
+  max-width:720px;margin:0 auto;
+  padding:48px 40px;text-align:center;
+  background:
+    radial-gradient(circle at 30% 0%,rgba(26,188,156,.15),transparent 60%),
+    radial-gradient(circle at 80% 100%,rgba(59,130,246,.1),transparent 60%),
+    linear-gradient(180deg,var(--panel) 0%,var(--bg-2) 100%);
+  border:1px solid var(--border);
+  border-radius:20px;
+  position:relative;overflow:hidden;
+}
+.download-card::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,transparent 0%,rgba(26,188,156,.08) 50%,transparent 100%);
+  background-size:200% 200%;
+  animation:shine 8s ease-in-out infinite;
+  pointer-events:none;
+}
+.download-card h2{font-size:34px;font-weight:800;color:#fff;margin-bottom:14px;letter-spacing:-.02em;position:relative}
+.download-card p{font-size:15px;color:var(--text-dim);margin-bottom:28px;max-width:460px;margin-left:auto;margin-right:auto;position:relative}
+.download-card .btn{font-size:15px;padding:15px 28px;position:relative}
+.download-meta{
+  display:flex;gap:20px;justify-content:center;align-items:center;flex-wrap:wrap;
+  margin-top:24px;font-size:12.5px;color:var(--text-mute);
+  position:relative;
+}
+.download-meta span{display:inline-flex;align-items:center;gap:6px}
+.download-meta svg{width:13px;height:13px}
+
+/* ==== FAQ ==== */
+.faq{max-width:780px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.faq-item{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:12px;
+  overflow:hidden;
+  transition:border-color .2s;
+}
+.faq-item:hover{border-color:#2f3544}
+.faq-q{
+  padding:18px 22px;
+  display:flex;justify-content:space-between;align-items:center;gap:12px;
+  cursor:pointer;
+  font-size:14.5px;font-weight:600;color:#fff;
+  user-select:none;
+  font-family:inherit;
+  background:none;border:none;width:100%;text-align:left;
+}
+.faq-q svg{width:16px;height:16px;color:var(--text-dim);transition:transform .2s;flex-shrink:0}
+.faq-item.open .faq-q svg{transform:rotate(180deg);color:var(--accent)}
+.faq-a{
+  max-height:0;overflow:hidden;
+  transition:max-height .3s ease;
+  padding:0 22px;
+}
+.faq-item.open .faq-a{max-height:300px;padding-bottom:20px}
+.faq-a p{font-size:13.5px;color:var(--text-dim);line-height:1.6}
+
+/* ==== FOOTER ==== */
+footer{
+  border-top:1px solid var(--border-soft);
+  padding:50px 0 30px;
+  margin-top:40px;
+}
+.foot-top{
+  display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;
+  margin-bottom:36px;
+}
+.foot-brand p{font-size:13.5px;color:var(--text-dim);margin-top:14px;line-height:1.55;max-width:320px}
+.foot-col h5{font-size:11px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:14px}
+.foot-col ul{list-style:none;display:flex;flex-direction:column;gap:9px}
+.foot-col a{font-size:13.5px;color:var(--text-dim);transition:color .15s;display:inline-flex;align-items:center;gap:6px}
+.foot-col a:hover{color:var(--accent)}
+.foot-col a svg{width:13px;height:13px}
+.foot-bottom{
+  padding-top:24px;border-top:1px solid var(--border-soft);
+  display:flex;justify-content:space-between;align-items:center;
+  font-size:12.5px;color:var(--text-mute);flex-wrap:wrap;gap:12px;
+}
+.foot-bottom a{color:var(--text-dim)}
+.foot-bottom a:hover{color:var(--accent)}
+
+/* ==== RESPONSIVE ==== */
+@media (max-width:960px){
+  .feat-grid{grid-template-columns:repeat(2,1fr)}
+  .games{grid-template-columns:1fr}
+  .steps{grid-template-columns:repeat(2,1fr)}
+  .foot-top{grid-template-columns:1fr 1fr;gap:30px}
+  section{padding:70px 0}
+  .hero{padding:70px 0 80px}
+}
+@media (max-width:640px){
+  .wrap{padding:0 20px}
+  .nav-links{display:none}
+  .nav-burger{display:block}
+  .nav-links.open{
+    display:flex;flex-direction:column;
+    position:absolute;top:100%;left:0;right:0;
+    background:var(--bg-2);border-bottom:1px solid var(--border);
+    padding:12px 20px;gap:4px;
+  }
+  .feat-grid{grid-template-columns:1fr}
+  .steps{grid-template-columns:1fr}
+  .foot-top{grid-template-columns:1fr;gap:28px}
+  .foot-brand{grid-column:1}
+  .hero h1{font-size:38px}
+  .hero p.lead{font-size:15px}
+  .download-card{padding:36px 24px}
+  .download-card h2{font-size:26px}
+  .game{padding:24px}
+  .feat{padding:22px}
+}
+
+/* ==== REVEAL ANIMATION ==== */
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .7s,transform .7s}
+.reveal.in{opacity:1;transform:none}
+</style>
+</head>
+<body>
+
+<div class="bg-fx">
+  <div class="bg-grid"></div>
+  <div class="bg-glow g1"></div>
+  <div class="bg-glow g2"></div>
+  <div class="bg-glow g3"></div>
+</div>
+
+<!-- NAV -->
+<nav class="nav" id="nav">
+  <div class="wrap">
+    <a href="#top" class="logo">
+      <div class="logo-ico">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5" opacity=".7"/><path d="M2 12l10 5 10-5" opacity=".85"/></svg>
+      </div>
+      STAKK
+    </a>
+    <button class="nav-burger" id="burger" aria-label="Menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <div class="nav-links" id="navLinks">
+      <a href="#features">Fonctionnalités</a>
+      <a href="#games">Jeux</a>
+      <a href="#how">Comment ça marche</a>
+      <a href="#faq">FAQ</a>
+      <a href="https://github.com/vDAKK/stakk" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://github.com/vDAKK/stakk/releases/latest" class="nav-cta" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Télécharger
+      </a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<header class="hero" id="top">
+  <div class="wrap">
+    <div class="badge reveal">
+      <span class="dot"></span>
+      v1.3 disponible · Essai gratuit 3 jours
+    </div>
+    <h1 class="reveal">
+      Joue plus de comptes Ankama,<br>
+      <span class="grad">sur un seul PC.</span>
+    </h1>
+    <p class="lead reveal">
+      STAKK centralise le lancement, l'import et la gestion de comptes <b>Dofus 3</b>,
+      <b>Dofus Retro</b>, <b>Wakfu</b> et <b>Dofus Touch</b> — en contournant les
+      limitations monocompte des serveurs.
+    </p>
+    <div class="hero-cta reveal">
+      <a href="https://github.com/vDAKK/stakk/releases/latest" class="btn btn-primary" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Télécharger pour Windows
+      </a>
+      <a href="#features" class="btn btn-ghost">
+        Voir les fonctionnalités
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
+    </div>
+    <div class="hero-meta reveal">
+      <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Windows 10 / 11</span>
+      <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Auto-update</span>
+      <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> FR · EN · ES · DE · PT</span>
+    </div>
+
+    <div class="preview reveal">
+      <div class="preview-frame">
+        <div class="preview-bar">
+          <div class="dots"><i></i><i></i><i></i></div>
+          <div class="url">stakk · dofus 3</div>
+          <div style="width:60px"></div>
+        </div>
+        <img src="preview.png" alt="Interface STAKK" loading="lazy">
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-tag">Fonctionnalités</div>
+      <h2>Tout ce qu'il faut pour le multi-compte</h2>
+      <p>Une interface unique pour gérer tes comptes, tes IPs, tes Shields, et tes raccourcis — sans quitter le navigateur.</p>
+    </div>
+    <div class="feat-grid">
+      <div class="feat reveal">
+        <div class="feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+        <h3>Import automatique</h3>
+        <p>Tes comptes Ankama sont détectés directement depuis le launcher officiel — pas de ressaisie.</p>
+      </div>
+      <div class="feat reveal">
+        <div class="feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></div>
+        <h3>Comptes illimités</h3>
+        <p>Lance autant d'instances que ta machine peut encaisser, en parallèle, sur un seul PC.</p>
+      </div>
+      <div class="feat reveal">
+        <div class="feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+        <h3>Shield intégré</h3>
+        <p>Gère automatiquement les certificats Shield via Email & OTP / Authenticator. Sans friction.</p>
+      </div>
+      <div class="feat reveal">
+        <div class="feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
+        <h3>Groupes réseau</h3>
+        <p>Associe chaque compte à une IP ou un proxy SOCKS5 — indispensable pour Dofus Retro.</p>
+      </div>
+      <div class="feat reveal">
+        <div class="feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2" ry="2"/><path d="M6 8h.01M10 8h.01M14 8h.01"/><line x1="6" y1="14" x2="18" y2="14"/></svg></div>
+        <h3>Raccourcis clavier</h3>
+        <p>Switch instantané entre les comptes. Définis tes propres touches par personnage.</p>
+      </div>
+      <div class="feat reveal">
+        <div class="feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+        <h3>Santé des comptes</h3>
+        <p>Indicateurs visuels : état du Shield, validité des clés, activité récente. Tu vois ce qui compte.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- GAMES -->
+<section id="games" style="background:linear-gradient(180deg,transparent 0%,rgba(22,26,34,.5) 50%,transparent 100%)">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-tag">Les jeux supportés</div>
+      <h2>Quatre univers Ankama, un seul outil</h2>
+      <p>Chaque jeu a ses règles. STAKK les applique au bon endroit, automatiquement.</p>
+    </div>
+    <div class="games">
+      <div class="game dofus3 reveal">
+        <div class="game-bg"></div>
+        <div class="game-head">
+          <div class="game-logo">D3</div>
+          <div class="game-title">
+            <h3>Dofus 3</h3>
+            <span>PC · Illimité</span>
+          </div>
+        </div>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span><b>Import auto</b> depuis le launcher Ankama</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>Nombre de comptes <b>illimité</b></span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>Contournement des <b>serveurs monocompte</b></span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>Shield Email & OTP / Authenticator</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>Raccourcis clavier pour switcher</span></li>
+        </ul>
+      </div>
+
+      <div class="game retro reveal">
+        <div class="game-bg"></div>
+        <div class="game-head">
+          <div class="game-logo">DR</div>
+          <div class="game-title">
+            <h3>Dofus Retro</h3>
+            <span>PC · Multi-IP</span>
+          </div>
+        </div>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>Import depuis le launcher Ankama</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>Plusieurs instances en <b>parallèle</b></span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>Règles réseau distinctes de Dofus 3</span></li>
+        </ul>
+        <div class="game-note">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span><b>Limite 1 compte / IP</b> — pour chaque compte supplémentaire, utilise une seconde carte réseau (ex. clé 4G USB) et un groupe réseau dédié.</span>
+        </div>
+      </div>
+
+      <div class="game wakfu reveal">
+        <div class="game-bg"></div>
+        <div class="game-head">
+          <div class="game-logo">W</div>
+          <div class="game-title">
+            <h3>Wakfu</h3>
+            <span>PC · Groupes réseau</span>
+          </div>
+        </div>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>Import depuis le launcher Ankama</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span><b>Groupes réseau dédiés</b> par compte</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>Lancement simultané multi-comptes</span></li>
+        </ul>
+      </div>
+
+      <div class="game touch reveal">
+        <div class="game-bg"></div>
+        <div class="game-head">
+          <div class="game-logo">DT</div>
+          <div class="game-title">
+            <h3>Dofus Touch</h3>
+            <span>Mobile · Android USB</span>
+          </div>
+        </div>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>Joue depuis le <b>navigateur</b> via téléphone en USB</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>Écran d'accueil du téléphone <b>privé</b></span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span><b>Multi-instance</b> par clonage d'APK</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>Macros <b>touche → clic</b> dessinées sur le canvas</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>Raccourcis <b>Alt+1..9</b> pour changer d'instance</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-tag">Comment ça marche</div>
+      <h2>Prêt en 4 étapes</h2>
+      <p>De zéro à multi-compte en moins de deux minutes.</p>
+    </div>
+    <div class="steps">
+      <div class="step reveal">
+        <h4>Télécharge</h4>
+        <p>Récupère la dernière release sur GitHub et extrais le zip où tu veux.</p>
+      </div>
+      <div class="step reveal">
+        <h4>Lance stakk.exe</h4>
+        <p>L'interface web s'ouvre dans ton navigateur par défaut automatiquement.</p>
+      </div>
+      <div class="step reveal">
+        <h4>Connecte Discord</h4>
+        <p>Authentification en un clic — tes comptes sont importés du launcher Ankama.</p>
+      </div>
+      <div class="step reveal">
+        <h4>Sélectionne & Play</h4>
+        <p>Coche les comptes à lancer, choisis le jeu, clique sur PLAY. C'est tout.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DOWNLOAD -->
+<section id="download">
+  <div class="wrap">
+    <div class="download-card reveal">
+      <h2>Prêt à jouer en multi-compte&nbsp;?</h2>
+      <p>Télécharge STAKK, teste gratuitement pendant 3 jours, et vois par toi-même.</p>
+      <a href="https://github.com/vDAKK/stakk/releases/latest" class="btn btn-primary" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Télécharger STAKK
+      </a>
+      <div class="download-meta">
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Windows 10/11 · 64-bit</span>
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Essai gratuit 3 jours</span>
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Mises à jour auto</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-tag">FAQ</div>
+      <h2>Les questions fréquentes</h2>
+    </div>
+    <div class="faq">
+      <div class="faq-item reveal">
+        <button class="faq-q">Est-ce que STAKK fonctionne sur Mac ou Linux ?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
+        <div class="faq-a"><p>STAKK cible Windows 10 / 11 64-bit. Pour Dofus Touch tu as besoin d'un navigateur Chromium (Chrome, Edge, Brave) — WebUSB n'est pas dispo sur Firefox ou Safari.</p></div>
+      </div>
+      <div class="faq-item reveal">
+        <button class="faq-q">Quelle est la limite de comptes simultanés ?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
+        <div class="faq-a"><p>Sur Dofus 3 et Wakfu : illimité, tant que ton PC tient le coup. Sur Dofus Retro : 1 compte par IP (règle Ankama) — utilise une seconde connexion (ex. clé 4G USB) pour chaque compte supplémentaire.</p></div>
+      </div>
+      <div class="faq-item reveal">
+        <button class="faq-q">Comment fonctionne le multi-compte sur Dofus Touch ?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
+        <div class="faq-a"><p>On clone l'APK Dofus Touch (via apktool + uber-apk-signer) pour créer plusieurs installations indépendantes sur un seul téléphone Android branché en USB. Chaque clone tourne dans son propre onglet, avec un affichage virtuel isolé — ton écran d'accueil reste privé.</p></div>
+      </div>
+      <div class="faq-item reveal">
+        <button class="faq-q">Mes identifiants Ankama sont-ils en sécurité ?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
+        <div class="faq-a"><p>STAKK lit les comptes directement depuis le launcher Ankama installé localement et les stocke chiffrés sur ton PC. Aucun mot de passe ne transite par des serveurs tiers.</p></div>
+      </div>
+      <div class="faq-item reveal">
+        <button class="faq-q">Que comprend l'essai gratuit ?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
+        <div class="faq-a"><p>3 jours d'accès complet, une seule fois par compte Discord. Toutes les fonctionnalités sont débloquées — aucune carte bancaire demandée.</p></div>
+      </div>
+      <div class="faq-item reveal">
+        <button class="faq-q">STAKK se met à jour tout seul ?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
+        <div class="faq-a"><p>Oui. Les correctifs protocole et logiques de lancement sont poussés en hot-update — pas besoin de télécharger une nouvelle version à chaque patch Ankama.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="wrap">
+    <div class="foot-top">
+      <div class="foot-brand">
+        <a href="#top" class="logo">
+          <div class="logo-ico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5" opacity=".7"/><path d="M2 12l10 5 10-5" opacity=".85"/></svg>
+          </div>
+          STAKK
+        </a>
+        <p>L'outil multi-compte pour joueurs Ankama. Dofus 3, Dofus Retro, Wakfu, Dofus Touch — un seul PC, zéro friction.</p>
+      </div>
+      <div class="foot-col">
+        <h5>Produit</h5>
+        <ul>
+          <li><a href="#features">Fonctionnalités</a></li>
+          <li><a href="#games">Jeux supportés</a></li>
+          <li><a href="#how">Comment ça marche</a></li>
+          <li><a href="#faq">FAQ</a></li>
+        </ul>
+      </div>
+      <div class="foot-col">
+        <h5>Ressources</h5>
+        <ul>
+          <li><a href="https://github.com/vDAKK/stakk/releases/latest" target="_blank" rel="noopener">Téléchargement</a></li>
+          <li><a href="https://github.com/vDAKK/stakk" target="_blank" rel="noopener">GitHub</a></li>
+          <li><a href="./">Lancer l'app</a></li>
+        </ul>
+      </div>
+      <div class="foot-col">
+        <h5>Communauté</h5>
+        <ul>
+          <li><a href="https://discord.gg/qwcxAbxns9" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.893.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+            Discord
+          </a></li>
+          <li><a href="https://github.com/vDAKK/stakk/issues" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            Signaler un bug
+          </a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <div>© 2026 STAKK — Fait par <a href="https://github.com/vDAKK" target="_blank" rel="noopener">vDAKK</a>. Projet indépendant, non affilié à Ankama.</div>
+      <div><a href="https://github.com/vDAKK/stakk">v1.3</a></div>
+    </div>
+  </div>
+</footer>
+
+<script>
+// Nav scroll state
+const nav=document.getElementById('nav');
+const onScroll=()=>nav.classList.toggle('scrolled',window.scrollY>10);
+window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+
+// Mobile burger
+const burger=document.getElementById('burger');
+const links=document.getElementById('navLinks');
+burger?.addEventListener('click',()=>links.classList.toggle('open'));
+links?.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>links.classList.remove('open')));
+
+// FAQ toggle
+document.querySelectorAll('.faq-item').forEach(item=>{
+  const q=item.querySelector('.faq-q');
+  q.addEventListener('click',()=>item.classList.toggle('open'));
+});
+
+// Feature card mouse tracking (for radial glow)
+document.querySelectorAll('.feat').forEach(el=>{
+  el.addEventListener('mousemove',e=>{
+    const r=el.getBoundingClientRect();
+    el.style.setProperty('--mx',((e.clientX-r.left)/r.width*100)+'%');
+    el.style.setProperty('--my',((e.clientY-r.top)/r.height*100)+'%');
+  });
+});
+
+// Reveal on scroll
+const io=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}});
+},{threshold:.12,rootMargin:'0px 0px -40px 0px'});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+// Open first FAQ by default
+document.querySelector('.faq-item')?.classList.add('open');
+</script>
+
+</body>
+</html>

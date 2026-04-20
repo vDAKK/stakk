@@ -4,6 +4,8 @@
 
 ![STAKK](https://raw.githubusercontent.com/vDAKK/stakk/main/docs/preview.png)
 
+**[Site de présentation](https://vdakk.github.io/stakk/about.html)** · **[Télécharger](https://github.com/vDAKK/stakk/releases/latest)** · **[Discord](https://discord.gg/qwcxAbxns9)**
+
 ## Description
 
 STAKK est un outil conçu pour les joueurs multi-comptes de l'univers Ankama. Il centralise en une seule interface web le lancement, l'import et la gestion de comptes **Dofus 3**, **Dofus Retro**, **Wakfu** et **Dofus Touch**, tout en contournant les limitations mono-compte des serveurs, en gérant les certificats Shield, les groupes réseau (IP / proxy SOCKS5) et, côté mobile, en permettant de jouer plusieurs comptes Dofus Touch en parallèle dans le navigateur via un téléphone Android branché en USB.
@@ -52,6 +54,8 @@ STAKK est un outil conçu pour les joueurs multi-comptes de l'univers Ankama. Il
 ## Téléchargement
 
 **[Télécharger la dernière version](https://github.com/vDAKK/stakk/releases/latest)**
+
+Plus d'infos sur la **[page de présentation du logiciel](https://vdakk.github.io/stakk/about.html)**.
 
 ## Démarrage rapide — Dofus 3 / Retro / Wakfu (PC)
 
