@@ -1,7 +1,3 @@
-## Support & contact
-
-Besoin d'aide, envie de remonter un bug ou une suggestion ? Rejoins le **[Discord STAKK](https://discord.gg/Vg2eckFe)** pour me contacter directement.
-
 # STAKK
 
 > Bypass les retrictions monocompte pour Dofus 3, Dofus Retro, Wakfu et Dofus Touch — joue plus de comptes, sur un seul PC.
