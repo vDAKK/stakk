@@ -1,10 +1,10 @@
 # STAKK
 
+**[Site de présentation](https://vdakk.github.io/stakk/about.html)** · **[Télécharger](https://github.com/vDAKK/stakk/releases/latest)** · **[Discord](https://discord.gg/qwcxAbxns9)**
+
 > Bypass les retrictions monocompte pour Dofus 3, Dofus Retro, Wakfu et Dofus Touch — joue plus de comptes, sur un seul PC.
 
 ![STAKK](https://raw.githubusercontent.com/vDAKK/stakk/main/docs/preview.png)
-
-**[Site de présentation](https://vdakk.github.io/stakk/about.html)** · **[Télécharger](https://github.com/vDAKK/stakk/releases/latest)** · **[Discord](https://discord.gg/qwcxAbxns9)**
 
 ## Description
 
