@@ -9,13 +9,15 @@
       padding: 0;
       height: 100vh;
       width: 100vw;
-      background: transparent;
+      background: rgba(0, 0, 0, 0.25);
       color: #fff;
       font-family: 'Segoe UI', sans-serif;
       font-size: 10px;
       user-select: none;
       overflow: hidden;
       cursor: default;
+      /* Bordure rouge temporaire pour diagnostic — sera retirée après fix */
+      outline: 3px solid #f00;
     }
     #grid {
       position: absolute;
@@ -198,6 +200,8 @@
   </style>
 </head>
 <body>
+  <!-- Diagnostic temporaire — si tu vois ce badge, la fenêtre est bien rendue. -->
+  <div style="position:fixed;top:2px;left:2px;background:#f00;color:#fff;padding:2px 6px;font-size:10px;font-weight:bold;z-index:1000;border-radius:2px">STAKK OVERLAY</div>
   <div id="filterBar"></div>
   <div id="status">drag pour positionner · Ctrl+Shift+F filtres · Ctrl+Shift+↑/↓ zoom · Ctrl+Shift+O sortir édit · Ctrl+Shift+Q quitter</div>
   <div id="grid"></div>
