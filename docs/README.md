@@ -22,6 +22,7 @@ STAKK est un outil conçu pour les joueurs multi-comptes de l'univers Ankama. Il
 - Groupes réseau (associer des comptes à différentes IP ou proxies SOCKS5)
 - Indicateurs de santé des comptes
 - Possibilité d'assigner des raccourics clavier pour switcher rapidement entre les comptes
+- Overlay affichant les ressources récoltable autour de la position du joueur avec adaptation en fonction de ses déplacements
 
 ### Dofus Retro (PC)
 
