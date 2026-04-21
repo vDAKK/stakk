@@ -194,12 +194,12 @@
       display: none;
       border: 1px solid rgba(255, 200, 0, 0.3);
     }
-    body.edit #tooltip { display: block; }
   </style>
 </head>
 <body>
   <div id="filterBar"></div>
   <div id="status">drag pour positionner · Ctrl+Shift+F filtres · Ctrl+Shift+↑/↓ zoom · Ctrl+Shift+O sortir édit · Ctrl+Shift+Q quitter</div>
+  <div id="diagBar" style="position:fixed;bottom:0;left:0;right:0;padding:2px 5px;background:rgba(0,0,0,0.85);color:#faa;font-size:9px;font-family:'Consolas',monospace;z-index:200;pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
   <div id="grid"></div>
   <div id="tooltip"></div>
 
@@ -279,15 +279,27 @@
       return n?.iconId ? `https://api.dofusdb.fr/img/items/${n.iconId}.png` : null;
     }
 
+    const diag = document.getElementById('diagBar');
+    function diagSet(msg) { if (diag) diag.textContent = msg; }
+
     async function fetchGrid(mapId, r) {
       const key = `${mapId}:${r}`;
       if (gridCache.has(key)) return gridCache.get(key);
+      const url = `${STAKK_URL}/api/map-grid?mapId=${mapId}&radius=${r}`;
       try {
-        const res = await fetch(`${STAKK_URL}/api/map-grid?mapId=${mapId}&radius=${r}`);
+        const res = await fetch(url);
+        if (!res.ok) {
+          diagSet(`HTTP ${res.status} pour map-grid ${mapId}`);
+          return null;
+        }
         const j = await res.json();
         gridCache.set(key, j);
+        diagSet(`OK map ${mapId} · ${(j.cells||[]).length} cells`);
         return j;
-      } catch { return null; }
+      } catch (e) {
+        diagSet(`FETCH ERR map-grid: ${e.message}`);
+        return null;
+      }
     }
 
     function renderGrid(data) {
@@ -369,23 +381,19 @@
     async function poll() {
       try {
         const res = await fetch(`${STAKK_URL}/api/map-state`, { cache: 'no-store' });
-        if (!res.ok) throw new Error('HTTP ' + res.status);
+        if (!res.ok) { diagSet(`map-state HTTP ${res.status}`); return; }
         const state = await res.json();
         const entries = Object.entries(state);
-        if (entries.length === 0) return;
+        if (entries.length === 0) { diagSet('aucun compte actif'); return; }
         const [, { mapId }] = entries[0];
         if (mapId !== lastMapId) {
           lastMapId = mapId;
           await refresh(mapId);
         }
-      } catch {}
+      } catch (e) { diagSet(`map-state ERR: ${e.message}`); }
     }
 
     document.addEventListener('mousemove', (e) => {
-      if (!document.body.classList.contains('edit')) {
-        tooltip.style.display = 'none';
-        return;
-      }
       const cell = e.target.closest('.cell');
       if (cell && cell.dataset.tooltip) {
         tooltip.textContent = cell.dataset.tooltip;
