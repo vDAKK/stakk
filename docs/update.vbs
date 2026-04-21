@@ -66,20 +66,21 @@ Function StakkRunning()
   StakkRunning = (InStr(exec2.StdOut.ReadAll, "stakk.exe") > 0)
 End Function
 
-' Lance stakk.exe détaché. Essaie 3 méthodes en séquence : WshShell.Run,
-' puis explorer.exe (hérite du shell, contourne certaines restrictions de
-' démarrage silencieux), puis powershell Start-Process. Log chaque tentative.
+' Lance stakk.exe détaché. Essaie 3 méthodes en séquence : explorer.exe,
+' puis WshShell.Run, puis powershell Start-Process. Log chaque tentative.
+' explorer.exe en premier car c'est la méthode qui marche à tous les coups
+' d'après les logs terrain — WshShell.Run direct échoue silencieusement dans
+' certains contextes (session 0 / wscript élevé), alors qu'explorer lance le
+' fichier comme si l'user avait double-cliqué (shell user = parent).
 Sub LaunchStakk()
-  LogMsg "Launch attempt 1 (WshShell.Run)..."
+  LogMsg "Launch attempt 1 (explorer.exe)..."
   WshShell.CurrentDirectory = appDir
-  WshShell.Run Chr(34) & oldExe & Chr(34), 1, False
+  WshShell.Run "explorer.exe " & Chr(34) & oldExe & Chr(34), 1, False
 End Sub
 Sub LaunchStakkFallback()
-  LogMsg "Launch attempt 2 (explorer.exe)..."
-  ' explorer.exe lance le fichier comme si l'user avait double-cliqué : le
-  ' shell user est le parent, pas wscript. Bypasse les soucis de session 0 /
-  ' context élevé que WshShell.Run peut avoir.
-  WshShell.Run "explorer.exe " & Chr(34) & oldExe & Chr(34), 1, False
+  LogMsg "Launch attempt 2 (WshShell.Run)..."
+  WshShell.CurrentDirectory = appDir
+  WshShell.Run Chr(34) & oldExe & Chr(34), 1, False
 End Sub
 Sub LaunchStakkPS()
   LogMsg "Launch attempt 3 (powershell Start-Process)..."
