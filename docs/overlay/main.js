@@ -33,8 +33,9 @@ const BOUNDS_FILE = process.env.STAKK_OVERLAY_BOUNDS || path.join(app.getPath('u
 console.log('[STAKK overlay] STAKK_URL=' + STAKK_URL + ' BOUNDS_FILE=' + BOUNDS_FILE);
 dbg(`vars resolved`);
 
-app.disableHardwareAcceleration();
-dbg('disableHardwareAcceleration OK');
+// disableHardwareAcceleration() vit dans bootstrap.js (doit être appelé
+// AVANT app-ready, qui peut déjà avoir fired quand main.js est require
+// après un fetch async hot-update). Ici on ne l'appelle plus.
 
 let win = null;
 let editMode = false;
