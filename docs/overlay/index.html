@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>STAKK Overlay</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      width: 100vw;
+      background: transparent;
+      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      font-size: 10px;
+      user-select: none;
+      overflow: hidden;
+      cursor: default;
+    }
+    #grid {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      gap: 0;
+      background: transparent;
+    }
+    .cell {
+      position: relative;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      background: rgba(0, 0, 0, 0.18);
+      box-sizing: border-box;
+      overflow: hidden;
+      display: flex;
+      flex-wrap: wrap;
+      align-content: flex-start;
+      gap: 1px;
+      padding: 2px;
+      min-width: 0;
+      min-height: 0;
+    }
+    /* Damier subtil pour mieux distinguer les cellules adjacentes */
+    .cell.alt { background: rgba(0, 0, 0, 0.32); }
+    .cell.center {
+      /* Encadrement très marqué en jaune vif pour repérer ta position */
+      border: 3px solid #ffcc00;
+      background: rgba(255, 204, 0, 0.15);
+      box-shadow:
+        inset 0 0 0 1px rgba(0, 0, 0, 0.6),
+        0 0 6px rgba(255, 204, 0, 0.6);
+      z-index: 2;
+    }
+    .cell.empty-cell { opacity: 0.45; }
+    .res {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .res img {
+      width: 18px;
+      height: 18px;
+      display: block;
+      filter: drop-shadow(0 0 1px rgba(0,0,0,0.9));
+      image-rendering: -webkit-optimize-contrast;
+    }
+    .res .count {
+      position: absolute;
+      bottom: -2px;
+      right: -2px;
+      font-size: 9px;
+      font-weight: bold;
+      color: #fff;
+      text-shadow: 0 0 2px #000, 0 0 2px #000, 0 0 2px #000;
+      line-height: 1;
+      pointer-events: none;
+    }
+    .coord {
+      position: absolute;
+      top: 0;
+      left: 1px;
+      font-size: 8px;
+      color: rgba(255, 255, 255, 0.35);
+      pointer-events: none;
+      display: none;
+      text-shadow: 0 0 2px rgba(0,0,0,0.9);
+    }
+    body.edit .coord { display: block; }
+    body.edit #grid { background: rgba(0, 0, 0, 0.35); }
+    body.edit .cell {
+      border-color: rgba(255, 200, 0, 0.5);
+      -webkit-app-region: drag;
+    }
+    body.edit .cell.center { border-color: rgba(255, 200, 0, 1); }
+    #status {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 2px 6px;
+      background: rgba(0, 0, 0, 0.75);
+      color: #aaa;
+      font-size: 9px;
+      pointer-events: none;
+      display: none;
+      z-index: 50;
+    }
+    body.edit #status { display: block; }
+
+    /* Filter bar — visible en mode filtre (Ctrl+Shift+F), permet de toggler
+       les types affichés sans entrer en mode édit. */
+    #filterBar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: 5px 6px;
+      background: rgba(0, 0, 0, 0.92);
+      display: none;
+      gap: 4px;
+      flex-wrap: wrap;
+      align-items: center;
+      z-index: 60;
+      max-height: 60%;
+      overflow-y: auto;
+      border-bottom: 1px solid rgba(255, 200, 0, 0.5);
+    }
+    body.filter-mode #filterBar { display: flex; }
+    #filterBar .lbl {
+      color: #ddd;
+      font-size: 10px;
+      margin-right: 4px;
+      white-space: nowrap;
+      font-weight: 600;
+    }
+    #filterBar .filter-item {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 3px;
+      transition: all 80ms;
+      position: relative;
+    }
+    #filterBar .filter-item:hover {
+      transform: scale(1.15);
+      border-color: rgba(255, 200, 0, 0.8);
+    }
+    #filterBar .filter-item.off {
+      opacity: 0.35;
+      filter: grayscale(85%);
+    }
+    #filterBar .filter-item.off::after {
+      content: '✕';
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #f55;
+      font-size: 14px;
+      font-weight: bold;
+      text-shadow: 0 0 2px #000;
+      pointer-events: none;
+    }
+    #tooltip {
+      position: fixed;
+      pointer-events: none;
+      background: rgba(0, 0, 0, 0.92);
+      color: #fff;
+      padding: 4px 7px;
+      border-radius: 3px;
+      font-size: 11px;
+      max-width: 220px;
+      white-space: pre-wrap;
+      z-index: 100;
+      display: none;
+      border: 1px solid rgba(255, 200, 0, 0.3);
+    }
+    body.edit #tooltip { display: block; }
+  </style>
+</head>
+<body>
+  <div id="filterBar"></div>
+  <div id="status">drag pour positionner · Ctrl+Shift+F filtres · Ctrl+Shift+↑/↓ zoom · Ctrl+Shift+O sortir édit · Ctrl+Shift+Q quitter</div>
+  <div id="grid"></div>
+  <div id="tooltip"></div>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const STAKK_URL = params.get('stakkUrl') || 'http://127.0.0.1:3000';
+    const grid = document.getElementById('grid');
+    const tooltip = document.getElementById('tooltip');
+
+    let radius = 1;       // 1 = 3x3, 2 = 5x5, 3 = 7x7
+    let lastMapId = null;
+    let lastData = null;  // pour re-render quand le filtre change
+    const gridCache = new Map(); // `${mapId}:${radius}` → data
+
+    // Filtre : ids de ressources masquées, persisté en localStorage
+    const HIDDEN_KEY = 'stakk-overlay-hidden';
+    let hiddenIds = new Set();
+    try {
+      const raw = localStorage.getItem(HIDDEN_KEY);
+      if (raw) hiddenIds = new Set(JSON.parse(raw).map(Number));
+    } catch {}
+    function saveHidden() {
+      try { localStorage.setItem(HIDDEN_KEY, JSON.stringify([...hiddenIds])); } catch {}
+    }
+    function toggleHidden(id, hidden) {
+      if (hidden === undefined) hidden = !hiddenIds.has(id);
+      if (hidden) hiddenIds.add(id); else hiddenIds.delete(id);
+      saveHidden();
+      if (lastData) renderGrid(lastData);
+      renderFilterBar(lastData);
+    }
+
+    const filterBar = document.getElementById('filterBar');
+    function renderFilterBar(data) {
+      filterBar.innerHTML = '';
+      if (!data || !data.cells) return;
+      // Liste tous les itemIds présents dans la grille courante + tous les
+      // hidden (même si pas dans la grille, pour pouvoir les ré-activer).
+      const ids = new Set([...hiddenIds]);
+      for (const c of data.cells) {
+        if (c.details) for (const k of Object.keys(c.details)) ids.add(+k);
+      }
+      const sorted = [...ids].sort((a, b) => {
+        const na = data.names?.[a]?.fr || '';
+        const nb = data.names?.[b]?.fr || '';
+        return na.localeCompare(nb);
+      });
+      const lbl = document.createElement('span');
+      lbl.className = 'lbl';
+      lbl.textContent = 'Filtres :';
+      filterBar.appendChild(lbl);
+      for (const id of sorted) {
+        const url = iconUrlFor(data.names, id);
+        if (!url) continue;
+        const el = document.createElement('img');
+        el.className = 'filter-item' + (hiddenIds.has(id) ? ' off' : '');
+        el.src = url;
+        el.title = nameFor(data.names, id) + (hiddenIds.has(id) ? ' (masqué)' : '');
+        el.draggable = false;
+        el.addEventListener('click', () => toggleHidden(id));
+        filterBar.appendChild(el);
+      }
+    }
+
+    function applyGridSize() {
+      const n = radius * 2 + 1;
+      grid.style.gridTemplateColumns = `repeat(${n}, 1fr)`;
+      grid.style.gridTemplateRows    = `repeat(${n}, 1fr)`;
+    }
+
+    function nameFor(names, id) {
+      const n = names?.[id];
+      return (n && (n.fr || n.en)) || ('id ' + id);
+    }
+    function iconUrlFor(names, id) {
+      const n = names?.[id];
+      return n?.iconId ? `https://api.dofusdb.fr/img/items/${n.iconId}.png` : null;
+    }
+
+    async function fetchGrid(mapId, r) {
+      const key = `${mapId}:${r}`;
+      if (gridCache.has(key)) return gridCache.get(key);
+      try {
+        const res = await fetch(`${STAKK_URL}/api/map-grid?mapId=${mapId}&radius=${r}`);
+        const j = await res.json();
+        gridCache.set(key, j);
+        return j;
+      } catch { return null; }
+    }
+
+    function renderGrid(data) {
+      grid.innerHTML = '';
+      applyGridSize();
+      if (!data || data.error || !data.center) {
+        const ph = document.createElement('div');
+        ph.style.cssText = 'grid-column:1/-1;grid-row:1/-1;display:flex;align-items:center;justify-content:center;color:#888;';
+        ph.textContent = '…';
+        grid.appendChild(ph);
+        return;
+      }
+      const { center, cells, names } = data;
+      const byCoord = new Map();
+      for (const c of cells) byCoord.set(`${c.posX},${c.posY}`, c);
+      for (let dy = -radius; dy <= radius; dy++) {
+        for (let dx = -radius; dx <= radius; dx++) {
+          const x = center.posX + dx;
+          const y = center.posY + dy;
+          const cell = byCoord.get(`${x},${y}`);
+          const div = document.createElement('div');
+          div.className = 'cell';
+          // Damier pour différencier visuellement les maps adjacentes
+          if ((dx + dy + radius * 2) % 2 === 1) div.classList.add('alt');
+          if (dx === 0 && dy === 0) div.classList.add('center');
+          if (!cell) div.classList.add('empty-cell');
+          const coord = document.createElement('div');
+          coord.className = 'coord';
+          coord.textContent = `${x},${y}`;
+          div.appendChild(coord);
+          if (cell && cell.details && Object.keys(cell.details).length) {
+            const tip = [`Map ${cell.mapId} (${x},${y})`];
+            const visibleEntries = Object.entries(cell.details)
+              .filter(([id]) => !hiddenIds.has(+id));
+            for (const [id, n] of visibleEntries) {
+              const idNum = +id;
+              const span = document.createElement('span');
+              span.className = 'res';
+              span.dataset.itemId = idNum;
+              const url = iconUrlFor(names, idNum);
+              if (url) {
+                const img = document.createElement('img');
+                img.src = url;
+                img.alt = nameFor(names, idNum);
+                img.draggable = false;
+                span.appendChild(img);
+              } else {
+                const dot = document.createElement('div');
+                dot.style.cssText = `width:14px;height:14px;border-radius:50%;background:hsl(${(idNum*137)%360},80%,55%);border:1px solid #000;`;
+                span.appendChild(dot);
+              }
+              if (n > 1) {
+                const c = document.createElement('span');
+                c.className = 'count';
+                c.textContent = n;
+                span.appendChild(c);
+              }
+              div.appendChild(span);
+              tip.push(`• ${nameFor(names, idNum)} ×${n}`);
+            }
+            div.dataset.tooltip = tip.join('\n');
+          } else {
+            div.dataset.tooltip = `Map (${x},${y}) — pas de récolte`;
+          }
+          grid.appendChild(div);
+        }
+      }
+    }
+
+    async function refresh(mapId) {
+      const data = await fetchGrid(mapId, radius);
+      if (mapId === lastMapId) {
+        lastData = data;
+        renderGrid(data);
+        renderFilterBar(data);
+      }
+    }
+
+    async function poll() {
+      try {
+        const res = await fetch(`${STAKK_URL}/api/map-state`, { cache: 'no-store' });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const state = await res.json();
+        const entries = Object.entries(state);
+        if (entries.length === 0) return;
+        const [, { mapId }] = entries[0];
+        if (mapId !== lastMapId) {
+          lastMapId = mapId;
+          await refresh(mapId);
+        }
+      } catch {}
+    }
+
+    document.addEventListener('mousemove', (e) => {
+      if (!document.body.classList.contains('edit')) {
+        tooltip.style.display = 'none';
+        return;
+      }
+      const cell = e.target.closest('.cell');
+      if (cell && cell.dataset.tooltip) {
+        tooltip.textContent = cell.dataset.tooltip;
+        tooltip.style.display = 'block';
+        tooltip.style.left = Math.min(window.innerWidth - 230, e.clientX + 12) + 'px';
+        tooltip.style.top  = Math.min(window.innerHeight - 100, e.clientY + 12) + 'px';
+      } else {
+        tooltip.style.display = 'none';
+      }
+    });
+
+    applyGridSize();
+    setInterval(poll, 500);
+    poll();
+
+    if (window.overlay) {
+      window.overlay.onEditMode((on) => {
+        document.body.classList.toggle('edit', on);
+        if (!on) tooltip.style.display = 'none';
+      });
+      window.overlay.onFilterMode((on) => {
+        document.body.classList.toggle('filter-mode', on);
+        if (on) renderFilterBar(lastData);
+      });
+      window.overlay.onRadius((r) => {
+        radius = r;
+        if (lastMapId) refresh(lastMapId);
+        else { applyGridSize(); renderGrid(null); }
+      });
+    }
+  </script>
+</body>
+</html>
