@@ -380,12 +380,27 @@
 
     async function poll() {
       try {
-        const res = await fetch(`${STAKK_URL}/api/map-state`, { cache: 'no-store' });
-        if (!res.ok) { diagSet(`map-state HTTP ${res.status}`); return; }
-        const state = await res.json();
+        const [stateRes, linkRes] = await Promise.all([
+          fetch(`${STAKK_URL}/api/map-state`, { cache: 'no-store' }),
+          fetch(`${STAKK_URL}/api/overlay/link`, { cache: 'no-store' }).catch(() => null),
+        ]);
+        if (!stateRes.ok) { diagSet(`map-state HTTP ${stateRes.status}`); return; }
+        const state = await stateRes.json();
+        const linked = linkRes?.ok ? (await linkRes.json()).accountId : null;
         const entries = Object.entries(state);
         if (entries.length === 0) { diagSet('aucun compte actif'); return; }
-        const [, { mapId }] = entries[0];
+
+        let chosen;
+        if (linked != null && state[linked]) {
+          // Compte explicitement linké par l'user
+          chosen = state[linked];
+          diagSet(`linked: ${linked} · ${(state[linked].mapId)}`);
+        } else {
+          // Auto-pick : celui dont la map a été update le plus récemment
+          entries.sort((a, b) => (b[1].updatedAt || 0) - (a[1].updatedAt || 0));
+          chosen = entries[0][1];
+        }
+        const mapId = chosen.mapId;
         if (mapId !== lastMapId) {
           lastMapId = mapId;
           await refresh(mapId);
