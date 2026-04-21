@@ -393,6 +393,7 @@
       } catch (e) { diagSet(`map-state ERR: ${e.message}`); }
     }
 
+    function hideTooltip() { tooltip.style.display = 'none'; }
     document.addEventListener('mousemove', (e) => {
       const cell = e.target.closest('.cell');
       if (cell && cell.dataset.tooltip) {
@@ -401,9 +402,14 @@
         tooltip.style.left = Math.min(window.innerWidth - 230, e.clientX + 12) + 'px';
         tooltip.style.top  = Math.min(window.innerHeight - 100, e.clientY + 12) + 'px';
       } else {
-        tooltip.style.display = 'none';
+        hideTooltip();
       }
     });
+    // Cache le tooltip dès que la souris quitte la fenêtre overlay — sinon
+    // il reste collé à la dernière position quand on alt-tab vers Dofus.
+    document.addEventListener('mouseleave', hideTooltip);
+    document.addEventListener('mouseout',   (e) => { if (!e.relatedTarget) hideTooltip(); });
+    window.addEventListener('blur', hideTooltip);
 
     applyGridSize();
     renderGrid(null); // grille vide visible dès le démarrage
