@@ -49,7 +49,24 @@
         0 0 6px rgba(255, 204, 0, 0.6);
       z-index: 2;
     }
-    .cell.empty-cell { opacity: 0.45; }
+    .cell.empty-cell { opacity: 0.55; }
+    /* Petit point central discret quand la cellule est vide (aide à voir
+       la grille quand il n'y a pas encore de data in-game chargée). */
+    .cell.empty-cell::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 3px;
+      height: 3px;
+      margin: -1.5px 0 0 -1.5px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.25);
+    }
+    .cell.center.empty-cell::before {
+      background: rgba(255, 204, 0, 0.6);
+      width: 5px; height: 5px; margin: -2.5px 0 0 -2.5px;
+    }
     .res {
       position: relative;
       display: inline-flex;
@@ -276,31 +293,29 @@
     function renderGrid(data) {
       grid.innerHTML = '';
       applyGridSize();
-      if (!data || data.error || !data.center) {
-        const ph = document.createElement('div');
-        ph.style.cssText = 'grid-column:1/-1;grid-row:1/-1;display:flex;align-items:center;justify-content:center;color:#888;';
-        ph.textContent = '…';
-        grid.appendChild(ph);
-        return;
-      }
-      const { center, cells, names } = data;
+      const center = data?.center;
+      const cells = data?.cells || [];
+      const names = data?.names || {};
       const byCoord = new Map();
       for (const c of cells) byCoord.set(`${c.posX},${c.posY}`, c);
+      // Si pas de data, on rend quand même la grille vide pour que l'overlay
+      // soit visible (sinon la fenêtre transparente sans contenu = invisible).
       for (let dy = -radius; dy <= radius; dy++) {
         for (let dx = -radius; dx <= radius; dx++) {
-          const x = center.posX + dx;
-          const y = center.posY + dy;
-          const cell = byCoord.get(`${x},${y}`);
+          const x = center ? center.posX + dx : null;
+          const y = center ? center.posY + dy : null;
+          const cell = center ? byCoord.get(`${x},${y}`) : null;
           const div = document.createElement('div');
           div.className = 'cell';
-          // Damier pour différencier visuellement les maps adjacentes
           if ((dx + dy + radius * 2) % 2 === 1) div.classList.add('alt');
           if (dx === 0 && dy === 0) div.classList.add('center');
           if (!cell) div.classList.add('empty-cell');
-          const coord = document.createElement('div');
-          coord.className = 'coord';
-          coord.textContent = `${x},${y}`;
-          div.appendChild(coord);
+          if (center) {
+            const coord = document.createElement('div');
+            coord.className = 'coord';
+            coord.textContent = `${x},${y}`;
+            div.appendChild(coord);
+          }
           if (cell && cell.details && Object.keys(cell.details).length) {
             const tip = [`Map ${cell.mapId} (${x},${y})`];
             const visibleEntries = Object.entries(cell.details)
@@ -332,8 +347,10 @@
               tip.push(`• ${nameFor(names, idNum)} ×${n}`);
             }
             div.dataset.tooltip = tip.join('\n');
-          } else {
+          } else if (center) {
             div.dataset.tooltip = `Map (${x},${y}) — pas de récolte`;
+          } else {
+            div.dataset.tooltip = 'En attente de position in-game…';
           }
           grid.appendChild(div);
         }
@@ -381,6 +398,7 @@
     });
 
     applyGridSize();
+    renderGrid(null); // grille vide visible dès le démarrage
     setInterval(poll, 500);
     poll();
 
