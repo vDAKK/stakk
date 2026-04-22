@@ -4,54 +4,86 @@
   <meta charset="utf-8">
   <title>STAKK Overlay</title>
   <style>
+    /* ─── Palette Dofus 3 ──────────────────────────────────────────────
+       Bleu marine profond du HUD (panneaux quête/chat), jaune doré des
+       éléments mis en avant (niveau de zone, noms cliquables, minimap
+       actif), rouge brique de la barre de vie, texte blanc cassé.
+       Tout en rgba pour conserver la transparence de l'overlay. */
+    :root {
+      --panel-bg:      rgba(28, 32, 58, 0.88);
+      --panel-bg-alt:  rgba(22, 26, 48, 0.92);
+      --panel-border:  rgba(12, 14, 28, 0.95);
+      --panel-hi:      rgba(255, 255, 255, 0.05);
+      --gold:          #f5c042;
+      --gold-soft:     #ffd566;
+      --gold-glow:     rgba(245, 192, 66, 0.55);
+      --gold-bg:       rgba(245, 192, 66, 0.14);
+      --text:          #eef1f8;
+      --text-dim:      #a8adc2;
+      --red:           #e24848;
+      --radius:        6px;
+    }
     html, body {
       margin: 0;
       padding: 0;
       height: 100vh;
       width: 100vw;
       background: transparent;
-      color: #fff;
-      font-family: 'Segoe UI', sans-serif;
+      color: var(--text);
+      font-family: 'Segoe UI', 'Open Sans', system-ui, sans-serif;
       font-size: 10px;
       user-select: none;
       overflow: hidden;
       cursor: default;
+      -webkit-font-smoothing: antialiased;
     }
     #grid {
       position: absolute;
       inset: 0;
       display: grid;
-      gap: 0;
+      gap: 2px;
       background: transparent;
     }
     .cell {
       position: relative;
-      border: 1px solid rgba(255, 255, 255, 0.35);
-      background: rgba(0, 0, 0, 0.18);
+      border-radius: var(--radius);
+      border: 1px solid var(--panel-border);
+      background: var(--panel-bg);
+      /* double liseré façon Dofus : bord extérieur sombre + highlight
+         interne clair côté haut pour donner de la profondeur */
+      box-shadow:
+        inset 0 1px 0 var(--panel-hi),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.03),
+        0 1px 2px rgba(0, 0, 0, 0.4);
       box-sizing: border-box;
       overflow: hidden;
       display: flex;
       flex-wrap: wrap;
       align-content: flex-start;
-      gap: 1px;
-      padding: 2px;
+      gap: 2px;
+      padding: 3px;
       min-width: 0;
       min-height: 0;
     }
-    /* Damier subtil pour mieux distinguer les cellules adjacentes */
-    .cell.alt { background: rgba(0, 0, 0, 0.32); }
+    /* Damier subtil : la version "alt" est légèrement plus sombre */
+    .cell.alt { background: var(--panel-bg-alt); }
     .cell.center {
-      /* Encadrement très marqué en jaune vif pour repérer ta position */
-      border: 3px solid #ffcc00;
-      background: rgba(255, 204, 0, 0.15);
+      /* Cellule active = halo doré façon bouton sélectionné Dofus */
+      border-color: var(--gold);
+      background:
+        linear-gradient(180deg,
+          rgba(245, 192, 66, 0.22) 0%,
+          rgba(245, 192, 66, 0.08) 40%,
+          var(--panel-bg) 100%);
       box-shadow:
-        inset 0 0 0 1px rgba(0, 0, 0, 0.6),
-        0 0 6px rgba(255, 204, 0, 0.6);
+        inset 0 1px 0 rgba(255, 213, 102, 0.35),
+        inset 0 0 0 1px rgba(245, 192, 66, 0.3),
+        0 0 8px var(--gold-glow),
+        0 0 2px rgba(0, 0, 0, 0.5);
       z-index: 2;
     }
-    .cell.empty-cell { opacity: 0.55; }
-    /* Petit point central discret quand la cellule est vide (aide à voir
-       la grille quand il n'y a pas encore de data in-game chargée). */
+    .cell.empty-cell { opacity: 0.7; }
+    /* Point central discret pour signaler une cellule vide */
     .cell.empty-cell::before {
       content: '';
       position: absolute;
@@ -61,11 +93,12 @@
       height: 3px;
       margin: -1.5px 0 0 -1.5px;
       border-radius: 50%;
-      background: rgba(255, 255, 255, 0.25);
+      background: rgba(255, 255, 255, 0.3);
     }
     .cell.center.empty-cell::before {
-      background: rgba(255, 204, 0, 0.6);
+      background: var(--gold-soft);
       width: 5px; height: 5px; margin: -2.5px 0 0 -2.5px;
+      box-shadow: 0 0 4px var(--gold-glow);
     }
     .res {
       position: relative;
@@ -73,98 +106,129 @@
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
+      /* mini-slot façon inventaire Dofus autour de chaque icône */
+      padding: 1px;
+      border-radius: 3px;
+      background: rgba(0, 0, 0, 0.25);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
     }
     .res img {
       width: 18px;
       height: 18px;
       display: block;
-      filter: drop-shadow(0 0 1px rgba(0,0,0,0.9));
+      filter: drop-shadow(0 1px 1px rgba(0,0,0,0.95));
       image-rendering: -webkit-optimize-contrast;
     }
     .res .count {
       position: absolute;
-      bottom: -2px;
-      right: -2px;
+      bottom: -3px;
+      right: -3px;
       font-size: 9px;
-      font-weight: bold;
-      color: #fff;
-      text-shadow: 0 0 2px #000, 0 0 2px #000, 0 0 2px #000;
+      font-weight: 700;
+      color: var(--gold-soft);
+      text-shadow:
+        0 0 2px #000, 0 0 2px #000,
+        0 1px 0 #000, 1px 0 0 #000, -1px 0 0 #000, 0 -1px 0 #000;
       line-height: 1;
       pointer-events: none;
+      letter-spacing: -0.3px;
     }
     .coord {
       position: absolute;
-      top: 0;
-      left: 1px;
+      top: 1px;
+      left: 3px;
       font-size: 8px;
-      color: rgba(255, 255, 255, 0.35);
+      color: var(--text-dim);
       pointer-events: none;
       display: none;
-      text-shadow: 0 0 2px rgba(0,0,0,0.9);
+      text-shadow: 0 0 2px rgba(0,0,0,0.95);
+      font-weight: 600;
+      letter-spacing: 0.3px;
     }
     body.edit .coord { display: block; }
-    body.edit #grid { background: rgba(0, 0, 0, 0.35); }
+    body.edit #grid { background: rgba(12, 14, 28, 0.35); }
     body.edit .cell {
-      border-color: rgba(255, 200, 0, 0.5);
+      border-color: rgba(245, 192, 66, 0.55);
       -webkit-app-region: drag;
     }
-    body.edit .cell.center { border-color: rgba(255, 200, 0, 1); }
+    body.edit .cell.center { border-color: var(--gold); }
     #status {
       position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      padding: 2px 6px;
-      background: rgba(0, 0, 0, 0.75);
-      color: #aaa;
+      bottom: 6px;
+      left: 6px;
+      right: 6px;
+      padding: 4px 10px;
+      background: var(--panel-bg-alt);
+      border: 1px solid var(--panel-border);
+      border-radius: var(--radius);
+      box-shadow:
+        inset 0 1px 0 var(--panel-hi),
+        0 2px 4px rgba(0, 0, 0, 0.5);
+      color: var(--text-dim);
       font-size: 9px;
+      font-weight: 500;
       pointer-events: none;
       display: none;
       z-index: 50;
+      letter-spacing: 0.2px;
     }
     body.edit #status { display: block; }
 
-    /* Filter bar — visible en mode filtre (Ctrl+Shift+F), permet de toggler
-       les types affichés sans entrer en mode édit. */
+    /* Filter bar — panneau horizontal ancré en haut façon toolbar Dofus.
+       Visible en mode filtre (Ctrl+Shift+F), permet de toggler les types
+       affichés. */
     #filterBar {
       position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      padding: 5px 6px;
-      background: rgba(0, 0, 0, 0.92);
+      top: 6px;
+      left: 6px;
+      right: 6px;
+      padding: 6px 10px;
+      background: var(--panel-bg-alt);
+      border: 1px solid var(--panel-border);
+      border-radius: var(--radius);
+      box-shadow:
+        inset 0 1px 0 var(--panel-hi),
+        0 4px 12px rgba(0, 0, 0, 0.5);
       display: none;
-      gap: 4px;
+      gap: 5px;
       flex-wrap: wrap;
       align-items: center;
       z-index: 60;
-      max-height: 60%;
+      max-height: calc(100% - 12px);
       overflow-y: auto;
-      border-bottom: 1px solid rgba(255, 200, 0, 0.5);
     }
     body.filter-mode #filterBar { display: flex; }
     #filterBar .lbl {
-      color: #ddd;
+      color: var(--gold);
       font-size: 10px;
-      margin-right: 4px;
+      margin-right: 6px;
       white-space: nowrap;
-      font-weight: 600;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      text-shadow: 0 1px 0 rgba(0, 0, 0, 0.6);
     }
     #filterBar .filter-item {
-      width: 20px;
-      height: 20px;
+      width: 22px;
+      height: 22px;
       cursor: pointer;
-      border: 1px solid rgba(255,255,255,0.25);
-      border-radius: 3px;
-      transition: all 80ms;
+      border: 1px solid var(--panel-border);
+      border-radius: 4px;
+      background: rgba(0, 0, 0, 0.3);
+      box-shadow: inset 0 1px 0 var(--panel-hi);
+      transition: transform 80ms, border-color 80ms, box-shadow 80ms;
       position: relative;
+      padding: 1px;
     }
     #filterBar .filter-item:hover {
-      transform: scale(1.15);
-      border-color: rgba(255, 200, 0, 0.8);
+      transform: translateY(-1px);
+      border-color: var(--gold);
+      box-shadow:
+        inset 0 1px 0 var(--panel-hi),
+        0 0 6px var(--gold-glow);
     }
     #filterBar .filter-item.off {
-      opacity: 0.35;
+      opacity: 0.4;
       filter: grayscale(85%);
     }
     #filterBar .filter-item.off::after {
@@ -174,32 +238,59 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #f55;
+      color: var(--red);
       font-size: 14px;
-      font-weight: bold;
-      text-shadow: 0 0 2px #000;
+      font-weight: 700;
+      text-shadow: 0 0 2px #000, 0 1px 0 #000;
       pointer-events: none;
     }
+    /* Tooltip façon info-bulle Dofus : panneau sombre, liseré doré fin,
+       premier mot en doré via ligne d'en-tête. */
     #tooltip {
       position: fixed;
       pointer-events: none;
-      background: rgba(0, 0, 0, 0.92);
-      color: #fff;
-      padding: 4px 7px;
-      border-radius: 3px;
+      background: var(--panel-bg-alt);
+      color: var(--text);
+      padding: 5px 9px;
+      border-radius: var(--radius);
+      border: 1px solid var(--panel-border);
+      box-shadow:
+        inset 0 1px 0 var(--panel-hi),
+        inset 0 0 0 1px rgba(245, 192, 66, 0.15),
+        0 4px 10px rgba(0, 0, 0, 0.6);
       font-size: 11px;
-      max-width: 220px;
+      line-height: 1.45;
+      max-width: 230px;
       white-space: pre-wrap;
       z-index: 100;
       display: none;
-      border: 1px solid rgba(255, 200, 0, 0.3);
+      font-weight: 500;
+      text-shadow: 0 1px 0 rgba(0, 0, 0, 0.5);
+    }
+    #diagBar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 3px 8px;
+      background: var(--panel-bg-alt);
+      border-top: 1px solid var(--panel-border);
+      color: var(--red);
+      font-size: 9px;
+      font-family: 'Consolas', 'Fira Code', monospace;
+      z-index: 200;
+      pointer-events: none;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      letter-spacing: 0.2px;
     }
   </style>
 </head>
 <body>
   <div id="filterBar"></div>
   <div id="status">drag pour positionner · Ctrl+Shift+F filtres · Ctrl+Shift+↑/↓ zoom · Ctrl+Shift+O sortir édit · Ctrl+Shift+Q quitter</div>
-  <div id="diagBar" style="position:fixed;bottom:0;left:0;right:0;padding:2px 5px;background:rgba(0,0,0,0.85);color:#faa;font-size:9px;font-family:'Consolas',monospace;z-index:200;pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+  <div id="diagBar"></div>
   <div id="grid"></div>
   <div id="tooltip"></div>
 
