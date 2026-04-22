@@ -20,9 +20,9 @@
       "publishedAt": "2026-04-17T16:44:34.512Z"
     },
     "haapi": {
-      "url": "https://vdakk.github.io/stakk/modules/haapi-602b7885.js",
-      "sha256": "602b788511fb678a3231007386d35e47957f69367906223779aed7cd8261ebf3",
-      "publishedAt": "2026-04-22T19:05:40.842Z"
+      "url": "https://vdakk.github.io/stakk/modules/haapi-de1c63c4.js",
+      "sha256": "de1c63c4c3fdbae8eeeafe082dc48d3144d8ec193dfdacae1a231beece383a69",
+      "publishedAt": "2026-04-22T19:11:14.162Z"
     },
     "frida-hook": {
       "url": "https://vdakk.github.io/stakk/modules/frida-hook-51c8f3bc.js",
