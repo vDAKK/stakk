@@ -228,12 +228,16 @@
     body.big-map #bigMapBtn { background: rgba(245, 192, 66, 0.35); border-color: var(--gold); }
 
     /* Vue étendue : grid cells à taille fixe, container scrollable dans le
-       panel. Cellules 36x36 pour voir icones + compteur confortablement. */
+       panel. Cellules 36x36 pour voir icones + compteur confortablement.
+       Curseur grab/grabbing = feedback visuel pour le drag-to-pan. */
     body.big-map #grid {
       overflow: auto;
       scrollbar-width: thin;
       scrollbar-color: rgba(245, 192, 66, 0.4) rgba(0, 0, 0, 0.3);
+      cursor: grab;
     }
+    body.big-map #grid.dragging { cursor: grabbing; }
+    body.big-map #grid.dragging .cell { cursor: grabbing; }
     body.big-map #grid::-webkit-scrollbar { width: 6px; height: 6px; }
     body.big-map #grid::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.3); }
     body.big-map #grid::-webkit-scrollbar-thumb { background: rgba(245, 192, 66, 0.4); border-radius: 3px; }
@@ -748,6 +752,53 @@
         toggleBigMap();
       });
     }
+
+    // ─── Drag-to-pan (vue étendue uniquement) ───────────────────────────
+    // Mousedown + move = scroll du container ; mouseup sans drag = click
+    // normal (copie /travel). Si drag détecté (move > 4px), on swallow le
+    // click qui suit pour ne pas déclencher /travel par mégarde.
+    let dragState = null;
+    const DRAG_THRESHOLD = 4;
+    grid.addEventListener('mousedown', (e) => {
+      if (!bigMap) return;
+      if (e.button !== 0) return;
+      dragState = {
+        startX: e.clientX, startY: e.clientY,
+        scrollX: grid.scrollLeft, scrollY: grid.scrollTop,
+        moved: false,
+      };
+      e.preventDefault(); // empêche sélection de texte
+    });
+    window.addEventListener('mousemove', (e) => {
+      if (!dragState) return;
+      const dx = e.clientX - dragState.startX;
+      const dy = e.clientY - dragState.startY;
+      if (!dragState.moved && (Math.abs(dx) > DRAG_THRESHOLD || Math.abs(dy) > DRAG_THRESHOLD)) {
+        dragState.moved = true;
+        grid.classList.add('dragging');
+        hideTooltip();
+      }
+      if (dragState.moved) {
+        grid.scrollLeft = dragState.scrollX - dx;
+        grid.scrollTop  = dragState.scrollY - dy;
+      }
+    });
+    window.addEventListener('mouseup', () => {
+      if (!dragState) return;
+      const wasDragging = dragState.moved;
+      dragState = null;
+      grid.classList.remove('dragging');
+      if (wasDragging) {
+        // Capture le click qui suit le mouseup pour l'annuler (sinon la
+        // cellule où on relâche la souris déclencherait un copy /travel).
+        const killClick = (ev) => {
+          ev.stopPropagation();
+          ev.preventDefault();
+          window.removeEventListener('click', killClick, true);
+        };
+        window.addEventListener('click', killClick, { capture: true, once: true });
+      }
+    });
 
     if (window.overlay) {
       window.overlay.onEditMode((on) => {
