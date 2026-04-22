@@ -37,26 +37,34 @@
       cursor: default;
       -webkit-font-smoothing: antialiased;
     }
-    /* Cadre façon panneau Dofus : l'overlay entier est encapsulé dans ce
-       container. Double liseré (bord sombre extérieur + liseré doré interne),
-       dégradé vertical, ombre portée + highlight top. C'est CE cadre qui
-       donne le look "interface in-game", pas les cellules. */
+    /* Cadre façon panneau Dofus : triple liseré (sombre extérieur + bronze
+       chunky + sombre intérieur) pour reproduire le cadre bronze/doré du
+       minimap et des panneaux in-game. Les cellules restent discrètes — c'est
+       le cadre global qui porte le look "interface du jeu". */
     #panel {
       position: absolute;
-      inset: 2px;
-      padding: 8px;
+      inset: 3px;
+      padding: 10px;
       box-sizing: border-box;
       background:
         linear-gradient(180deg,
-          rgba(30, 34, 60, 0.72) 0%,
-          rgba(20, 24, 44, 0.82) 100%);
-      border: 2px solid rgba(8, 10, 22, 0.95);
-      border-radius: 10px;
+          rgba(24, 28, 52, 0.90) 0%,
+          rgba(12, 16, 34, 0.94) 100%);
+      /* Bordure principale = bande bronze épaisse (3px), c'est la couleur
+         dominante du cadre */
+      border: 3px solid rgba(156, 112, 46, 0.88);
+      border-radius: 9px;
       box-shadow:
-        inset 0 0 0 1px rgba(245, 192, 66, 0.28),
-        inset 0 1px 0 rgba(255, 255, 255, 0.10),
-        inset 0 -1px 0 rgba(0, 0, 0, 0.5),
-        0 6px 20px rgba(0, 0, 0, 0.55);
+        /* Liseré sombre à l'intérieur du bronze pour creuser la bande */
+        inset 0 0 0 1px rgba(5, 8, 20, 0.95),
+        /* Reflet chaud en haut du bronze pour le relief doré */
+        inset 0 1px 0 rgba(255, 213, 140, 0.22),
+        /* Ombre interne basse pour creuser le fond */
+        inset 0 -2px 6px rgba(0, 0, 0, 0.45),
+        /* Liseré sombre à l'extérieur du bronze (contour du frame) */
+        0 0 0 1px rgba(0, 0, 0, 0.9),
+        /* Ombre portée pour décoller du jeu */
+        0 6px 18px rgba(0, 0, 0, 0.70);
     }
     #grid {
       width: 100%;
