@@ -5,6 +5,7 @@
 > Bypass les retrictions monocompte pour Dofus 3, Dofus Retro, Wakfu et Dofus Touch — joue plus de comptes, sur un seul PC.
 
 ![STAKK](https://raw.githubusercontent.com/vDAKK/stakk/main/docs/preview.png)
+![OVERLAY](https://raw.githubusercontent.com/vDAKK/stakk/main/docs/overlay.png)
 
 ## Description
 
