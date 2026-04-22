@@ -37,10 +37,10 @@
       cursor: default;
       -webkit-font-smoothing: antialiased;
     }
-    /* Cadre minimap Dofus = bande STEEL/SLATE (gris bleuté cool), PAS bronze.
-       Référence : pixels du frame in-game ≈ rgb(108,115,128) avec highlight
-       clair en haut et ombre plus foncée en bas. Gradient 3-stop + liserés
-       noirs pour creuser la bande + arrondi 6px façon Dofus. */
+    /* Cadre minimap Dofus = bande OLIVE/KHAKI sombre chaud. Pixel-peek sur
+       le frame in-game : ≈ rgb(95,86,65) au milieu, avec reflet clair en
+       haut et ombre plus foncée en bas. Gradient 3-stop + double liseré
+       noir intérieur/extérieur, arrondi 6px. */
     #panel {
       position: absolute;
       inset: 3px;
@@ -53,11 +53,11 @@
           rgba(18, 22, 42, 0.92) 0%,
           rgba(10, 14, 30, 0.95) 100%) padding-box,
         linear-gradient(180deg,
-          rgba(138, 146, 162, 0.95) 0%,
-          rgba(108, 116, 132, 0.95) 50%,
-          rgba(68, 76, 92, 0.95) 100%) border-box;
+          rgba(124, 112, 82, 0.95) 0%,
+          rgba(92, 82, 60, 0.95) 50%,
+          rgba(54, 46, 30, 0.95) 100%) border-box;
       box-shadow:
-        /* Liseré noir intérieur (creuse la bande steel) */
+        /* Liseré noir intérieur (creuse la bande olive) */
         inset 0 0 0 1px rgba(0, 0, 0, 0.9),
         /* Liseré noir extérieur (contour net du frame) */
         0 0 0 1px rgba(0, 0, 0, 0.9),
@@ -74,8 +74,10 @@
     .cell {
       position: relative;
       border-radius: 2px;
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      background: rgba(8, 10, 22, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      /* Au lieu d'assombrir sur fond déjà sombre, on applique un léger voile
+         CLAIR — cellules visibles sans clasher avec le fond navy. */
+      background: rgba(255, 255, 255, 0.05);
       box-sizing: border-box;
       overflow: hidden;
       display: flex;
@@ -87,7 +89,7 @@
       min-height: 0;
       transition: background 80ms, border-color 80ms;
     }
-    .cell.alt { background: rgba(8, 10, 22, 0.35); }
+    .cell.alt { background: rgba(255, 255, 255, 0.08); }
     .cell.center {
       border-color: var(--gold);
       background: rgba(245, 192, 66, 0.16);
