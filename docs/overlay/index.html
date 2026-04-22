@@ -71,8 +71,11 @@
       display: flex;
       flex-wrap: wrap;
       align-content: flex-start;
-      gap: 2px;
-      padding: 3px;
+      /* row-gap plus grand que column-gap pour que le .count (qui déborde
+         de .res en bottom/right) ne chevauche pas l'icône de la ligne suivante */
+      column-gap: 2px;
+      row-gap: 7px;
+      padding: 3px 3px 5px;
       min-width: 0;
       min-height: 0;
       transition: background 80ms, border-color 80ms;
@@ -134,17 +137,25 @@
     }
     .res .count {
       position: absolute;
-      bottom: -3px;
+      bottom: -4px;
       right: -3px;
+      min-width: 10px;
+      height: 11px;
+      padding: 0 2px;
+      box-sizing: border-box;
       font-size: 9px;
       font-weight: 700;
-      color: var(--gold-soft);
-      text-shadow:
-        0 0 2px #000, 0 0 2px #000,
-        0 1px 0 #000, 1px 0 0 #000, -1px 0 0 #000, 0 -1px 0 #000;
+      color: #fff;
+      background: rgba(0, 0, 0, 0.85);
+      border: 1px solid var(--gold-soft);
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       line-height: 1;
       pointer-events: none;
       letter-spacing: -0.3px;
+      text-shadow: 0 1px 0 #000;
     }
     .coord {
       position: absolute;
