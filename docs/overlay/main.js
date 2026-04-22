@@ -120,6 +120,17 @@ function createWindow() {
   win.webContents.on('did-finish-load', () => {
     try { win.webContents.send('set-radius', currentRadius); } catch {}
   });
+
+  // Auto click-through : le renderer signale via document.title quand la
+  // souris est DANS l'overlay (title contient 'click') ou dessus sans y
+  // être (title contient 'idle'). Ça permet aux cellules de recevoir des
+  // clicks sans avoir à rebuild preload.js (astuce page-title-updated,
+  // fonctionne avec forward:true qui pousse les mouseenter/leave au renderer).
+  win.webContents.on('page-title-updated', (_e, title) => {
+    if (!win) return;
+    const wantsClick = typeof title === 'string' && title.includes('click');
+    win.setIgnoreMouseEvents(!editMode && !filterMode && !wantsClick, { forward: true });
+  });
 }
 
 function toggleEditMode() {

@@ -37,24 +37,39 @@
       cursor: default;
       -webkit-font-smoothing: antialiased;
     }
-    #grid {
+    /* Cadre façon panneau Dofus : l'overlay entier est encapsulé dans ce
+       container. Double liseré (bord sombre extérieur + liseré doré interne),
+       dégradé vertical, ombre portée + highlight top. C'est CE cadre qui
+       donne le look "interface in-game", pas les cellules. */
+    #panel {
       position: absolute;
-      inset: 0;
+      inset: 2px;
+      padding: 8px;
+      box-sizing: border-box;
+      background:
+        linear-gradient(180deg,
+          rgba(30, 34, 60, 0.72) 0%,
+          rgba(20, 24, 44, 0.82) 100%);
+      border: 2px solid rgba(8, 10, 22, 0.95);
+      border-radius: 10px;
+      box-shadow:
+        inset 0 0 0 1px rgba(245, 192, 66, 0.28),
+        inset 0 1px 0 rgba(255, 255, 255, 0.10),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.5),
+        0 6px 20px rgba(0, 0, 0, 0.55);
+    }
+    #grid {
+      width: 100%;
+      height: 100%;
       display: grid;
       gap: 2px;
       background: transparent;
     }
     .cell {
       position: relative;
-      border-radius: var(--radius);
-      border: 1px solid var(--panel-border);
-      background: var(--panel-bg);
-      /* double liseré façon Dofus : bord extérieur sombre + highlight
-         interne clair côté haut pour donner de la profondeur */
-      box-shadow:
-        inset 0 1px 0 var(--panel-hi),
-        inset 0 0 0 1px rgba(255, 255, 255, 0.03),
-        0 1px 2px rgba(0, 0, 0, 0.4);
+      border-radius: 3px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      background: rgba(8, 10, 22, 0.25);
       box-sizing: border-box;
       overflow: hidden;
       display: flex;
@@ -64,26 +79,28 @@
       padding: 3px;
       min-width: 0;
       min-height: 0;
+      transition: background 80ms, border-color 80ms;
     }
-    /* Damier subtil : la version "alt" est légèrement plus sombre */
-    .cell.alt { background: var(--panel-bg-alt); }
+    .cell.alt { background: rgba(8, 10, 22, 0.35); }
     .cell.center {
-      /* Cellule active = halo doré façon bouton sélectionné Dofus */
       border-color: var(--gold);
-      background:
-        linear-gradient(180deg,
-          rgba(245, 192, 66, 0.22) 0%,
-          rgba(245, 192, 66, 0.08) 40%,
-          var(--panel-bg) 100%);
+      background: rgba(245, 192, 66, 0.16);
       box-shadow:
-        inset 0 1px 0 rgba(255, 213, 102, 0.35),
-        inset 0 0 0 1px rgba(245, 192, 66, 0.3),
-        0 0 8px var(--gold-glow),
-        0 0 2px rgba(0, 0, 0, 0.5);
+        inset 0 0 0 1px rgba(245, 192, 66, 0.35),
+        0 0 6px var(--gold-glow);
       z-index: 2;
     }
+    /* Hover léger : léger halo doré, pas d'effet "lourd" qui fait flasher */
+    .cell[data-clickable="1"] { cursor: pointer; }
+    .cell[data-clickable="1"]:hover {
+      border-color: rgba(245, 192, 66, 0.6);
+      background: rgba(245, 192, 66, 0.12);
+    }
+    .cell.copied {
+      background: rgba(26, 188, 156, 0.28) !important;
+      border-color: #1abc9c !important;
+    }
     .cell.empty-cell { opacity: 0.7; }
-    /* Point central discret pour signaler une cellule vide */
     .cell.empty-cell::before {
       content: '';
       position: absolute;
@@ -93,7 +110,7 @@
       height: 3px;
       margin: -1.5px 0 0 -1.5px;
       border-radius: 50%;
-      background: rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.25);
     }
     .cell.center.empty-cell::before {
       background: var(--gold-soft);
@@ -267,14 +284,20 @@
       font-weight: 500;
       text-shadow: 0 1px 0 rgba(0, 0, 0, 0.5);
     }
+    /* diagBar : visible uniquement tant qu'aucun perso n'est lié à l'overlay
+       (body sans classe `.connected`). Dès qu'on reçoit un mapId valide, on
+       ajoute .connected sur le body et la barre disparaît — plus de pollution
+       visuelle quand tout marche. */
     #diagBar {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
+      position: absolute;
+      bottom: 4px;
+      left: 4px;
+      right: 4px;
       padding: 3px 8px;
-      background: var(--panel-bg-alt);
-      border-top: 1px solid var(--panel-border);
+      background: rgba(20, 24, 44, 0.92);
+      border: 1px solid rgba(8, 10, 22, 0.95);
+      border-radius: 5px;
+      box-shadow: inset 0 0 0 1px rgba(245, 192, 66, 0.15);
       color: var(--red);
       font-size: 9px;
       font-family: 'Consolas', 'Fira Code', monospace;
@@ -285,14 +308,47 @@
       text-overflow: ellipsis;
       letter-spacing: 0.2px;
     }
+    body.connected #diagBar { display: none; }
+    /* Toast confirmation de copie : slide-in depuis le haut, s'efface tout seul */
+    #toast {
+      position: absolute;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-8px);
+      padding: 5px 12px;
+      background: linear-gradient(180deg,
+        rgba(26, 188, 156, 0.95) 0%,
+        rgba(22, 160, 133, 0.95) 100%);
+      border: 1px solid rgba(0, 0, 0, 0.4);
+      border-radius: 6px;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.2),
+        0 4px 10px rgba(0, 0, 0, 0.5);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 600;
+      z-index: 300;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 140ms, transform 140ms;
+      text-shadow: 0 1px 0 rgba(0, 0, 0, 0.3);
+      white-space: nowrap;
+    }
+    #toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
   </style>
 </head>
 <body>
+  <div id="panel">
+    <div id="grid"></div>
+  </div>
   <div id="filterBar"></div>
   <div id="status">drag pour positionner · Ctrl+Shift+F filtres · Ctrl+Shift+↑/↓ zoom · Ctrl+Shift+O sortir édit · Ctrl+Shift+Q quitter</div>
   <div id="diagBar"></div>
-  <div id="grid"></div>
   <div id="tooltip"></div>
+  <div id="toast"></div>
 
   <script>
     const params = new URLSearchParams(location.search);
@@ -371,7 +427,23 @@
     }
 
     const diag = document.getElementById('diagBar');
-    function diagSet(msg) { if (diag) diag.textContent = msg; }
+    // diagSet(msg, isError) — isError=true affiche la barre (problème), false
+    // la masque (tout va bien, ne pas polluer). body.connected masque aussi.
+    function diagSet(msg, isError = true) {
+      if (!diag) return;
+      diag.textContent = msg || '';
+      diag.style.display = (msg && isError) ? 'block' : 'none';
+    }
+
+    const toast = document.getElementById('toast');
+    let toastTimer = null;
+    function showToast(msg) {
+      if (!toast) return;
+      toast.textContent = msg;
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove('show'), 1400);
+    }
 
     async function fetchGrid(mapId, r) {
       const key = `${mapId}:${r}`;
@@ -385,7 +457,7 @@
         }
         const j = await res.json();
         gridCache.set(key, j);
-        diagSet(`OK map ${mapId} · ${(j.cells||[]).length} cells`);
+        diagSet('');
         return j;
       } catch (e) {
         diagSet(`FETCH ERR map-grid: ${e.message}`);
@@ -414,13 +486,17 @@
           if (dx === 0 && dy === 0) div.classList.add('center');
           if (!cell) div.classList.add('empty-cell');
           if (center) {
+            // Expose coords pour le click → copier /travel X Y
+            div.dataset.x = x;
+            div.dataset.y = y;
+            div.dataset.clickable = '1';
             const coord = document.createElement('div');
             coord.className = 'coord';
             coord.textContent = `${x},${y}`;
             div.appendChild(coord);
           }
           if (cell && cell.details && Object.keys(cell.details).length) {
-            const tip = [`Map ${cell.mapId} (${x},${y})`];
+            const tip = [`(${x}, ${y})`];
             const visibleEntries = Object.entries(cell.details)
               .filter(([id]) => !hiddenIds.has(+id));
             for (const [id, n] of visibleEntries) {
@@ -447,13 +523,11 @@
                 span.appendChild(c);
               }
               div.appendChild(span);
-              tip.push(`• ${nameFor(names, idNum)} ×${n}`);
+              tip.push(`${nameFor(names, idNum)} ×${n}`);
             }
             div.dataset.tooltip = tip.join('\n');
           } else if (center) {
-            div.dataset.tooltip = `Map (${x},${y}) — pas de récolte`;
-          } else {
-            div.dataset.tooltip = 'En attente de position in-game…';
+            div.dataset.tooltip = `(${x}, ${y})`;
           }
           grid.appendChild(div);
         }
@@ -483,9 +557,7 @@
 
         let chosen;
         if (linked != null && state[linked]) {
-          // Compte explicitement linké par l'user
           chosen = state[linked];
-          diagSet(`linked: ${linked} · ${(state[linked].mapId)}`);
         } else {
           // Auto-pick : celui dont la map a été update le plus récemment
           entries.sort((a, b) => (b[1].updatedAt || 0) - (a[1].updatedAt || 0));
@@ -496,31 +568,74 @@
           lastMapId = mapId;
           await refresh(mapId);
         }
+        // Dès qu'on a un mapId valide → perso connecté, on masque la diag bar
+        if (mapId) {
+          document.body.classList.add('connected');
+          diagSet('');
+        }
       } catch (e) { diagSet(`map-state ERR: ${e.message}`); }
     }
 
-    function hideTooltip() { tooltip.style.display = 'none'; }
+    // ─── Tooltip : évite le clignotement en ne re-setant textContent QUE
+    //     sur changement de cellule hover (pas à chaque mousemove). mousemove
+    //     ne fait que repositionner. ────────────────────────────────────────
+    let hoveredCell = null;
+    function hideTooltip() {
+      tooltip.style.display = 'none';
+      hoveredCell = null;
+    }
+    function updateTooltipFor(cell) {
+      if (!cell || !cell.dataset.tooltip) { hideTooltip(); return; }
+      if (cell === hoveredCell) return; // pas de reflow inutile
+      hoveredCell = cell;
+      tooltip.textContent = cell.dataset.tooltip;
+      tooltip.style.display = 'block';
+    }
     document.addEventListener('mousemove', (e) => {
       const cell = e.target.closest('.cell');
-      if (cell && cell.dataset.tooltip) {
-        tooltip.textContent = cell.dataset.tooltip;
-        tooltip.style.display = 'block';
+      updateTooltipFor(cell);
+      if (hoveredCell) {
         tooltip.style.left = Math.min(window.innerWidth - 230, e.clientX + 12) + 'px';
         tooltip.style.top  = Math.min(window.innerHeight - 100, e.clientY + 12) + 'px';
-      } else {
-        hideTooltip();
       }
     });
-    // Cache le tooltip dès que la souris quitte la fenêtre overlay — sinon
-    // il reste collé à la dernière position quand on alt-tab vers Dofus.
     document.addEventListener('mouseleave', hideTooltip);
     document.addEventListener('mouseout',   (e) => { if (!e.relatedTarget) hideTooltip(); });
     window.addEventListener('blur', hideTooltip);
+
+    // ─── Click sur cellule → copie /travel X Y dans le presse-papier, feedback
+    //     visuel vert pendant 500ms. ───────────────────────────────────────────
+    document.addEventListener('click', async (e) => {
+      const cell = e.target.closest('.cell');
+      if (!cell || cell.dataset.clickable !== '1') return;
+      const x = cell.dataset.x, y = cell.dataset.y;
+      if (x == null || y == null) return;
+      const cmd = `/travel ${x} ${y}`;
+      try {
+        await navigator.clipboard.writeText(cmd);
+        showToast(`Copié : ${cmd}`);
+        cell.classList.add('copied');
+        setTimeout(() => cell.classList.remove('copied'), 500);
+      } catch (err) {
+        showToast('Copie échouée');
+      }
+    });
 
     applyGridSize();
     renderGrid(null); // grille vide visible dès le démarrage
     setInterval(poll, 500);
     poll();
+
+    // Auto-toggle click-through via document.title : main.js écoute
+    // page-title-updated et (dés)active setIgnoreMouseEvents. Quand la souris
+    // entre dans le panel → clicks réagissent (tooltip + /travel copy).
+    // Quand elle sort → clicks passent vers Dofus. Pas besoin de hotkey ni
+    // de rebuild preload.
+    const panel = document.getElementById('panel');
+    if (panel) {
+      panel.addEventListener('mouseenter', () => { document.title = 'stakk-overlay-click'; });
+      panel.addEventListener('mouseleave', () => { document.title = 'stakk-overlay-idle'; });
+    }
 
     if (window.overlay) {
       window.overlay.onEditMode((on) => {
