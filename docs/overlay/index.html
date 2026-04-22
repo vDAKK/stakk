@@ -416,8 +416,15 @@
 
     let radius = 1;       // effective radius used for rendering
     let normalRadius = 1; // radius set by user via hotkeys (1 = 3x3 … 3 = 7x7)
-    let bigMap = false;   // toggle via bouton : vue étendue 13x13 scrollable
-    const BIG_MAP_RADIUS = 6;  // 13x13 = 169 cells (tient dans $limit=200)
+    let bigMap = false;   // toggle via bouton : vue étendue scrollable
+    const BIG_MAP_INITIAL_RADIUS = 6;   // 13x13 = 169 cells (fast initial load)
+    const BIG_MAP_STEP = 3;              // +3 par expansion auto
+    const BIG_MAP_MAX_RADIUS = 20;       // 41x41 = 1681 cells cap
+    const EDGE_THRESHOLD_CELLS = 3;      // si scroll dans 3 cells d'un bord → expand
+    const CELL_SIZE = 36;
+    const CELL_GAP = 2;
+    let bigMapRadius = BIG_MAP_INITIAL_RADIUS;
+    let expandPending = false;
     let lastMapId = null;
     let lastData = null;  // pour re-render quand le filtre change
     const gridCache = new Map(); // `${mapId}:${radius}` → data
@@ -733,8 +740,13 @@
     async function toggleBigMap() {
       bigMap = !bigMap;
       document.body.classList.toggle('big-map', bigMap);
-      radius = bigMap ? BIG_MAP_RADIUS : normalRadius;
-      bigMapBtn.title = bigMap ? 'Vue normale' : 'Vue étendue (13x13 scrollable)';
+      if (bigMap) {
+        bigMapRadius = BIG_MAP_INITIAL_RADIUS;
+        radius = bigMapRadius;
+      } else {
+        radius = normalRadius;
+      }
+      bigMapBtn.title = bigMap ? 'Vue normale' : 'Vue étendue (scroll + drag)';
       bigMapBtn.textContent = bigMap ? '×' : '⛶';
       applyGridSize();
       if (lastMapId) await refresh(lastMapId);
@@ -746,6 +758,51 @@
         });
       }
     }
+
+    // ─── Chargement dynamique : expand radius quand on scroll près d'un bord
+    //     (et qu'on est en vue étendue). Garde la position scroll relative au
+    //     center en compensant les nouvelles cells ajoutées aux bords.
+    async function expandBigMapIfNeeded() {
+      if (!bigMap || expandPending || bigMapRadius >= BIG_MAP_MAX_RADIUS) return;
+      const edge = EDGE_THRESHOLD_CELLS * (CELL_SIZE + CELL_GAP);
+      const maxX = grid.scrollWidth - grid.clientWidth;
+      const maxY = grid.scrollHeight - grid.clientHeight;
+      const nearEdge =
+        grid.scrollLeft < edge ||
+        grid.scrollTop < edge ||
+        (maxX - grid.scrollLeft) < edge ||
+        (maxY - grid.scrollTop) < edge;
+      if (!nearEdge) return;
+      expandPending = true;
+      try {
+        const prevRadius = bigMapRadius;
+        const prevScrollX = grid.scrollLeft;
+        const prevScrollY = grid.scrollTop;
+        bigMapRadius = Math.min(BIG_MAP_MAX_RADIUS, bigMapRadius + BIG_MAP_STEP);
+        radius = bigMapRadius;
+        // Invalider le cache de la radius précédente pour refetch large
+        gridCache.delete(`${lastMapId}:${prevRadius}`);
+        applyGridSize();
+        if (lastMapId) await refresh(lastMapId);
+        // Compense le scroll : BIG_MAP_STEP cells ajoutées à GAUCHE et HAUT
+        // (car le grid est centré sur le player), donc on décale scroll par
+        // le même delta pour rester visuellement sur la même zone.
+        const diff = (bigMapRadius - prevRadius) * (CELL_SIZE + CELL_GAP);
+        grid.scrollLeft = prevScrollX + diff;
+        grid.scrollTop  = prevScrollY + diff;
+      } finally {
+        expandPending = false;
+      }
+    }
+    // Throttle le check scroll pour éviter de fire refetch 60x/s pendant le drag
+    let scrollThrottle = null;
+    grid.addEventListener('scroll', () => {
+      if (scrollThrottle) return;
+      scrollThrottle = setTimeout(() => {
+        scrollThrottle = null;
+        expandBigMapIfNeeded();
+      }, 150);
+    });
     if (bigMapBtn) {
       bigMapBtn.addEventListener('click', (e) => {
         e.stopPropagation();  // évite que le click handler cell intercepte
