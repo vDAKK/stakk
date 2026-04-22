@@ -198,6 +198,52 @@
     }
     body.edit #status { display: block; }
 
+    /* Bouton "vue étendue" : bascule vers un grid 13x13 scrollable pour voir
+       où sont les ressources dans la zone façon dofusdb. Coin haut-droit. */
+    #bigMapBtn {
+      position: absolute;
+      top: 3px;
+      right: 3px;
+      width: 18px;
+      height: 18px;
+      padding: 0;
+      background: rgba(0, 0, 0, 0.55);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 2px;
+      color: #eef1f8;
+      font-size: 11px;
+      font-family: inherit;
+      line-height: 1;
+      cursor: pointer;
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 80ms, border-color 80ms;
+    }
+    #bigMapBtn:hover {
+      background: rgba(245, 192, 66, 0.25);
+      border-color: var(--gold);
+    }
+    body.big-map #bigMapBtn { background: rgba(245, 192, 66, 0.35); border-color: var(--gold); }
+
+    /* Vue étendue : grid cells à taille fixe, container scrollable dans le
+       panel. Cellules 36x36 pour voir icones + compteur confortablement. */
+    body.big-map #grid {
+      overflow: auto;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(245, 192, 66, 0.4) rgba(0, 0, 0, 0.3);
+    }
+    body.big-map #grid::-webkit-scrollbar { width: 6px; height: 6px; }
+    body.big-map #grid::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.3); }
+    body.big-map #grid::-webkit-scrollbar-thumb { background: rgba(245, 192, 66, 0.4); border-radius: 3px; }
+    body.big-map .cell {
+      width: 36px;
+      height: 36px;
+      min-width: 36px;
+      min-height: 36px;
+    }
+
     /* Filter bar — panneau horizontal ancré en haut façon toolbar Dofus.
        Visible en mode filtre (Ctrl+Shift+F), permet de toggler les types
        affichés. */
@@ -349,6 +395,7 @@
 </head>
 <body>
   <div id="panel">
+    <button id="bigMapBtn" title="Vue étendue (13x13 scrollable)">⛶</button>
     <div id="grid"></div>
   </div>
   <div id="filterBar"></div>
@@ -363,7 +410,10 @@
     const grid = document.getElementById('grid');
     const tooltip = document.getElementById('tooltip');
 
-    let radius = 1;       // 1 = 3x3, 2 = 5x5, 3 = 7x7
+    let radius = 1;       // effective radius used for rendering
+    let normalRadius = 1; // radius set by user via hotkeys (1 = 3x3 … 3 = 7x7)
+    let bigMap = false;   // toggle via bouton : vue étendue 13x13 scrollable
+    const BIG_MAP_RADIUS = 6;  // 13x13 = 169 cells (tient dans $limit=200)
     let lastMapId = null;
     let lastData = null;  // pour re-render quand le filtre change
     const gridCache = new Map(); // `${mapId}:${radius}` → data
@@ -420,8 +470,15 @@
 
     function applyGridSize() {
       const n = radius * 2 + 1;
-      grid.style.gridTemplateColumns = `repeat(${n}, 1fr)`;
-      grid.style.gridTemplateRows    = `repeat(${n}, 1fr)`;
+      if (bigMap) {
+        // Cells à taille fixe pour qu'elles débordent et que le container scroll
+        grid.style.gridTemplateColumns = `repeat(${n}, 36px)`;
+        grid.style.gridTemplateRows    = `repeat(${n}, 36px)`;
+      } else {
+        // Fill panel : cells en 1fr, tiennent exactement dans la fenêtre
+        grid.style.gridTemplateColumns = `repeat(${n}, 1fr)`;
+        grid.style.gridTemplateRows    = `repeat(${n}, 1fr)`;
+      }
     }
 
     function nameFor(names, id) {
@@ -665,6 +722,33 @@
       panel.addEventListener('mouseleave', () => { document.title = 'stakk-overlay-idle'; });
     }
 
+    // ─── Bouton vue étendue (big map) ────────────────────────────────────
+    // Bascule entre le grid normal (radius user-défini, fill panel) et une
+    // vue 13x13 scrollable façon dofusdb pour voir les ressources autour.
+    const bigMapBtn = document.getElementById('bigMapBtn');
+    async function toggleBigMap() {
+      bigMap = !bigMap;
+      document.body.classList.toggle('big-map', bigMap);
+      radius = bigMap ? BIG_MAP_RADIUS : normalRadius;
+      bigMapBtn.title = bigMap ? 'Vue normale' : 'Vue étendue (13x13 scrollable)';
+      bigMapBtn.textContent = bigMap ? '×' : '⛶';
+      applyGridSize();
+      if (lastMapId) await refresh(lastMapId);
+      // Scroll vers le centre quand on ouvre la vue étendue
+      if (bigMap) {
+        requestAnimationFrame(() => {
+          const center = grid.querySelector('.cell.center');
+          if (center) center.scrollIntoView({ block: 'center', inline: 'center' });
+        });
+      }
+    }
+    if (bigMapBtn) {
+      bigMapBtn.addEventListener('click', (e) => {
+        e.stopPropagation();  // évite que le click handler cell intercepte
+        toggleBigMap();
+      });
+    }
+
     if (window.overlay) {
       window.overlay.onEditMode((on) => {
         document.body.classList.toggle('edit', on);
@@ -675,9 +759,14 @@
         if (on) renderFilterBar(lastData);
       });
       window.overlay.onRadius((r) => {
-        radius = r;
-        if (lastMapId) refresh(lastMapId);
-        else { applyGridSize(); renderGrid(null); }
+        normalRadius = r;
+        if (!bigMap) {
+          radius = r;
+          if (lastMapId) refresh(lastMapId);
+          else { applyGridSize(); renderGrid(null); }
+        }
+        // En mode big-map, les hotkeys de radius n'affectent pas l'affichage
+        // courant ; la nouvelle valeur sera appliquée au retour en vue normale.
       });
     }
   </script>
