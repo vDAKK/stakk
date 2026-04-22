@@ -37,32 +37,36 @@
       cursor: default;
       -webkit-font-smoothing: antialiased;
     }
-    /* Cadre façon panneau Dofus : triple liseré (sombre extérieur + bronze
-       chunky + sombre intérieur) pour reproduire le cadre bronze/doré du
-       minimap et des panneaux in-game. Les cellules restent discrètes — c'est
-       le cadre global qui porte le look "interface du jeu". */
+    /* Cadre façon panneau Dofus : bordure gradient tan→bronze (3px) qui
+       reproduit la bande métallique chaude du cadre minimap. Double
+       background via padding-box/border-box : le contenu (fond sombre) occupe
+       le padding-box, le gradient doré occupe le border-box = équivaut à
+       peindre la bordure en dégradé. Ajouté des liserés sombres pour creuser
+       la bande façon relief Dofus. */
     #panel {
       position: absolute;
       inset: 3px;
       padding: 10px;
       box-sizing: border-box;
+      border: 3px solid transparent;
+      border-radius: 9px;
       background:
         linear-gradient(180deg,
           rgba(24, 28, 52, 0.90) 0%,
-          rgba(12, 16, 34, 0.94) 100%);
-      /* Bordure principale = bande bronze épaisse (3px), c'est la couleur
-         dominante du cadre */
-      border: 3px solid rgba(156, 112, 46, 0.88);
-      border-radius: 9px;
+          rgba(12, 16, 34, 0.94) 100%) padding-box,
+        linear-gradient(180deg,
+          rgba(232, 200, 130, 0.95) 0%,
+          rgba(196, 158, 92, 0.95) 45%,
+          rgba(142, 108, 58, 0.95) 100%) border-box;
       box-shadow:
-        /* Liseré sombre à l'intérieur du bronze pour creuser la bande */
-        inset 0 0 0 1px rgba(5, 8, 20, 0.95),
-        /* Reflet chaud en haut du bronze pour le relief doré */
-        inset 0 1px 0 rgba(255, 213, 140, 0.22),
+        /* Liseré sombre à l'intérieur du gradient doré (creuse la bande) */
+        inset 0 0 0 1px rgba(8, 10, 22, 0.9),
+        /* Reflet chaud en haut pour le relief métallique */
+        inset 0 1px 0 rgba(255, 224, 160, 0.35),
         /* Ombre interne basse pour creuser le fond */
-        inset 0 -2px 6px rgba(0, 0, 0, 0.45),
-        /* Liseré sombre à l'extérieur du bronze (contour du frame) */
-        0 0 0 1px rgba(0, 0, 0, 0.9),
+        inset 0 -3px 8px rgba(0, 0, 0, 0.40),
+        /* Liseré sombre à l'extérieur (contour du frame) */
+        0 0 0 1px rgba(0, 0, 0, 0.85),
         /* Ombre portée pour décoller du jeu */
         0 6px 18px rgba(0, 0, 0, 0.70);
     }
@@ -612,19 +616,40 @@
     window.addEventListener('blur', hideTooltip);
 
     // ─── Click sur cellule → copie /travel X Y dans le presse-papier, feedback
-    //     visuel vert pendant 500ms. ───────────────────────────────────────────
+    //     visuel vert pendant 500ms. navigator.clipboard peut échouer dans
+    //     Electron (permission policy), donc fallback execCommand('copy') via
+    //     textarea temporaire. ──────────────────────────────────────────────
+    async function copyToClipboard(text) {
+      try {
+        if (navigator.clipboard && window.isSecureContext !== false) {
+          await navigator.clipboard.writeText(text);
+          return true;
+        }
+      } catch {}
+      // Fallback legacy — fonctionne tant qu'on est dans un user-gesture.
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;pointer-events:none';
+      document.body.appendChild(ta);
+      ta.select();
+      let ok = false;
+      try { ok = document.execCommand('copy'); } catch {}
+      document.body.removeChild(ta);
+      return ok;
+    }
     document.addEventListener('click', async (e) => {
       const cell = e.target.closest('.cell');
       if (!cell || cell.dataset.clickable !== '1') return;
       const x = cell.dataset.x, y = cell.dataset.y;
       if (x == null || y == null) return;
       const cmd = `/travel ${x} ${y}`;
-      try {
-        await navigator.clipboard.writeText(cmd);
+      const ok = await copyToClipboard(cmd);
+      if (ok) {
         showToast(`Copié : ${cmd}`);
         cell.classList.add('copied');
         setTimeout(() => cell.classList.remove('copied'), 500);
-      } catch (err) {
+      } else {
         showToast('Copie échouée');
       }
     });
