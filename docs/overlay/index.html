@@ -37,34 +37,25 @@
       cursor: default;
       -webkit-font-smoothing: antialiased;
     }
-    /* Cadre façon minimap Dofus : bande bronze-olive DIMMED (pas doré vif).
-       Référence visuelle = le cadre de la minimap in-game, qui est un
-       warm-gray métallique sombre, pas un gold éclatant. Gradient subtil
-       haut→bas + liserés noirs intérieur/extérieur pour creuser la bande. */
+    /* Cadre minimap Dofus : frame très sobre, arrondi minimal (4px), bordure
+       fine 2px bronze-sombre, simple liseré noir intérieur + extérieur. Pas
+       de gradient complexe ; le style Dofus est minimaliste sur les cadres,
+       la "richesse" visuelle vient du contenu. */
     #panel {
       position: absolute;
-      inset: 3px;
-      padding: 10px;
+      inset: 2px;
+      padding: 8px;
       box-sizing: border-box;
-      border: 3px solid transparent;
-      border-radius: 8px;
-      background:
-        linear-gradient(180deg,
-          rgba(20, 24, 46, 0.92) 0%,
-          rgba(10, 14, 30, 0.95) 100%) padding-box,
-        linear-gradient(180deg,
-          rgba(138, 114, 70, 0.95) 0%,
-          rgba(96, 76, 46, 0.95) 50%,
-          rgba(58, 42, 22, 0.95) 100%) border-box;
+      background: rgba(14, 18, 36, 0.90);
+      border: 2px solid rgba(78, 62, 38, 0.95);
+      border-radius: 4px;
       box-shadow:
-        /* Liseré sombre à l'intérieur du gradient (creuse la bande) */
-        inset 0 0 0 1px rgba(6, 8, 16, 0.95),
-        /* Ombre interne pour creuser le fond (donne de la profondeur) */
-        inset 0 -2px 6px rgba(0, 0, 0, 0.35),
-        /* Liseré sombre à l'extérieur (contour net du frame) */
+        /* Liseré noir intérieur (creuse la bande bronze) */
+        inset 0 0 0 1px rgba(0, 0, 0, 0.85),
+        /* Liseré noir extérieur (contour net) */
         0 0 0 1px rgba(0, 0, 0, 0.9),
         /* Ombre portée pour décoller du jeu */
-        0 5px 14px rgba(0, 0, 0, 0.65);
+        0 4px 10px rgba(0, 0, 0, 0.6);
     }
     #grid {
       width: 100%;
@@ -75,7 +66,7 @@
     }
     .cell {
       position: relative;
-      border-radius: 3px;
+      border-radius: 2px;
       border: 1px solid rgba(255, 255, 255, 0.06);
       background: rgba(8, 10, 22, 0.25);
       box-sizing: border-box;
