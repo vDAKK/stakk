@@ -37,31 +37,19 @@
       cursor: default;
       -webkit-font-smoothing: antialiased;
     }
-    /* Cadre minimap Dofus = bande OLIVE/KHAKI sombre chaud. Pixel-peek sur
-       le frame in-game : ≈ rgb(95,86,65) au milieu, avec reflet clair en
-       haut et ombre plus foncée en bas. Gradient 3-stop + double liseré
-       noir intérieur/extérieur, arrondi 6px. */
+    /* Cadre minimap Dofus : bordure solide #32354c (navy slate), arrondi
+       minimal 2px pour coller à l'esthétique angular du HUD. */
     #panel {
       position: absolute;
       inset: 3px;
       padding: 9px;
       box-sizing: border-box;
-      border: 4px solid transparent;
-      border-radius: 6px;
-      background:
-        linear-gradient(180deg,
-          rgba(18, 22, 42, 0.92) 0%,
-          rgba(10, 14, 30, 0.95) 100%) padding-box,
-        linear-gradient(180deg,
-          rgba(124, 112, 82, 0.95) 0%,
-          rgba(92, 82, 60, 0.95) 50%,
-          rgba(54, 46, 30, 0.95) 100%) border-box;
+      background: rgba(14, 18, 36, 0.92);
+      border: 3px solid #32354c;
+      border-radius: 2px;
       box-shadow:
-        /* Liseré noir intérieur (creuse la bande olive) */
-        inset 0 0 0 1px rgba(0, 0, 0, 0.9),
-        /* Liseré noir extérieur (contour net du frame) */
-        0 0 0 1px rgba(0, 0, 0, 0.9),
-        /* Ombre portée pour décoller du jeu */
+        inset 0 0 0 1px rgba(0, 0, 0, 0.85),
+        0 0 0 1px rgba(0, 0, 0, 0.85),
         0 4px 10px rgba(0, 0, 0, 0.6);
     }
     #grid {
