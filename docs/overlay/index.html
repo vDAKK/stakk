@@ -37,38 +37,34 @@
       cursor: default;
       -webkit-font-smoothing: antialiased;
     }
-    /* Cadre façon panneau Dofus : bordure gradient tan→bronze (3px) qui
-       reproduit la bande métallique chaude du cadre minimap. Double
-       background via padding-box/border-box : le contenu (fond sombre) occupe
-       le padding-box, le gradient doré occupe le border-box = équivaut à
-       peindre la bordure en dégradé. Ajouté des liserés sombres pour creuser
-       la bande façon relief Dofus. */
+    /* Cadre façon minimap Dofus : bande bronze-olive DIMMED (pas doré vif).
+       Référence visuelle = le cadre de la minimap in-game, qui est un
+       warm-gray métallique sombre, pas un gold éclatant. Gradient subtil
+       haut→bas + liserés noirs intérieur/extérieur pour creuser la bande. */
     #panel {
       position: absolute;
       inset: 3px;
       padding: 10px;
       box-sizing: border-box;
       border: 3px solid transparent;
-      border-radius: 9px;
+      border-radius: 8px;
       background:
         linear-gradient(180deg,
-          rgba(24, 28, 52, 0.90) 0%,
-          rgba(12, 16, 34, 0.94) 100%) padding-box,
+          rgba(20, 24, 46, 0.92) 0%,
+          rgba(10, 14, 30, 0.95) 100%) padding-box,
         linear-gradient(180deg,
-          rgba(232, 200, 130, 0.95) 0%,
-          rgba(196, 158, 92, 0.95) 45%,
-          rgba(142, 108, 58, 0.95) 100%) border-box;
+          rgba(138, 114, 70, 0.95) 0%,
+          rgba(96, 76, 46, 0.95) 50%,
+          rgba(58, 42, 22, 0.95) 100%) border-box;
       box-shadow:
-        /* Liseré sombre à l'intérieur du gradient doré (creuse la bande) */
-        inset 0 0 0 1px rgba(8, 10, 22, 0.9),
-        /* Reflet chaud en haut pour le relief métallique */
-        inset 0 1px 0 rgba(255, 224, 160, 0.35),
-        /* Ombre interne basse pour creuser le fond */
-        inset 0 -3px 8px rgba(0, 0, 0, 0.40),
-        /* Liseré sombre à l'extérieur (contour du frame) */
-        0 0 0 1px rgba(0, 0, 0, 0.85),
+        /* Liseré sombre à l'intérieur du gradient (creuse la bande) */
+        inset 0 0 0 1px rgba(6, 8, 16, 0.95),
+        /* Ombre interne pour creuser le fond (donne de la profondeur) */
+        inset 0 -2px 6px rgba(0, 0, 0, 0.35),
+        /* Liseré sombre à l'extérieur (contour net du frame) */
+        0 0 0 1px rgba(0, 0, 0, 0.9),
         /* Ombre portée pour décoller du jeu */
-        0 6px 18px rgba(0, 0, 0, 0.70);
+        0 5px 14px rgba(0, 0, 0, 0.65);
     }
     #grid {
       width: 100%;
