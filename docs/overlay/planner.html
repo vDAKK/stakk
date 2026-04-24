@@ -443,11 +443,14 @@
   const RADIUS_STEP = 5;
   const DRAG_THRESHOLD = 5;
 
-  // localStorage keys — SHARED avec l'overlay (même origine). Les formats
-  // sont identiques pour que l'overlay affiche directement les waypoints
-  // créés ici.
-  const ROUTES_KEY        = 'stakk-overlay-routes';
-  const ACTIVE_ROUTE_KEY  = 'stakk-overlay-active-route';
+  // Les trajets vivent maintenant côté serveur (~/.stakk/routes.json) via
+  // /api/overlay/routes, parce que localStorage côté Electron (overlay) et
+  // côté navigateur par défaut (planner) sont isolés malgré le même origin
+  // → les routes créées ici n'étaient pas visibles dans l'overlay. Le
+  // localStorage ne garde plus que les préférences UI planner-only.
+  // Les clés *_KEY legacy servent uniquement pour la migration one-shot.
+  const LEGACY_ROUTES_KEY       = 'stakk-overlay-routes';
+  const LEGACY_ACTIVE_ROUTE_KEY = 'stakk-overlay-active-route';
   const PLANNER_CENTER    = 'stakk-planner-center'; // dernier center utilisé
   const PLANNER_RADIUS    = 'stakk-planner-radius';
   const PLANNER_FILTER    = 'stakk-planner-filter'; // Set d'itemIds à montrer
@@ -477,15 +480,13 @@
   let followPlayer = true;
   try { followPlayer = localStorage.getItem(PLANNER_FOLLOW) !== 'false'; } catch {}
 
-  // Routes persistées (shared avec overlay)
+  // Routes : état local mirroring du serveur. Chargé au init via
+  // GET /api/overlay/routes, modifié via POST. Un `routesVersion`
+  // sert au polling pour détecter si qqn d'autre (overlay, autre tab
+  // planner) a modifié les routes côté serveur.
   let routeStore = {};
   let activeRoute = { name: '', waypoints: [] };
-  try { routeStore = JSON.parse(localStorage.getItem(ROUTES_KEY) || '{}'); } catch {}
-  try {
-    const name = localStorage.getItem(ACTIVE_ROUTE_KEY) || '';
-    if (name && routeStore[name]) activeRoute = { name, waypoints: [...(routeStore[name].waypoints || [])] };
-    else if (name) activeRoute.name = name;
-  } catch {}
+  let routesVersion = 0;
 
   // ─── DOM refs ─────────────────────────────────────────────────────
   const gridWrap    = document.getElementById('gridWrap');
@@ -523,8 +524,54 @@
     const n = names?.[id];
     return n?.iconId ? `https://api.dofusdb.fr/img/items/${n.iconId}.png` : null;
   }
-  function saveRouteStore()   { try { localStorage.setItem(ROUTES_KEY,       JSON.stringify(routeStore)); } catch {} }
-  function saveActiveName()   { try { localStorage.setItem(ACTIVE_ROUTE_KEY, activeRoute.name || '');      } catch {} }
+  // ─── API calls pour les routes ────────────────────────────────────
+  async function apiFetchRoutes() {
+    try {
+      const r = await fetch(`${STAKK_URL}/api/overlay/routes`, { cache: 'no-store' });
+      if (!r.ok) return null;
+      return await r.json();
+    } catch { return null; }
+  }
+  async function apiSaveRoute(name, waypoints) {
+    const r = await fetch(`${STAKK_URL}/api/overlay/routes`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, waypoints }),
+    });
+    return r.ok ? await r.json() : null;
+  }
+  async function apiDeleteRoute(name) {
+    const r = await fetch(`${STAKK_URL}/api/overlay/routes/delete`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name }),
+    });
+    return r.ok ? await r.json() : null;
+  }
+  async function apiSetActiveRoute(name) {
+    const r = await fetch(`${STAKK_URL}/api/overlay/routes/active`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: name || '' }),
+    });
+    return r.ok ? await r.json() : null;
+  }
+  // Sync local state from server response
+  function applyRoutesState(state) {
+    if (!state || typeof state !== 'object') return;
+    routeStore = state.routes || {};
+    routesVersion = state.version || 0;
+    const currentName = activeRoute.name;
+    const serverActive = state.activeRoute || '';
+    // Si le serveur a une active route et qu'on n'a pas déjà chargé la même
+    // en local, on la synchronise. Sinon on garde l'état local (l'user peut
+    // avoir édité des waypoints non encore sauvés).
+    if (serverActive && serverActive !== currentName && routeStore[serverActive]) {
+      activeRoute = { name: serverActive, waypoints: [...(routeStore[serverActive].waypoints || [])] };
+      const inp = document.getElementById('routeName');
+      if (inp) inp.value = serverActive;
+    }
+  }
 
   // ─── API calls ────────────────────────────────────────────────────
   async function fetchMapState() {
@@ -804,68 +851,65 @@
   }
   function refreshWpCount() { wpCount.textContent = activeRoute.waypoints.length; }
 
-  function toggleWaypoint(x, y, mapId) {
+  async function toggleWaypoint(x, y, mapId) {
     const idx = activeRoute.waypoints.findIndex(w => w.x === x && w.y === y);
     if (idx >= 0) activeRoute.waypoints.splice(idx, 1);
     else activeRoute.waypoints.push({ x, y, mapId: mapId || null });
     refreshWpCount();
     if (lastData) renderGrid(lastData);
-    // Si un trajet est actif (nom + déjà sauvé), on autosave les modifs.
+    // Si un trajet est actif (nom + déjà sur le serveur), on autosave via HTTP.
     if (activeRoute.name && routeStore[activeRoute.name]) {
-      routeStore[activeRoute.name].waypoints = activeRoute.waypoints.slice();
-      routeStore[activeRoute.name].updatedAt = new Date().toISOString();
-      saveRouteStore();
+      const r = await apiSaveRoute(activeRoute.name, activeRoute.waypoints);
+      if (r?.route) { routeStore[activeRoute.name] = r.route; routesVersion = r.version; }
     }
   }
 
-  function saveRoute() {
+  async function saveRoute() {
     const name = (routeName.value || '').trim();
     if (!name) { showToast('Donne un nom au trajet'); routeName.focus(); return; }
     if (activeRoute.waypoints.length === 0) { showToast('Ajoute au moins une étape'); return; }
-    routeStore[name] = {
-      waypoints: activeRoute.waypoints.slice(),
-      createdAt: routeStore[name]?.createdAt || new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+    const r = await apiSaveRoute(name, activeRoute.waypoints);
+    if (!r?.ok) { showToast('Erreur serveur — trajet non enregistré'); return; }
+    routeStore[name] = r.route;
     activeRoute.name = name;
-    saveRouteStore();
-    saveActiveName();
+    routesVersion = r.version;
+    await apiSetActiveRoute(name);
     refreshLoadSelect();
     showToast(`« ${name} » enregistré (${activeRoute.waypoints.length} étapes)`);
   }
-  function loadRoute(name) {
+  async function loadRoute(name) {
     if (!name || !routeStore[name]) return;
     activeRoute = { name, waypoints: [...(routeStore[name].waypoints || [])] };
     routeName.value = name;
-    saveActiveName();
+    const r = await apiSetActiveRoute(name);
+    if (r?.version) routesVersion = r.version;
     refreshWpCount();
     if (lastData) renderGrid(lastData);
     showToast(`« ${name} » chargé`);
   }
-  function deleteRoute() {
+  async function deleteRoute() {
     const name = activeRoute.name || routeName.value.trim();
     if (!name || !routeStore[name]) { showToast('Aucun trajet à supprimer'); return; }
     if (!confirm(`Supprimer le trajet "${name}" ?`)) return;
+    const r = await apiDeleteRoute(name);
+    if (!r?.ok) { showToast('Erreur serveur — suppression échouée'); return; }
     delete routeStore[name];
-    saveRouteStore();
     activeRoute = { name: '', waypoints: [] };
     routeName.value = '';
-    saveActiveName();
+    routesVersion = r.version;
     refreshLoadSelect();
     refreshWpCount();
     if (lastData) renderGrid(lastData);
     showToast(`« ${name} » supprimé`);
   }
-  function clearWaypoints() {
+  async function clearWaypoints() {
     if (activeRoute.waypoints.length === 0) return;
     activeRoute.waypoints = [];
     refreshWpCount();
     if (lastData) renderGrid(lastData);
-    // Si le trajet est sauvé, autosave le vidage (pas de confirmation — on
-    // peut toujours re-cliquer les cells pour reconstruire)
     if (activeRoute.name && routeStore[activeRoute.name]) {
-      routeStore[activeRoute.name].waypoints = [];
-      saveRouteStore();
+      const r = await apiSaveRoute(activeRoute.name, []);
+      if (r?.route) { routeStore[activeRoute.name] = r.route; routesVersion = r.version; }
     }
   }
   async function recenterOnPlayer() {
@@ -1005,22 +1049,8 @@
     else if (e.key === '-' || e.key === '_') { setRadius(radius - RADIUS_STEP); e.preventDefault(); }
   });
 
-  // Sync cross-tab : si l'overlay modifie l'active-route (rare) ou si on a
-  // plusieurs onglets planner ouverts, on re-charge le store.
-  window.addEventListener('storage', (e) => {
-    if (e.key === ROUTES_KEY) {
-      try { routeStore = JSON.parse(e.newValue || '{}'); } catch {}
-      refreshLoadSelect();
-    } else if (e.key === ACTIVE_ROUTE_KEY) {
-      const name = e.newValue || '';
-      if (name && routeStore[name]) {
-        activeRoute = { name, waypoints: [...(routeStore[name].waypoints || [])] };
-        routeName.value = name;
-        refreshWpCount();
-        if (lastData) renderGrid(lastData);
-      }
-    }
-  });
+  // (Pas de storage listener : sync cross-client se fait via le poll
+  // /api/overlay/routes + comparison de version, cf. setInterval plus bas.)
 
   // ─── Init ─────────────────────────────────────────────────────────
   radiusLabel.textContent = radius;
@@ -1028,7 +1058,36 @@
   refreshLoadSelect();
   refreshWpCount();
 
+  // Migration one-shot : si l'user avait des trajets en localStorage (ancien
+  // comportement), on les POST au serveur puis on efface les clés legacy.
+  async function migrateLegacyRoutes() {
+    let legacyStore = null;
+    let legacyActive = '';
+    try { legacyStore = JSON.parse(localStorage.getItem(LEGACY_ROUTES_KEY) || 'null'); } catch {}
+    try { legacyActive = localStorage.getItem(LEGACY_ACTIVE_ROUTE_KEY) || ''; } catch {}
+    if (!legacyStore || typeof legacyStore !== 'object' || Object.keys(legacyStore).length === 0) return;
+    showToast(`Migration : ${Object.keys(legacyStore).length} trajet(s) vers le serveur…`);
+    for (const [name, entry] of Object.entries(legacyStore)) {
+      if (!entry || !Array.isArray(entry.waypoints)) continue;
+      await apiSaveRoute(name, entry.waypoints);
+    }
+    if (legacyActive) await apiSetActiveRoute(legacyActive);
+    try { localStorage.removeItem(LEGACY_ROUTES_KEY); } catch {}
+    try { localStorage.removeItem(LEGACY_ACTIVE_ROUTE_KEY); } catch {}
+  }
+
   (async () => {
+    // 1. Charger les trajets depuis le serveur
+    const rs = await apiFetchRoutes();
+    if (rs) applyRoutesState(rs);
+    // 2. Migration legacy localStorage (one-shot, no-op si rien à migrer)
+    await migrateLegacyRoutes();
+    // 3. Re-fetch après migration pour picker les nouveaux
+    const rs2 = await apiFetchRoutes();
+    if (rs2) applyRoutesState(rs2);
+    refreshLoadSelect();
+    refreshWpCount();
+
     // Priorité : position courante du joueur > dernier cache planner. Le
     // cache peut être une map d'une session précédente où le joueur
     // jouait ailleurs — partir du cache causait « rien ne s'affiche sur
@@ -1064,6 +1123,19 @@
         requestAnimationFrame(centerViewportOnCenter);
       }
     }, 2000);
+
+    // Poll des routes serveur : si un autre onglet (autre planner, ou
+    // l'overlay) a modifié/ajouté des trajets, le `version` incrémenté
+    // nous signale qu'il faut re-sync. Cheap, réponse ~<1KB.
+    setInterval(async () => {
+      const rs = await apiFetchRoutes();
+      if (!rs) return;
+      if (rs.version !== routesVersion) {
+        applyRoutesState(rs);
+        refreshLoadSelect();
+        refreshWpCount();
+      }
+    }, 3000);
   })();
 </script>
 </body>

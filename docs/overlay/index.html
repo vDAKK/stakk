@@ -575,31 +575,45 @@
       if (raw) hiddenIds = new Set(JSON.parse(raw).map(Number));
     } catch {}
 
-    // ─── Routes (trajets) — LECTURE SEULE ───────────────────────────────
-    // L'overlay affiche le trajet actif (waypoints numérotés + banner next-step)
-    // mais n'édite plus. Création/save/load se fait via la page planner dans
-    // un navigateur normal (http://127.0.0.1:3000/overlay/planner.html), où
-    // les clicks fonctionnent sans les bidouilles click-through Electron.
-    // localStorage est partagé (même origine), et un 'storage' event permet
-    // de picker les changements du planner en live sans reload.
-    const ROUTES_KEY = 'stakk-overlay-routes';
-    const ACTIVE_ROUTE_KEY = 'stakk-overlay-active-route';
+    // ─── Routes (trajets) — LECTURE via API serveur ─────────────────────
+    // L'overlay Electron et le planner navigateur ont des localStorage
+    // ISOLÉS malgré le même origin (backends de stockage différents par
+    // process). Les trajets sont donc stockés côté serveur stakk.exe dans
+    // ~/.stakk/routes.json, exposés via /api/overlay/routes*. Le polling
+    // détecte les changements via un `version` counter incrémenté par le
+    // serveur à chaque modification.
     let routeStore = {};
-    try { routeStore = JSON.parse(localStorage.getItem(ROUTES_KEY) || '{}'); } catch {}
     let activeRoute = { name: '', waypoints: [] };
-    function loadActiveRouteFromStorage() {
+    let routesVersion = 0;
+
+    async function fetchRoutesState() {
       try {
-        const activeName = localStorage.getItem(ACTIVE_ROUTE_KEY) || '';
-        if (activeName && routeStore[activeName]) {
-          activeRoute = { name: activeName, waypoints: [...(routeStore[activeName].waypoints || [])] };
-        } else {
-          activeRoute = { name: '', waypoints: [] };
-        }
-      } catch {}
+        const r = await fetch(`${STAKK_URL}/api/overlay/routes`, { cache: 'no-store' });
+        if (!r.ok) return null;
+        return await r.json();
+      } catch { return null; }
     }
-    loadActiveRouteFromStorage();
-    // Populate le <select> de trajets et le branche : click user → load le
-    // trajet + save active name (l'overlay et le planner partagent localStorage).
+    async function setActiveRouteOnServer(name) {
+      try {
+        const r = await fetch(`${STAKK_URL}/api/overlay/routes/active`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: name || '' }),
+        });
+        return r.ok ? await r.json() : null;
+      } catch { return null; }
+    }
+    function applyRoutesState(state) {
+      if (!state) return;
+      routeStore = state.routes || {};
+      routesVersion = state.version || 0;
+      const serverActive = state.activeRoute || '';
+      if (serverActive && routeStore[serverActive]) {
+        activeRoute = { name: serverActive, waypoints: [...(routeStore[serverActive].waypoints || [])] };
+      } else {
+        activeRoute = { name: '', waypoints: [] };
+      }
+    }
     function populateRouteSel() {
       const sel = document.getElementById('routeSel');
       if (!sel) return;
@@ -613,31 +627,35 @@
           return `<option value="${safe}"${selAttr}>${safe} (${cnt})</option>`;
         }).join('');
     }
-    populateRouteSel();
-    document.getElementById('routeSel')?.addEventListener('change', (e) => {
+    document.getElementById('routeSel')?.addEventListener('change', async (e) => {
       const name = e.target.value;
-      if (name && routeStore[name]) {
-        activeRoute = { name, waypoints: [...(routeStore[name].waypoints || [])] };
-      } else {
-        activeRoute = { name: '', waypoints: [] };
+      const r = await setActiveRouteOnServer(name);
+      if (r) {
+        if (name && routeStore[name]) {
+          activeRoute = { name, waypoints: [...(routeStore[name].waypoints || [])] };
+        } else {
+          activeRoute = { name: '', waypoints: [] };
+        }
+        routesVersion = r.version || routesVersion;
       }
-      try { localStorage.setItem(ACTIVE_ROUTE_KEY, activeRoute.name || ''); } catch {}
       if (lastData) renderGrid(lastData);
       showToast(activeRoute.name ? `Trajet « ${activeRoute.name} » chargé` : 'Trajet désactivé');
     });
-    // Écoute les modifs du planner (autre onglet/fenêtre) : mise à jour live.
-    window.addEventListener('storage', (e) => {
-      if (e.key === ROUTES_KEY) {
-        try { routeStore = JSON.parse(e.newValue || '{}'); } catch {}
-        loadActiveRouteFromStorage();
-        populateRouteSel();
-        if (lastData) renderGrid(lastData);
-      } else if (e.key === ACTIVE_ROUTE_KEY) {
-        loadActiveRouteFromStorage();
+    // Init + poll périodique : détecte les nouveaux trajets créés dans le
+    // planner. Le version counter évite de refetcher/re-render pour rien.
+    (async () => {
+      const rs = await fetchRoutesState();
+      if (rs) { applyRoutesState(rs); populateRouteSel(); if (lastData) renderGrid(lastData); }
+    })();
+    setInterval(async () => {
+      const rs = await fetchRoutesState();
+      if (!rs) return;
+      if (rs.version !== routesVersion) {
+        applyRoutesState(rs);
         populateRouteSel();
         if (lastData) renderGrid(lastData);
       }
-    });
+    }, 3000);
 
     // Banner "Étape X/Y → direction" affiché dans la vue normale (3x3) quand
     // un trajet est actif. Donne à l'user l'info next-step sans qu'il ait à
