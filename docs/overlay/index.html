@@ -1033,21 +1033,37 @@
     // entre dans le panel → clicks réagissent (tooltip + /travel copy).
     // Quand elle sort → clicks passent vers Dofus. Pas besoin de hotkey ni
     // de rebuild preload.
+    // Title = canal de signal vers main.js (preload.js bundlé n'expose pas
+    // d'IPC générique). Formats :
+    //   stakk-overlay-click  → souris dans le panel, main.js désactive
+    //                          setIgnoreMouseEvents (clicks arrivent au DOM)
+    //   stakk-overlay-idle   → souris hors panel, click-through activé
+    //   suffixe -plan         → bigMap actif, main.js agrandit la fenêtre
+    //                          (savedCompactBounds + setBounds(800×800))
+    //   sans -plan            → main.js restaure les bounds compactes
+    function updateTitleForPanelState() {
+      if (document.body.classList.contains('dragging')) {
+        // Pendant un drag on ne change rien : la souris peut sortir du panel
+        // sans couper le drag (voir fix drag PR1).
+        return;
+      }
+      const hover = panel.matches(':hover');
+      const plan  = bigMap;
+      document.title = (hover ? 'stakk-overlay-click' : 'stakk-overlay-idle') + (plan ? '-plan' : '');
+    }
     const panel = document.getElementById('panel');
     if (panel) {
-      panel.addEventListener('mouseenter', () => { document.title = 'stakk-overlay-click'; });
-      panel.addEventListener('mouseleave', () => {
-        // Ne pas toggle click-through pendant un drag : sinon la souris qui
-        // passe sur la bordure 3px hors du panel coupe le drag à mi-chemin.
-        if (document.body.classList.contains('dragging')) return;
-        document.title = 'stakk-overlay-idle';
-      });
+      panel.addEventListener('mouseenter', updateTitleForPanelState);
+      panel.addEventListener('mouseleave', updateTitleForPanelState);
     }
 
     // ─── Bouton vue étendue (big map) ────────────────────────────────────
     // Bascule entre le grid normal (radius user-défini, fill panel) et une
-    // vue 13x13 scrollable façon dofusdb pour voir les ressources autour.
+    // vue XL scrollable façon dofusdb pour voir les ressources autour et
+    // planifier des trajets. En big-map, main.js agrandit la fenêtre overlay
+    // (plan-mode via document.title suffix '-plan').
     const bigMapBtn = document.getElementById('bigMapBtn');
+    let pendingCenterScroll = false;
     async function toggleBigMap() {
       bigMap = !bigMap;
       document.body.classList.toggle('big-map', bigMap);
@@ -1059,16 +1075,34 @@
       }
       bigMapBtn.title = bigMap ? 'Vue normale' : 'Vue étendue (scroll + drag)';
       bigMapBtn.textContent = bigMap ? '×' : '⛶';
+      // Signale à main.js qu'on veut la fenêtre en plan-size (via title).
+      updateTitleForPanelState();
       applyGridSize();
       if (lastMapId) await refresh(lastMapId);
-      // Scroll vers le centre quand on ouvre la vue étendue
       if (bigMap) {
-        requestAnimationFrame(() => {
-          const center = grid.querySelector('.cell.center');
-          if (center) center.scrollIntoView({ block: 'center', inline: 'center' });
-        });
+        // La fenêtre est en train de grandir (Electron setBounds côté main).
+        // On arme un flag : au prochain resize event du window, on re-scroll
+        // pour centrer la cellule courante dans le nouveau viewport. Fallback
+        // timeout au cas où le resize event ne firerait pas (déjà à la bonne
+        // taille). Dans tous les cas on fait aussi un scroll initial maintenant.
+        const doCenter = () => {
+          const c = grid.querySelector('.cell.center');
+          if (c) c.scrollIntoView({ block: 'center', inline: 'center' });
+        };
+        requestAnimationFrame(doCenter);
+        pendingCenterScroll = true;
+        setTimeout(() => {
+          if (pendingCenterScroll) { pendingCenterScroll = false; doCenter(); }
+        }, 350);
       }
     }
+    window.addEventListener('resize', () => {
+      if (pendingCenterScroll) {
+        pendingCenterScroll = false;
+        const c = grid.querySelector('.cell.center');
+        if (c) c.scrollIntoView({ block: 'center', inline: 'center' });
+      }
+    });
 
     // ─── Chargement dynamique : expand radius quand on scroll près d'un bord
     //     (et qu'on est en vue étendue). Garde la position scroll relative au

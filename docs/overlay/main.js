@@ -59,6 +59,10 @@ function loadBounds() {
 let saveTimer = null;
 function saveBoundsDebounced() {
   if (!win) return;
+  // En plan-mode les bounds window sont temporaires (grande fenêtre de
+  // planification) ; on ne les persiste pas, sinon au prochain launch
+  // l'overlay s'ouvrirait en taille planner alors qu'il doit être compact.
+  if (planMode) return;
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
     try {
@@ -67,6 +71,41 @@ function saveBoundsDebounced() {
         JSON.stringify({ ...win.getBounds(), radius: currentRadius }));
     } catch {}
   }, 500);
+}
+
+// Plan mode : fenêtre agrandie temporairement quand l'utilisateur bascule
+// en vue étendue (big-map) pour pouvoir créer un trajet à l'aise. On sauve
+// les bounds compactes avant d'agrandir, on restaure à la sortie.
+let planMode = false;
+let savedCompactBounds = null;
+function applyPlanMode(on) {
+  if (!win) return;
+  if (on && !planMode) {
+    planMode = true;
+    savedCompactBounds = win.getBounds();
+    try {
+      const { screen } = require('electron');
+      const wa = screen.getPrimaryDisplay().workArea;
+      const w = Math.min(1200, Math.max(600, Math.round(wa.width  * 0.7)));
+      const h = Math.min(1200, Math.max(600, Math.round(wa.height * 0.8)));
+      // Garde le centre de la fenêtre à la même position pour que l'user
+      // "voie" la fenêtre grandir autour de sa position actuelle. Contraint
+      // au workArea pour ne pas disparaître hors écran.
+      const cx = savedCompactBounds.x + savedCompactBounds.width  / 2;
+      const cy = savedCompactBounds.y + savedCompactBounds.height / 2;
+      let x = Math.round(cx - w / 2);
+      let y = Math.round(cy - h / 2);
+      x = Math.max(wa.x, Math.min(wa.x + wa.width  - w, x));
+      y = Math.max(wa.y, Math.min(wa.y + wa.height - h, y));
+      win.setBounds({ x, y, width: w, height: h });
+    } catch (e) { dbg(`applyPlanMode grow err: ${e.message}`); }
+  } else if (!on && planMode) {
+    planMode = false;
+    if (savedCompactBounds) {
+      try { win.setBounds(savedCompactBounds); } catch {}
+      savedCompactBounds = null;
+    }
+  }
 }
 
 function setRadius(r) {
@@ -128,8 +167,11 @@ function createWindow() {
   // fonctionne avec forward:true qui pousse les mouseenter/leave au renderer).
   win.webContents.on('page-title-updated', (_e, title) => {
     if (!win) return;
-    const wantsClick = typeof title === 'string' && title.includes('click');
+    const t = typeof title === 'string' ? title : '';
+    const wantsClick = t.includes('click');
+    const wantsPlan  = t.includes('plan');
     win.setIgnoreMouseEvents(!editMode && !filterMode && !wantsClick, { forward: true });
+    applyPlanMode(wantsPlan);
   });
 }
 
