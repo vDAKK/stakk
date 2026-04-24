@@ -841,8 +841,12 @@
     toggleWaypoint(x, y, mapId);
   });
 
-  // Drag-to-pan sur le gridWrap (indépendant du scroll natif qui marche
-  // aussi via scrollbar/wheel). Pointer events + capture pour robustesse.
+  // Drag-to-pan sur le gridWrap. Pointer events mais on NE PAS capturer au
+  // pointerdown — setPointerCapture redirigerait TOUS les events (y compris
+  // le click qui suit) vers gridWrap, donc e.target.closest('.cell') du
+  // click handler renverrait null et le click ne ferait rien. On ne capture
+  // qu'à partir du moment où le drag est confirmé (move > threshold), pour
+  // laisser les simples clicks atteindre leur cellule naturellement.
   let dragState = null;
   gridWrap.addEventListener('pointerdown', (e) => {
     if (e.button !== 0 || e.pointerType === 'touch') return;
@@ -852,7 +856,6 @@
       scrollX: gridWrap.scrollLeft, scrollY: gridWrap.scrollTop,
       moved: false,
     };
-    try { gridWrap.setPointerCapture(e.pointerId); } catch {}
   });
   gridWrap.addEventListener('pointermove', (e) => {
     if (!dragState || e.pointerId !== dragState.pointerId) return;
@@ -862,6 +865,9 @@
       dragState.moved = true;
       gridWrap.classList.add('dragging');
       hideTooltip();
+      // Capture MAINTENANT que le drag est confirmé : garantit qu'on garde
+      // les pointermove/up même si la souris sort de gridWrap pendant le pan.
+      try { gridWrap.setPointerCapture(e.pointerId); } catch {}
     }
     if (dragState.moved) {
       gridWrap.scrollLeft = dragState.scrollX - dx;
@@ -870,7 +876,7 @@
   });
   function endDrag(e) {
     if (!dragState || (e && e.pointerId !== dragState.pointerId)) return;
-    try { gridWrap.releasePointerCapture(dragState.pointerId); } catch {}
+    if (dragState.moved) { try { gridWrap.releasePointerCapture(dragState.pointerId); } catch {} }
     gridWrap.classList.remove('dragging');
     dragState = null;
   }
