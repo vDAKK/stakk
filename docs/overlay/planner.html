@@ -1,0 +1,780 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>STAKK — Planner de trajet</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231abc9c' stroke-width='2'%3E%3Cpath d='M12 2L2 7l10 5 10-5-10-5z'/%3E%3C/svg%3E">
+  <style>
+    :root {
+      --bg:         #111318;
+      --panel:      #181c24;
+      --panel2:     #1e222c;
+      --border:     #252a36;
+      --text:       #d4d8e4;
+      --dim:        #666d80;
+      --accent:     #1abc9c;
+      --accent-dim: rgba(26, 188, 156, 0.32);
+      --gold:       #f5c042;
+      --gold-dim:   rgba(245, 192, 66, 0.25);
+      --red:        #e74c3c;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100vh; overflow: hidden; }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 13px;
+      user-select: none;
+    }
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); }
+    ::-webkit-scrollbar-thumb { background: #2a2f3a; border-radius: 5px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+    .app { display: grid; grid-template-rows: auto 1fr auto; height: 100vh; }
+
+    /* ─── Header / toolbar ──────────────────────────────────────────── */
+    header {
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    header h1 {
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: 0.3px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    header h1 .logo {
+      width: 22px; height: 22px;
+      background: linear-gradient(135deg, var(--accent), #16a085);
+      border-radius: 5px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 800;
+      font-size: 11px;
+    }
+    .tb { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .tb input, .tb select, .tb button {
+      height: 30px;
+      padding: 0 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--panel2);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 12px;
+      outline: none;
+    }
+    .tb input { min-width: 180px; }
+    .tb input:focus, .tb select:focus { border-color: var(--accent); }
+    .tb button { cursor: pointer; font-weight: 600; transition: all .15s; }
+    .tb button:hover { border-color: var(--accent); color: var(--accent); }
+    .tb button.primary { background: var(--accent); border-color: var(--accent); color: #0a0d12; }
+    .tb button.primary:hover { filter: brightness(1.1); color: #0a0d12; }
+    .tb button.danger:hover { border-color: var(--red); color: var(--red); }
+    .tb .sep { width: 1px; height: 22px; background: var(--border); margin: 0 4px; }
+    .tb .info {
+      color: var(--dim);
+      font-size: 11px;
+      padding: 0 8px;
+      white-space: nowrap;
+    }
+    .tb .info strong { color: var(--accent); font-weight: 700; }
+
+    /* ─── Grid / map ────────────────────────────────────────────────── */
+    main {
+      position: relative;
+      overflow: hidden;
+      background: var(--bg);
+    }
+    #gridWrap {
+      position: absolute;
+      inset: 0;
+      overflow: auto;
+      cursor: crosshair;
+      background:
+        radial-gradient(circle at 50% 50%, rgba(26, 188, 156, 0.04) 0%, transparent 50%),
+        var(--bg);
+    }
+    #gridWrap.dragging { cursor: grabbing; }
+    #grid {
+      display: grid;
+      gap: 2px;
+      padding: 40px;
+      width: max-content;
+      margin: 0 auto;
+    }
+    .cell {
+      position: relative;
+      width: 40px;
+      height: 40px;
+      border-radius: 3px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.025);
+      box-sizing: border-box;
+      display: flex;
+      flex-wrap: wrap;
+      align-content: flex-start;
+      gap: 1px;
+      padding: 2px;
+      transition: background 80ms, border-color 80ms;
+      cursor: pointer;
+      -webkit-user-drag: none;
+      user-drag: none;
+    }
+    .cell.alt { background: rgba(255, 255, 255, 0.05); }
+    .cell:hover {
+      border-color: var(--accent);
+      background: rgba(26, 188, 156, 0.12);
+      z-index: 2;
+    }
+    .cell.current {
+      border-color: var(--gold);
+      background: var(--gold-dim);
+      box-shadow: inset 0 0 0 1px var(--gold), 0 0 8px rgba(245, 192, 66, 0.5);
+      z-index: 3;
+    }
+    .cell.waypoint {
+      background: var(--accent-dim);
+      border-color: var(--accent);
+      box-shadow: inset 0 0 0 1px rgba(26, 188, 156, 0.6);
+    }
+    .cell.waypoint.current {
+      background: linear-gradient(135deg, var(--gold-dim), var(--accent-dim));
+      border-color: var(--accent);
+    }
+    .wp-badge {
+      position: absolute;
+      top: 1px;
+      right: 1px;
+      min-width: 15px;
+      height: 15px;
+      padding: 0 4px;
+      box-sizing: border-box;
+      background: var(--accent);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 800;
+      border: 1px solid rgba(0, 0, 0, 0.6);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      pointer-events: none;
+      z-index: 5;
+      letter-spacing: -0.3px;
+      text-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
+    }
+    .coord {
+      position: absolute;
+      top: 1px;
+      left: 3px;
+      font-size: 8px;
+      color: var(--dim);
+      pointer-events: none;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+    }
+    .cell.waypoint .coord, .cell.current .coord { color: rgba(255, 255, 255, 0.7); }
+    .res {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      flex-shrink: 0;
+    }
+    .res img {
+      width: 14px;
+      height: 14px;
+      display: block;
+      filter: drop-shadow(0 1px 1px rgba(0,0,0,0.9));
+      pointer-events: none;
+      -webkit-user-drag: none;
+      user-drag: none;
+    }
+    .res .count {
+      position: absolute;
+      bottom: -3px;
+      right: -3px;
+      min-width: 8px;
+      height: 9px;
+      padding: 0 2px;
+      box-sizing: border-box;
+      font-size: 8px;
+      font-weight: 700;
+      color: #fff;
+      background: rgba(0, 0, 0, 0.9);
+      border: 1px solid var(--gold);
+      border-radius: 5px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      letter-spacing: -0.3px;
+    }
+
+    /* ─── Tooltip ───────────────────────────────────────────────────── */
+    #tooltip {
+      position: fixed;
+      pointer-events: none;
+      background: rgba(24, 28, 36, 0.97);
+      color: var(--text);
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6);
+      font-size: 11px;
+      line-height: 1.5;
+      max-width: 260px;
+      white-space: pre-wrap;
+      z-index: 1000;
+      display: none;
+      font-weight: 500;
+    }
+
+    /* ─── Footer status bar ─────────────────────────────────────────── */
+    footer {
+      background: var(--panel);
+      border-top: 1px solid var(--border);
+      padding: 6px 16px;
+      font-size: 11px;
+      color: var(--dim);
+      display: flex;
+      gap: 16px;
+      justify-content: space-between;
+      align-items: center;
+    }
+    footer .hint kbd {
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 1px 5px;
+      font-family: ui-monospace, monospace;
+      font-size: 10px;
+      color: var(--text);
+    }
+    #diag { color: var(--red); font-weight: 600; }
+    #diag:empty { display: none; }
+
+    /* ─── Toast ─────────────────────────────────────────────────────── */
+    #toast {
+      position: fixed;
+      top: 68px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-10px);
+      padding: 8px 16px;
+      background: linear-gradient(180deg, #1abc9c, #16a085);
+      border: 1px solid rgba(0, 0, 0, 0.3);
+      border-radius: 6px;
+      color: #fff;
+      font-weight: 600;
+      font-size: 12px;
+      z-index: 2000;
+      opacity: 0;
+      transition: opacity .15s, transform .15s;
+      pointer-events: none;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1><span class="logo">S</span> Planner de trajet</h1>
+    <div class="tb">
+      <input id="routeName" type="text" placeholder="Nom du trajet" maxlength="40">
+      <button id="saveBtn" class="primary">💾 Enregistrer</button>
+      <select id="loadSel"><option value="">— charger un trajet —</option></select>
+      <button id="deleteBtn" class="danger">🗑️ Supprimer</button>
+      <span class="sep"></span>
+      <button id="clearBtn">✕ Vider</button>
+      <button id="recenterBtn">📍 Me centrer</button>
+      <span class="sep"></span>
+      <span class="info">Rayon : <strong id="radiusLabel">20</strong> cases</span>
+      <button id="radiusDecBtn">−</button>
+      <button id="radiusIncBtn">+</button>
+      <span class="sep"></span>
+      <span class="info"><strong id="wpCount">0</strong> étape(s)</span>
+    </div>
+  </header>
+  <main>
+    <div id="gridWrap"><div id="grid"></div></div>
+  </main>
+  <footer>
+    <span class="hint">
+      <kbd>click</kbd> ajouter/retirer étape ·
+      <kbd>click+drag</kbd> déplacer la carte ·
+      <kbd>+ / −</kbd> agrandir le rayon
+    </span>
+    <span id="diag"></span>
+  </footer>
+</div>
+<div id="tooltip"></div>
+<div id="toast"></div>
+
+<script>
+  'use strict';
+  // STAKK URL : même origin que cette page (loopback stakk.exe HTTP).
+  const STAKK_URL = location.origin;
+
+  // ─── Constantes & état ────────────────────────────────────────────
+  const CELL_SIZE = 40;
+  const CELL_GAP = 2;
+  const CELL_PITCH = CELL_SIZE + CELL_GAP;
+  const MIN_RADIUS = 5;
+  const MAX_RADIUS = 50;
+  const RADIUS_STEP = 5;
+  const DRAG_THRESHOLD = 5;
+
+  // localStorage keys — SHARED avec l'overlay (même origine). Les formats
+  // sont identiques pour que l'overlay affiche directement les waypoints
+  // créés ici.
+  const ROUTES_KEY        = 'stakk-overlay-routes';
+  const ACTIVE_ROUTE_KEY  = 'stakk-overlay-active-route';
+  const PLANNER_CENTER    = 'stakk-planner-center'; // dernier center utilisé
+  const PLANNER_RADIUS    = 'stakk-planner-radius';
+
+  let playerMapId = null;     // map courante du joueur (polled via /api/map-state)
+  let centerMapId = null;     // centre de la vue (= player par défaut, ou pick manuel)
+  let radius = 20;
+  try { radius = Math.max(MIN_RADIUS, Math.min(MAX_RADIUS, parseInt(localStorage.getItem(PLANNER_RADIUS) || '20', 10))); } catch {}
+  let lastData = null;
+  const gridCache = new Map(); // `${mapId}:${radius}` → data
+
+  // Routes persistées (shared avec overlay)
+  let routeStore = {};
+  let activeRoute = { name: '', waypoints: [] };
+  try { routeStore = JSON.parse(localStorage.getItem(ROUTES_KEY) || '{}'); } catch {}
+  try {
+    const name = localStorage.getItem(ACTIVE_ROUTE_KEY) || '';
+    if (name && routeStore[name]) activeRoute = { name, waypoints: [...(routeStore[name].waypoints || [])] };
+    else if (name) activeRoute.name = name;
+  } catch {}
+
+  // ─── DOM refs ─────────────────────────────────────────────────────
+  const gridWrap    = document.getElementById('gridWrap');
+  const grid        = document.getElementById('grid');
+  const tooltip     = document.getElementById('tooltip');
+  const toast       = document.getElementById('toast');
+  const diag        = document.getElementById('diag');
+  const routeName   = document.getElementById('routeName');
+  const saveBtn     = document.getElementById('saveBtn');
+  const loadSel     = document.getElementById('loadSel');
+  const deleteBtn   = document.getElementById('deleteBtn');
+  const clearBtn    = document.getElementById('clearBtn');
+  const recenterBtn = document.getElementById('recenterBtn');
+  const radiusInc   = document.getElementById('radiusIncBtn');
+  const radiusDec   = document.getElementById('radiusDecBtn');
+  const radiusLabel = document.getElementById('radiusLabel');
+  const wpCount     = document.getElementById('wpCount');
+
+  // ─── Utils ────────────────────────────────────────────────────────
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => toast.classList.remove('show'), 1800);
+  }
+  function setDiag(msg) { diag.textContent = msg || ''; }
+  function nameFor(names, id) {
+    const n = names?.[id];
+    return (n && (n.fr || n.en)) || 'id ' + id;
+  }
+  function iconUrlFor(names, id) {
+    const n = names?.[id];
+    return n?.iconId ? `https://api.dofusdb.fr/img/items/${n.iconId}.png` : null;
+  }
+  function saveRouteStore()   { try { localStorage.setItem(ROUTES_KEY,       JSON.stringify(routeStore)); } catch {} }
+  function saveActiveName()   { try { localStorage.setItem(ACTIVE_ROUTE_KEY, activeRoute.name || '');      } catch {} }
+
+  // ─── API calls ────────────────────────────────────────────────────
+  async function fetchMapState() {
+    try {
+      const [stateRes, linkRes] = await Promise.all([
+        fetch(`${STAKK_URL}/api/map-state`, { cache: 'no-store' }),
+        fetch(`${STAKK_URL}/api/overlay/link`, { cache: 'no-store' }).catch(() => null),
+      ]);
+      if (!stateRes.ok) return null;
+      const state = await stateRes.json();
+      const linked = linkRes?.ok ? (await linkRes.json()).accountId : null;
+      const entries = Object.entries(state);
+      if (entries.length === 0) return null;
+      if (linked != null && state[linked]) return state[linked];
+      entries.sort((a, b) => (b[1].updatedAt || 0) - (a[1].updatedAt || 0));
+      return entries[0][1];
+    } catch (e) { return null; }
+  }
+  async function fetchGrid(mapId, r) {
+    const key = `${mapId}:${r}`;
+    if (gridCache.has(key)) return gridCache.get(key);
+    try {
+      const res = await fetch(`${STAKK_URL}/api/map-grid?mapId=${mapId}&radius=${r}`);
+      if (!res.ok) { setDiag(`HTTP ${res.status} /api/map-grid`); return null; }
+      const j = await res.json();
+      if (j.error) { setDiag(j.error); return null; }
+      gridCache.set(key, j);
+      setDiag('');
+      return j;
+    } catch (e) { setDiag(`FETCH ERR ${e.message}`); return null; }
+  }
+
+  // ─── Render ───────────────────────────────────────────────────────
+  function renderGrid(data) {
+    grid.innerHTML = '';
+    const n = radius * 2 + 1;
+    grid.style.gridTemplateColumns = `repeat(${n}, ${CELL_SIZE}px)`;
+    grid.style.gridTemplateRows    = `repeat(${n}, ${CELL_SIZE}px)`;
+
+    const center = data?.center;
+    const cells = data?.cells || [];
+    const names = data?.names || {};
+    const byCoord = new Map();
+    for (const c of cells) byCoord.set(`${c.posX},${c.posY}`, c);
+
+    const wpByCoord = new Map();
+    for (let i = 0; i < activeRoute.waypoints.length; i++) {
+      const w = activeRoute.waypoints[i];
+      wpByCoord.set(`${w.x},${w.y}`, i + 1);
+    }
+
+    const frag = document.createDocumentFragment();
+    for (let dy = -radius; dy <= radius; dy++) {
+      for (let dx = -radius; dx <= radius; dx++) {
+        const x = center ? center.posX + dx : null;
+        const y = center ? center.posY + dy : null;
+        const cell = center ? byCoord.get(`${x},${y}`) : null;
+        const div = document.createElement('div');
+        div.className = 'cell';
+        if ((dx + dy + radius * 2) % 2 === 1) div.classList.add('alt');
+        if (dx === 0 && dy === 0) div.classList.add('current');
+        if (center) {
+          div.dataset.x = x;
+          div.dataset.y = y;
+          div.dataset.mapId = cell ? cell.mapId : '';
+          const coord = document.createElement('div');
+          coord.className = 'coord';
+          coord.textContent = `${x},${y}`;
+          div.appendChild(coord);
+        }
+        const wpIdx = center ? wpByCoord.get(`${x},${y}`) : null;
+        if (wpIdx) {
+          div.classList.add('waypoint');
+          const badge = document.createElement('span');
+          badge.className = 'wp-badge';
+          badge.textContent = wpIdx;
+          div.appendChild(badge);
+        }
+        if (cell && cell.details && Object.keys(cell.details).length) {
+          const tip = [`(${x}, ${y})`];
+          for (const [id, n] of Object.entries(cell.details)) {
+            const idNum = +id;
+            const span = document.createElement('span');
+            span.className = 'res';
+            const url = iconUrlFor(names, idNum);
+            if (url) {
+              const img = document.createElement('img');
+              img.src = url;
+              img.alt = nameFor(names, idNum);
+              img.draggable = false;
+              span.appendChild(img);
+            } else {
+              const dot = document.createElement('div');
+              dot.style.cssText = `width:10px;height:10px;border-radius:50%;background:hsl(${(idNum*137)%360},80%,55%);`;
+              span.appendChild(dot);
+            }
+            if (n > 1) {
+              const c2 = document.createElement('span');
+              c2.className = 'count';
+              c2.textContent = n;
+              span.appendChild(c2);
+            }
+            div.appendChild(span);
+            tip.push(`${nameFor(names, idNum)} ×${n}`);
+          }
+          div.dataset.tooltip = tip.join('\n');
+        } else if (center) {
+          div.dataset.tooltip = `(${x}, ${y})`;
+        }
+        frag.appendChild(div);
+      }
+    }
+    grid.appendChild(frag);
+  }
+
+  function centerViewportOnCenter() {
+    // Scroll le container pour centrer la cellule (radius, radius) (= center)
+    const centerPx = 40 /*padding*/ + (radius + 0.5) * CELL_PITCH;
+    gridWrap.scrollLeft = centerPx - gridWrap.clientWidth / 2;
+    gridWrap.scrollTop  = centerPx - gridWrap.clientHeight / 2;
+  }
+
+  async function refresh() {
+    if (!centerMapId) {
+      setDiag('Aucune map courante — joue en-jeu pour que STAKK la détecte.');
+      renderGrid(null);
+      return;
+    }
+    const data = await fetchGrid(centerMapId, radius);
+    lastData = data;
+    renderGrid(data);
+  }
+
+  // ─── Toolbar refresh ──────────────────────────────────────────────
+  function refreshLoadSelect() {
+    const names = Object.keys(routeStore).sort();
+    loadSel.innerHTML = '<option value="">— charger un trajet —</option>' +
+      names.map(n => {
+        const safe = n.replace(/"/g, '&quot;');
+        const sel = n === activeRoute.name ? ' selected' : '';
+        return `<option value="${safe}"${sel}>${safe} (${(routeStore[n].waypoints || []).length})</option>`;
+      }).join('');
+  }
+  function refreshWpCount() { wpCount.textContent = activeRoute.waypoints.length; }
+
+  function toggleWaypoint(x, y, mapId) {
+    const idx = activeRoute.waypoints.findIndex(w => w.x === x && w.y === y);
+    if (idx >= 0) activeRoute.waypoints.splice(idx, 1);
+    else activeRoute.waypoints.push({ x, y, mapId: mapId || null });
+    refreshWpCount();
+    if (lastData) renderGrid(lastData);
+    // Si un trajet est actif (nom + déjà sauvé), on autosave les modifs.
+    if (activeRoute.name && routeStore[activeRoute.name]) {
+      routeStore[activeRoute.name].waypoints = activeRoute.waypoints.slice();
+      routeStore[activeRoute.name].updatedAt = new Date().toISOString();
+      saveRouteStore();
+    }
+  }
+
+  function saveRoute() {
+    const name = (routeName.value || '').trim();
+    if (!name) { showToast('Donne un nom au trajet'); routeName.focus(); return; }
+    if (activeRoute.waypoints.length === 0) { showToast('Ajoute au moins une étape'); return; }
+    routeStore[name] = {
+      waypoints: activeRoute.waypoints.slice(),
+      createdAt: routeStore[name]?.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    activeRoute.name = name;
+    saveRouteStore();
+    saveActiveName();
+    refreshLoadSelect();
+    showToast(`✓ "${name}" enregistré (${activeRoute.waypoints.length} étapes)`);
+  }
+  function loadRoute(name) {
+    if (!name || !routeStore[name]) return;
+    activeRoute = { name, waypoints: [...(routeStore[name].waypoints || [])] };
+    routeName.value = name;
+    saveActiveName();
+    refreshWpCount();
+    if (lastData) renderGrid(lastData);
+    showToast(`"${name}" chargé`);
+  }
+  function deleteRoute() {
+    const name = activeRoute.name || routeName.value.trim();
+    if (!name || !routeStore[name]) { showToast('Aucun trajet à supprimer'); return; }
+    if (!confirm(`Supprimer le trajet "${name}" ?`)) return;
+    delete routeStore[name];
+    saveRouteStore();
+    activeRoute = { name: '', waypoints: [] };
+    routeName.value = '';
+    saveActiveName();
+    refreshLoadSelect();
+    refreshWpCount();
+    if (lastData) renderGrid(lastData);
+    showToast(`"${name}" supprimé`);
+  }
+  function clearWaypoints() {
+    if (activeRoute.waypoints.length === 0) return;
+    activeRoute.waypoints = [];
+    refreshWpCount();
+    if (lastData) renderGrid(lastData);
+    // Si le trajet est sauvé, autosave le vidage (pas de confirmation — on
+    // peut toujours re-cliquer les cells pour reconstruire)
+    if (activeRoute.name && routeStore[activeRoute.name]) {
+      routeStore[activeRoute.name].waypoints = [];
+      saveRouteStore();
+    }
+  }
+  async function recenterOnPlayer() {
+    const state = await fetchMapState();
+    if (!state?.mapId) { showToast('Pas de position joueur détectée'); return; }
+    playerMapId = state.mapId;
+    centerMapId = state.mapId;
+    try { localStorage.setItem(PLANNER_CENTER, String(centerMapId)); } catch {}
+    gridCache.clear();
+    await refresh();
+    requestAnimationFrame(centerViewportOnCenter);
+  }
+  function setRadius(r) {
+    radius = Math.max(MIN_RADIUS, Math.min(MAX_RADIUS, r));
+    radiusLabel.textContent = radius;
+    try { localStorage.setItem(PLANNER_RADIUS, String(radius)); } catch {}
+    gridCache.clear();
+    refresh().then(() => requestAnimationFrame(centerViewportOnCenter));
+  }
+
+  // ─── Events ───────────────────────────────────────────────────────
+  // Click sur une cellule = toggle waypoint. Drag threshold : si l'user a
+  // bougé > DRAG_THRESHOLD px entre mousedown et mouseup, on ne toggle pas
+  // (c'était un pan, pas un click).
+  let mousedownPos = null;
+  gridWrap.addEventListener('mousedown', (e) => {
+    if (e.button !== 0) return;
+    mousedownPos = { x: e.clientX, y: e.clientY };
+  });
+  gridWrap.addEventListener('click', (e) => {
+    if (!mousedownPos) return;
+    const moved = Math.hypot(e.clientX - mousedownPos.x, e.clientY - mousedownPos.y);
+    mousedownPos = null;
+    if (moved > DRAG_THRESHOLD) return; // c'était un drag
+    const cell = e.target.closest('.cell');
+    if (!cell || cell.dataset.x === undefined) return;
+    const x = parseInt(cell.dataset.x, 10);
+    const y = parseInt(cell.dataset.y, 10);
+    const mapId = cell.dataset.mapId ? parseInt(cell.dataset.mapId, 10) : null;
+    toggleWaypoint(x, y, mapId);
+  });
+
+  // Drag-to-pan sur le gridWrap (indépendant du scroll natif qui marche
+  // aussi via scrollbar/wheel). Pointer events + capture pour robustesse.
+  let dragState = null;
+  gridWrap.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0 || e.pointerType === 'touch') return;
+    dragState = {
+      pointerId: e.pointerId,
+      startX: e.clientX, startY: e.clientY,
+      scrollX: gridWrap.scrollLeft, scrollY: gridWrap.scrollTop,
+      moved: false,
+    };
+    try { gridWrap.setPointerCapture(e.pointerId); } catch {}
+  });
+  gridWrap.addEventListener('pointermove', (e) => {
+    if (!dragState || e.pointerId !== dragState.pointerId) return;
+    const dx = e.clientX - dragState.startX;
+    const dy = e.clientY - dragState.startY;
+    if (!dragState.moved && Math.hypot(dx, dy) > DRAG_THRESHOLD) {
+      dragState.moved = true;
+      gridWrap.classList.add('dragging');
+      hideTooltip();
+    }
+    if (dragState.moved) {
+      gridWrap.scrollLeft = dragState.scrollX - dx;
+      gridWrap.scrollTop  = dragState.scrollY - dy;
+    }
+  });
+  function endDrag(e) {
+    if (!dragState || (e && e.pointerId !== dragState.pointerId)) return;
+    try { gridWrap.releasePointerCapture(dragState.pointerId); } catch {}
+    gridWrap.classList.remove('dragging');
+    dragState = null;
+  }
+  gridWrap.addEventListener('pointerup', endDrag);
+  gridWrap.addEventListener('pointercancel', endDrag);
+  gridWrap.addEventListener('dragstart', (e) => e.preventDefault());
+
+  // Tooltip
+  function hideTooltip() { tooltip.style.display = 'none'; }
+  let hoveredCell = null;
+  gridWrap.addEventListener('mousemove', (e) => {
+    const cell = e.target.closest('.cell');
+    if (!cell || !cell.dataset.tooltip) { hideTooltip(); return; }
+    if (cell !== hoveredCell) {
+      hoveredCell = cell;
+      tooltip.textContent = cell.dataset.tooltip;
+      tooltip.style.display = 'block';
+    }
+    tooltip.style.left = Math.min(window.innerWidth - 280, e.clientX + 14) + 'px';
+    tooltip.style.top  = Math.min(window.innerHeight - 120, e.clientY + 14) + 'px';
+  });
+  gridWrap.addEventListener('mouseleave', hideTooltip);
+
+  // Toolbar buttons
+  saveBtn.addEventListener('click', saveRoute);
+  deleteBtn.addEventListener('click', deleteRoute);
+  clearBtn.addEventListener('click', clearWaypoints);
+  recenterBtn.addEventListener('click', recenterOnPlayer);
+  radiusInc.addEventListener('click', () => setRadius(radius + RADIUS_STEP));
+  radiusDec.addEventListener('click', () => setRadius(radius - RADIUS_STEP));
+  loadSel.addEventListener('change', () => {
+    if (loadSel.value) loadRoute(loadSel.value);
+  });
+  routeName.addEventListener('input', () => {
+    activeRoute.name = routeName.value.trim();
+  });
+  routeName.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') saveRoute();
+  });
+
+  // Hotkeys globaux (sauf dans les inputs)
+  document.addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+    if (e.key === '+' || e.key === '=') { setRadius(radius + RADIUS_STEP); e.preventDefault(); }
+    else if (e.key === '-' || e.key === '_') { setRadius(radius - RADIUS_STEP); e.preventDefault(); }
+  });
+
+  // Sync cross-tab : si l'overlay modifie l'active-route (rare) ou si on a
+  // plusieurs onglets planner ouverts, on re-charge le store.
+  window.addEventListener('storage', (e) => {
+    if (e.key === ROUTES_KEY) {
+      try { routeStore = JSON.parse(e.newValue || '{}'); } catch {}
+      refreshLoadSelect();
+    } else if (e.key === ACTIVE_ROUTE_KEY) {
+      const name = e.newValue || '';
+      if (name && routeStore[name]) {
+        activeRoute = { name, waypoints: [...(routeStore[name].waypoints || [])] };
+        routeName.value = name;
+        refreshWpCount();
+        if (lastData) renderGrid(lastData);
+      }
+    }
+  });
+
+  // ─── Init ─────────────────────────────────────────────────────────
+  radiusLabel.textContent = radius;
+  routeName.value = activeRoute.name || '';
+  refreshLoadSelect();
+  refreshWpCount();
+
+  (async () => {
+    // Préfère le dernier center planner, sinon le player courant, sinon rien.
+    let initial = null;
+    try { initial = parseInt(localStorage.getItem(PLANNER_CENTER) || '', 10) || null; } catch {}
+    if (!initial) {
+      const state = await fetchMapState();
+      if (state?.mapId) { initial = state.mapId; playerMapId = state.mapId; }
+    } else {
+      const state = await fetchMapState();
+      if (state?.mapId) playerMapId = state.mapId;
+    }
+    if (initial) {
+      centerMapId = initial;
+      await refresh();
+      requestAnimationFrame(centerViewportOnCenter);
+    } else {
+      setDiag('Lance le jeu pour que STAKK détecte ta position, puis clique « 📍 Me centrer ».');
+    }
+    // Poll périodique pour mettre à jour playerMapId (indicateur visuel
+    // éventuel futur). Pas de re-center auto sur bouger du joueur pour
+    // éviter d'interrompre la planification.
+    setInterval(async () => {
+      const state = await fetchMapState();
+      if (state?.mapId) playerMapId = state.mapId;
+    }, 2000);
+  })();
+</script>
+</body>
+</html>

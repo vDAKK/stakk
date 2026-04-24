@@ -144,6 +144,18 @@ function createWindow() {
   dbg('BrowserWindow created');
   win.setAlwaysOnTop(true, 'screen-saver');
   win.setIgnoreMouseEvents(true, { forward: true });
+  // window.open depuis le renderer (bouton 📋 planner) → ouvre dans le
+  // navigateur OS par défaut au lieu de créer une 2e BrowserWindow Electron
+  // (qui hériterait de la transparence/click-through, complètement cassé pour
+  // une page d'édition normale). shell.openExternal respecte le browser
+  // default de l'user. 'deny' indique à Chromium de ne PAS spawn de window.
+  try {
+    const { shell } = require('electron');
+    win.webContents.setWindowOpenHandler(({ url }) => {
+      try { shell.openExternal(url); } catch (e) { dbg(`openExternal err: ${e.message}`); }
+      return { action: 'deny' };
+    });
+  } catch (e) { dbg(`setWindowOpenHandler err: ${e.message}`); }
   // Charge le renderer depuis STAKK local (loopback HTTP). web-server.js
   // proxy-fetch les assets depuis GitHub Pages (hot-updatable sans rebuild),
   // donc même origine que l'API — pas de CORS ni mixed-content à gérer.

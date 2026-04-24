@@ -254,7 +254,34 @@
       min-height: 36px;
     }
 
-    /* ─── Waypoints (création trajet) ──────────────────────────────────── */
+    /* Second bouton carré (📋) à côté de ⛶, même style */
+    #plannerBtn {
+      position: absolute;
+      top: 3px;
+      right: 24px;
+      width: 18px;
+      height: 18px;
+      padding: 0;
+      background: rgba(0, 0, 0, 0.55);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 2px;
+      color: #eef1f8;
+      font-size: 10px;
+      font-family: inherit;
+      line-height: 1;
+      cursor: pointer;
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 80ms, border-color 80ms;
+    }
+    #plannerBtn:hover {
+      background: rgba(26, 188, 156, 0.35);
+      border-color: var(--gold);
+    }
+
+    /* ─── Waypoints (affichage en lecture seule, création via planner page) ─── */
     .cell.waypoint {
       background: rgba(26, 188, 156, 0.32);
       border-color: #1abc9c;
@@ -291,48 +318,6 @@
       z-index: 5;
       letter-spacing: -0.3px;
     }
-    /* body.route-mode : click sur une cellule = ajout/suppression waypoint,
-       pas copie /travel. Curseur crosshair pour clarifier. */
-    body.route-mode.big-map #grid { cursor: crosshair; }
-    body.route-mode.big-map #grid.dragging { cursor: grabbing; }
-    body.route-mode #panel { border-color: #1abc9c; }
-
-    /* Toolbar trajet : visible seulement en big-map. Barre horizontale sous
-       le bouton ⛶, permet mode routes + save/load/clear. */
-    #routeBar {
-      position: absolute;
-      top: 26px;
-      left: 3px;
-      right: 24px;
-      padding: 3px 5px;
-      background: var(--panel-bg-alt);
-      border: 1px solid var(--panel-border);
-      border-radius: 4px;
-      display: none;
-      gap: 4px;
-      align-items: center;
-      z-index: 40;
-      font-size: 10px;
-    }
-    body.big-map #routeBar { display: flex; }
-    #routeBar button, #routeBar input, #routeBar select {
-      height: 18px;
-      padding: 0 5px;
-      background: rgba(0, 0, 0, 0.45);
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      border-radius: 3px;
-      color: var(--text);
-      font-size: 10px;
-      font-family: inherit;
-      box-sizing: border-box;
-    }
-    #routeBar input { flex: 1; min-width: 40px; }
-    #routeBar select { max-width: 90px; }
-    #routeBar button { cursor: pointer; white-space: nowrap; }
-    #routeBar button:hover { background: rgba(245, 192, 66, 0.25); border-color: var(--gold); }
-    #routeBar button.on { background: rgba(26, 188, 156, 0.45); border-color: #1abc9c; }
-    #routeBar .sep { width: 1px; height: 14px; background: rgba(255, 255, 255, 0.18); margin: 0 2px; }
-
     /* Banner dans la vue normale (pas big-map) quand un trajet est actif :
        affiche "Étape X/Y" et la direction vers le next waypoint. */
     #routeBanner {
@@ -510,14 +495,7 @@
 <body>
   <div id="panel">
     <button id="bigMapBtn" title="Vue étendue (scroll + drag)">⛶</button>
-    <div id="routeBar">
-      <button id="routeModeBtn" title="Mode création : click sur les cases pour ajouter des étapes">📍</button>
-      <input id="routeName" type="text" placeholder="Nom du trajet" maxlength="40">
-      <button id="routeSaveBtn" title="Enregistrer ce trajet sous ce nom">💾</button>
-      <select id="routeLoadSel" title="Charger un trajet enregistré"><option value="">— charger —</option></select>
-      <span class="sep"></span>
-      <button id="routeClearBtn" title="Effacer les étapes du trajet actif">✕</button>
-    </div>
+    <button id="plannerBtn" title="Ouvrir le planner de trajet (nouvelle fenêtre navigateur)">📋</button>
     <div id="routeBanner"></div>
     <div id="grid"></div>
   </div>
@@ -556,74 +534,40 @@
       if (raw) hiddenIds = new Set(JSON.parse(raw).map(Number));
     } catch {}
 
-    // ─── Routes (trajets) ───────────────────────────────────────────────
-    // Structure persistée : { [name]: { waypoints: [{x,y,mapId}], createdAt } }
-    // activeRoute = copie live éditable ; quand l'user tape un nom + save →
-    // copie dans le store. Active route persistée séparément (nom seul) pour
-    // que l'overlay recharge le dernier trajet au prochain démarrage.
+    // ─── Routes (trajets) — LECTURE SEULE ───────────────────────────────
+    // L'overlay affiche le trajet actif (waypoints numérotés + banner next-step)
+    // mais n'édite plus. Création/save/load se fait via la page planner dans
+    // un navigateur normal (http://127.0.0.1:3000/overlay/planner.html), où
+    // les clicks fonctionnent sans les bidouilles click-through Electron.
+    // localStorage est partagé (même origine), et un 'storage' event permet
+    // de picker les changements du planner en live sans reload.
     const ROUTES_KEY = 'stakk-overlay-routes';
     const ACTIVE_ROUTE_KEY = 'stakk-overlay-active-route';
     let routeStore = {};
     try { routeStore = JSON.parse(localStorage.getItem(ROUTES_KEY) || '{}'); } catch {}
     let activeRoute = { name: '', waypoints: [] };
-    try {
-      const activeName = localStorage.getItem(ACTIVE_ROUTE_KEY) || '';
-      if (activeName && routeStore[activeName]) {
-        activeRoute = { name: activeName, waypoints: [...(routeStore[activeName].waypoints || [])] };
+    function loadActiveRouteFromStorage() {
+      try {
+        const activeName = localStorage.getItem(ACTIVE_ROUTE_KEY) || '';
+        if (activeName && routeStore[activeName]) {
+          activeRoute = { name: activeName, waypoints: [...(routeStore[activeName].waypoints || [])] };
+        } else {
+          activeRoute = { name: '', waypoints: [] };
+        }
+      } catch {}
+    }
+    loadActiveRouteFromStorage();
+    // Écoute les modifs du planner (autre onglet/fenêtre) : mise à jour live.
+    window.addEventListener('storage', (e) => {
+      if (e.key === ROUTES_KEY) {
+        try { routeStore = JSON.parse(e.newValue || '{}'); } catch {}
+        loadActiveRouteFromStorage();
+        if (lastData) renderGrid(lastData);
+      } else if (e.key === ACTIVE_ROUTE_KEY) {
+        loadActiveRouteFromStorage();
+        if (lastData) renderGrid(lastData);
       }
-    } catch {}
-    let routeMode = false; // click-to-add waypoints (toggle via bouton 📍)
-
-    function saveRouteStore() {
-      try { localStorage.setItem(ROUTES_KEY, JSON.stringify(routeStore)); } catch {}
-    }
-    function saveActiveName() {
-      try { localStorage.setItem(ACTIVE_ROUTE_KEY, activeRoute.name || ''); } catch {}
-    }
-    function refreshRouteLoadSelect() {
-      const sel = document.getElementById('routeLoadSel');
-      if (!sel) return;
-      const names = Object.keys(routeStore).sort();
-      sel.innerHTML = '<option value="">— charger —</option>' +
-        names.map(n => `<option value="${n.replace(/"/g,'&quot;')}"${n===activeRoute.name?' selected':''}>${n}</option>`).join('');
-    }
-    function toggleWaypointAt(x, y, mapId) {
-      const idx = activeRoute.waypoints.findIndex(w => w.x === x && w.y === y);
-      if (idx >= 0) activeRoute.waypoints.splice(idx, 1);
-      else activeRoute.waypoints.push({ x, y, mapId });
-      if (lastData) renderGrid(lastData);
-    }
-    function clearActiveRoute() {
-      activeRoute = { name: '', waypoints: [] };
-      saveActiveName();
-      const nameInput = document.getElementById('routeName');
-      if (nameInput) nameInput.value = '';
-      if (lastData) renderGrid(lastData);
-    }
-    function saveActiveRoute() {
-      const nameInput = document.getElementById('routeName');
-      const name = (nameInput?.value || '').trim();
-      if (!name) { showToast('Donne un nom au trajet'); return; }
-      if (activeRoute.waypoints.length === 0) { showToast('Ajoute au moins une étape'); return; }
-      routeStore[name] = {
-        waypoints: activeRoute.waypoints.slice(),
-        createdAt: new Date().toISOString(),
-      };
-      activeRoute.name = name;
-      saveRouteStore();
-      saveActiveName();
-      refreshRouteLoadSelect();
-      showToast(`Trajet "${name}" sauvé (${activeRoute.waypoints.length} étapes)`);
-    }
-    function loadRoute(name) {
-      if (!name || !routeStore[name]) return;
-      activeRoute = { name, waypoints: [...routeStore[name].waypoints] };
-      saveActiveName();
-      const nameInput = document.getElementById('routeName');
-      if (nameInput) nameInput.value = name;
-      if (lastData) renderGrid(lastData);
-      showToast(`Trajet "${name}" chargé`);
-    }
+    });
 
     // Banner "Étape X/Y → direction" affiché dans la vue normale (3x3) quand
     // un trajet est actif. Donne à l'user l'info next-step sans qu'il ait à
@@ -960,25 +904,10 @@
       return ok;
     }
     document.addEventListener('click', async (e) => {
-      // Clicks sur la route bar sont gérés par leurs propres handlers, skip ici.
-      if (e.target.closest('#routeBar')) return;
       const cell = e.target.closest('.cell');
       if (!cell || cell.dataset.clickable !== '1') return;
       const x = cell.dataset.x, y = cell.dataset.y;
       if (x == null || y == null) return;
-      // Mode création trajet : click = toggle waypoint, pas copy /travel.
-      if (routeMode) {
-        const xi = parseInt(x, 10), yi = parseInt(y, 10);
-        // mapId de la cell : on cherche dans lastData.cells. Si pas trouvé
-        // (cell vide hors data), on stocke null — le waypoint reste valide par
-        // coord, juste impossible de "resync" par mapId si les données bougent.
-        let mapId = null;
-        for (const c of (lastData?.cells || [])) {
-          if (c.posX === xi && c.posY === yi) { mapId = c.mapId; break; }
-        }
-        toggleWaypointAt(xi, yi, mapId);
-        return;
-      }
       const cmd = `/travel ${x} ${y}`;
       const ok = await copyToClipboard(cmd);
       if (ok) {
@@ -990,38 +919,13 @@
       }
     });
 
-    // ─── Route toolbar : boutons + inputs ───────────────────────────────
-    {
-      const modeBtn = document.getElementById('routeModeBtn');
-      const nameInput = document.getElementById('routeName');
-      const saveBtn = document.getElementById('routeSaveBtn');
-      const loadSel = document.getElementById('routeLoadSel');
-      const clearBtn = document.getElementById('routeClearBtn');
-      if (nameInput) nameInput.value = activeRoute.name;
-      refreshRouteLoadSelect();
-      modeBtn?.addEventListener('click', (e) => {
-        e.stopPropagation();
-        routeMode = !routeMode;
-        document.body.classList.toggle('route-mode', routeMode);
-        modeBtn.classList.toggle('on', routeMode);
-        showToast(routeMode ? 'Mode création : click = étape' : 'Mode création off');
-      });
-      saveBtn?.addEventListener('click', (e) => { e.stopPropagation(); saveActiveRoute(); });
-      clearBtn?.addEventListener('click', (e) => { e.stopPropagation(); clearActiveRoute(); });
-      loadSel?.addEventListener('change', (e) => {
-        e.stopPropagation();
-        const name = loadSel.value;
-        if (name) loadRoute(name);
-      });
-      // Pendant la frappe du nom, on update l'activeRoute.name au keyup pour
-      // que saveActiveName soit cohérent si l'user quitte sans cliquer save.
-      nameInput?.addEventListener('input', () => {
-        activeRoute.name = nameInput.value.trim();
-      });
-      // Empêche les hotkeys globales d'intercepter les touches pendant qu'on
-      // tape dans l'input (sinon Ctrl+Shift+Q quitte en plein milieu du nom).
-      nameInput?.addEventListener('keydown', (e) => e.stopPropagation());
-    }
+    // Bouton 📋 ouvre la page planner. window.open déclenche le
+    // setWindowOpenHandler côté main.js qui utilise shell.openExternal pour
+    // ouvrir dans le navigateur par défaut (pas une nouvelle fenêtre Electron).
+    document.getElementById('plannerBtn')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      window.open(`${STAKK_URL}/overlay/planner.html`, '_blank');
+    });
 
     applyGridSize();
     renderGrid(null); // grille vide visible dès le démarrage
