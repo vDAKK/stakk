@@ -32,7 +32,7 @@
     ::-webkit-scrollbar-thumb { background: #2a2f3a; border-radius: 5px; }
     ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 
-    .app { display: grid; grid-template-rows: auto 1fr auto; height: 100vh; }
+    .app { display: grid; grid-template-rows: auto auto 1fr auto; height: 100vh; }
 
     /* ─── Header / toolbar ──────────────────────────────────────────── */
     header {
@@ -91,6 +91,82 @@
       white-space: nowrap;
     }
     .tb .info strong { color: var(--accent); font-weight: 700; }
+
+    /* ─── Filter bar (2e ligne du header) ───────────────────────────── */
+    .filters {
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      padding: 6px 16px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      font-size: 11px;
+    }
+    .filters .flabel {
+      color: var(--dim);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-right: 6px;
+    }
+    .filters .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 8px 4px 4px;
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      cursor: pointer;
+      transition: all .12s;
+      font-size: 11px;
+      color: var(--dim);
+      user-select: none;
+    }
+    .filters .chip img { width: 18px; height: 18px; display: block; }
+    .filters .chip:hover { border-color: var(--accent); color: var(--text); }
+    .filters .chip.on {
+      background: rgba(26, 188, 156, 0.18);
+      border-color: var(--accent);
+      color: #fff;
+      font-weight: 600;
+    }
+    .filters .chip .n {
+      background: rgba(0, 0, 0, 0.4);
+      padding: 1px 5px;
+      border-radius: 8px;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--accent);
+      margin-left: 2px;
+    }
+    .filters .chip.on .n { background: var(--accent); color: #0a0d12; }
+    .filters .reset {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--dim);
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .filters .reset:hover { border-color: var(--accent); color: var(--accent); }
+    .filters.empty { display: none; }
+
+    /* Cellules qui ne matchent pas le filtre actif : grisées, coords
+       gardés pour continuer à planifier autour. */
+    .cell.filtered-out {
+      opacity: 0.18;
+      filter: grayscale(80%);
+    }
+    .cell.filtered-out:hover { opacity: 0.55; filter: grayscale(0); }
+    /* Waypoints et current cell restent toujours visibles même si filtrés */
+    .cell.filtered-out.waypoint, .cell.filtered-out.current { opacity: 1; filter: none; }
 
     /* ─── Grid / map ────────────────────────────────────────────────── */
     main {
@@ -311,6 +387,7 @@
       <span class="info"><strong id="wpCount">0</strong> étape(s)</span>
     </div>
   </header>
+  <div class="filters empty" id="filters"></div>
   <main>
     <div id="gridWrap"><div id="grid"></div></div>
   </main>
@@ -347,6 +424,7 @@
   const ACTIVE_ROUTE_KEY  = 'stakk-overlay-active-route';
   const PLANNER_CENTER    = 'stakk-planner-center'; // dernier center utilisé
   const PLANNER_RADIUS    = 'stakk-planner-radius';
+  const PLANNER_FILTER    = 'stakk-planner-filter'; // Set d'itemIds à montrer
 
   let playerMapId = null;     // map courante du joueur (polled via /api/map-state)
   let centerMapId = null;     // centre de la vue (= player par défaut, ou pick manuel)
@@ -354,6 +432,17 @@
   try { radius = Math.max(MIN_RADIUS, Math.min(MAX_RADIUS, parseInt(localStorage.getItem(PLANNER_RADIUS) || '20', 10))); } catch {}
   let lastData = null;
   const gridCache = new Map(); // `${mapId}:${radius}` → data
+
+  // Filtre ressource : Set d'itemIds à afficher (inclusif). Vide = tout
+  // afficher. Persisté pour rester d'une session à l'autre.
+  let filterSet = new Set();
+  try {
+    const raw = localStorage.getItem(PLANNER_FILTER);
+    if (raw) filterSet = new Set(JSON.parse(raw).map(Number));
+  } catch {}
+  function saveFilter() {
+    try { localStorage.setItem(PLANNER_FILTER, JSON.stringify([...filterSet])); } catch {}
+  }
 
   // Routes persistées (shared avec overlay)
   let routeStore = {};
@@ -381,6 +470,7 @@
   const radiusDec   = document.getElementById('radiusDecBtn');
   const radiusLabel = document.getElementById('radiusLabel');
   const wpCount     = document.getElementById('wpCount');
+  const filtersEl   = document.getElementById('filters');
 
   // ─── Utils ────────────────────────────────────────────────────────
   function showToast(msg) {
@@ -432,6 +522,91 @@
     } catch (e) { setDiag(`FETCH ERR ${e.message}`); return null; }
   }
 
+  // ─── Filter bar ───────────────────────────────────────────────────
+  // Build des chips à partir des itemIds uniques présents dans la grille
+  // courante. Pour chaque ressource, on montre icône + count global dans le
+  // viewport (utile pour voir "combien de cellules ont du fer dans le rayon").
+  // Click chip = toggle inclusion dans filterSet. Filtre actif = seules les
+  // cellules avec AU MOINS UN item sélectionné restent à pleine opacité.
+  function renderFilterBar(data) {
+    filtersEl.innerHTML = '';
+    if (!data || !data.cells || data.cells.length === 0) {
+      filtersEl.classList.add('empty');
+      return;
+    }
+    const names = data.names || {};
+    // Count par itemId : combien de cells l'ont, et quantité totale
+    const counts = new Map(); // id → { cells: n, total: n }
+    for (const c of data.cells) {
+      if (!c.details) continue;
+      for (const [id, n] of Object.entries(c.details)) {
+        const key = +id;
+        const entry = counts.get(key) || { cells: 0, total: 0 };
+        entry.cells += 1;
+        entry.total += n;
+        counts.set(key, entry);
+      }
+    }
+    // Inclut aussi les itemIds qui sont dans filterSet mais plus dans la
+    // grille (pour que l'user puisse les retirer du filtre).
+    for (const id of filterSet) if (!counts.has(id)) counts.set(id, { cells: 0, total: 0 });
+    if (counts.size === 0) {
+      filtersEl.classList.add('empty');
+      return;
+    }
+    filtersEl.classList.remove('empty');
+    const label = document.createElement('span');
+    label.className = 'flabel';
+    label.textContent = 'Filtrer :';
+    filtersEl.appendChild(label);
+    // Tri alpha par nom pour une UX stable (pas de reshuffle à chaque fetch)
+    const sorted = [...counts.entries()].sort((a, b) => {
+      const na = nameFor(names, a[0]);
+      const nb = nameFor(names, b[0]);
+      return na.localeCompare(nb);
+    });
+    for (const [id, count] of sorted) {
+      const chip = document.createElement('span');
+      chip.className = 'chip' + (filterSet.has(id) ? ' on' : '');
+      chip.title = nameFor(names, id) + ` · ${count.cells} case(s)` + (count.total > count.cells ? ` · ${count.total} au total` : '');
+      const url = iconUrlFor(names, id);
+      if (url) {
+        const img = document.createElement('img');
+        img.src = url;
+        img.alt = '';
+        img.draggable = false;
+        chip.appendChild(img);
+      }
+      const txt = document.createElement('span');
+      txt.textContent = nameFor(names, id);
+      chip.appendChild(txt);
+      const cnt = document.createElement('span');
+      cnt.className = 'n';
+      cnt.textContent = count.cells;
+      chip.appendChild(cnt);
+      chip.addEventListener('click', () => {
+        if (filterSet.has(id)) filterSet.delete(id);
+        else filterSet.add(id);
+        saveFilter();
+        renderFilterBar(lastData);
+        if (lastData) renderGrid(lastData);
+      });
+      filtersEl.appendChild(chip);
+    }
+    if (filterSet.size > 0) {
+      const reset = document.createElement('button');
+      reset.className = 'reset';
+      reset.textContent = '✕ Tout afficher';
+      reset.addEventListener('click', () => {
+        filterSet.clear();
+        saveFilter();
+        renderFilterBar(lastData);
+        if (lastData) renderGrid(lastData);
+      });
+      filtersEl.appendChild(reset);
+    }
+  }
+
   // ─── Render ───────────────────────────────────────────────────────
   function renderGrid(data) {
     grid.innerHTML = '';
@@ -479,8 +654,20 @@
           div.appendChild(badge);
         }
         if (cell && cell.details && Object.keys(cell.details).length) {
+          const entries = Object.entries(cell.details);
+          // Si filtre actif : garde seulement les entries dont l'itemId est
+          // dans filterSet. Si aucune match → cell marquée filtered-out.
+          const shown = filterSet.size > 0
+            ? entries.filter(([id]) => filterSet.has(+id))
+            : entries;
+          if (filterSet.size > 0 && shown.length === 0) {
+            div.classList.add('filtered-out');
+          }
           const tip = [`(${x}, ${y})`];
-          for (const [id, n] of Object.entries(cell.details)) {
+          if (filterSet.size > 0 && entries.length > shown.length) {
+            tip.push(`${entries.length - shown.length} masquée(s) par filtre`);
+          }
+          for (const [id, n] of shown) {
             const idNum = +id;
             const span = document.createElement('span');
             span.className = 'res';
@@ -507,6 +694,9 @@
           }
           div.dataset.tooltip = tip.join('\n');
         } else if (center) {
+          // Cell sans ressource : filter actif → grise aussi (tu planifies
+          // une route de fer, les cases sans rien sont secondaires)
+          if (filterSet.size > 0) div.classList.add('filtered-out');
           div.dataset.tooltip = `(${x}, ${y})`;
         }
         frag.appendChild(div);
@@ -526,11 +716,13 @@
     if (!centerMapId) {
       setDiag('Aucune map courante — joue en-jeu pour que STAKK la détecte.');
       renderGrid(null);
+      renderFilterBar(null);
       return;
     }
     const data = await fetchGrid(centerMapId, radius);
     lastData = data;
     renderGrid(data);
+    renderFilterBar(data);
   }
 
   // ─── Toolbar refresh ──────────────────────────────────────────────
