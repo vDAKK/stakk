@@ -176,32 +176,6 @@
     }
     .filters .reset:hover { border-color: var(--accent); color: var(--accent); }
     .filters.empty { display: none; }
-    .filters.active {
-      background: linear-gradient(90deg, rgba(243, 156, 18, 0.15), var(--panel) 30%);
-      border-bottom-color: var(--orange, #f39c12);
-    }
-    .filters .active-badge {
-      background: #f39c12;
-      color: #0a0d12;
-      padding: 2px 8px;
-      border-radius: 10px;
-      font-size: 10px;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      display: none;
-    }
-    .filters.active .active-badge { display: inline-block; }
-
-    /* Cellules qui ne matchent pas le filtre actif : grisées, coords
-       gardés pour continuer à planifier autour. */
-    .cell.filtered-out {
-      opacity: 0.18;
-      filter: grayscale(80%);
-    }
-    .cell.filtered-out:hover { opacity: 0.55; filter: grayscale(0); }
-    /* Waypoints et current cell restent toujours visibles même si filtrés */
-    .cell.filtered-out.waypoint, .cell.filtered-out.current { opacity: 1; filter: none; }
 
     /* ─── Grid / map ────────────────────────────────────────────────── */
     main {
@@ -616,15 +590,15 @@
       return;
     }
     filtersEl.classList.remove('empty');
-    filtersEl.classList.toggle('active', filterSet.size > 0);
+    // Filtre inclusif : filterSet vide = rien affiché, l'user sélectionne
+    // les ressources à afficher. Pas de bandeau « actif » — c'est l'état
+    // normal au chargement, pas une anomalie à signaler.
     const label = document.createElement('span');
     label.className = 'flabel';
-    label.textContent = 'Filtrer :';
+    label.textContent = filterSet.size === 0
+      ? 'Sélectionne les ressources à afficher :'
+      : 'Ressources affichées :';
     filtersEl.appendChild(label);
-    const badge = document.createElement('span');
-    badge.className = 'active-badge';
-    badge.textContent = `Filtre actif (${filterSet.size})`;
-    filtersEl.appendChild(badge);
     // Tri alpha par nom pour une UX stable (pas de reshuffle à chaque fetch)
     const sorted = [...counts.entries()].sort((a, b) => {
       const na = nameFor(names, a[0]);
@@ -659,18 +633,29 @@
       });
       filtersEl.appendChild(chip);
     }
-    if (filterSet.size > 0) {
-      const reset = document.createElement('button');
-      reset.className = 'reset';
-      reset.innerHTML = '<svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Tout afficher';
-      reset.addEventListener('click', () => {
+    // Bouton "tout sélectionner" quand rien n'est coché (raccourci pour
+    // revenir au comportement "affiche tout"), ou "tout désélectionner"
+    // quand l'user a des sélections et veut repartir de zéro.
+    const toggleAll = document.createElement('button');
+    toggleAll.className = 'reset';
+    if (filterSet.size === 0) {
+      toggleAll.innerHTML = '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Tout sélectionner';
+      toggleAll.addEventListener('click', () => {
+        for (const id of counts.keys()) filterSet.add(id);
+        saveFilter();
+        renderFilterBar(lastData);
+        if (lastData) { renderGrid(lastData); updateStats(lastData); }
+      });
+    } else {
+      toggleAll.innerHTML = '<svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Tout désélectionner';
+      toggleAll.addEventListener('click', () => {
         filterSet.clear();
         saveFilter();
         renderFilterBar(lastData);
         if (lastData) { renderGrid(lastData); updateStats(lastData); }
       });
-      filtersEl.appendChild(reset);
     }
+    filtersEl.appendChild(toggleAll);
   }
 
   // ─── Render ───────────────────────────────────────────────────────
@@ -721,17 +706,16 @@
         }
         if (cell && cell.details && Object.keys(cell.details).length) {
           const entries = Object.entries(cell.details);
-          // Si filtre actif : garde seulement les entries dont l'itemId est
-          // dans filterSet. Si aucune match → cell marquée filtered-out.
-          const shown = filterSet.size > 0
-            ? entries.filter(([id]) => filterSet.has(+id))
-            : entries;
-          if (filterSet.size > 0 && shown.length === 0) {
-            div.classList.add('filtered-out');
-          }
+          // Filtre inclusif façon dofusdb : filterSet vide = RIEN affiché
+          // (rendu rapide par défaut, l'user choisit ce qu'il veut voir).
+          // Tooltip garde toutes les ressources pour rester informatif au
+          // survol sans avoir à activer de filtre.
+          const shown = filterSet.size === 0
+            ? []
+            : entries.filter(([id]) => filterSet.has(+id));
           const tip = [`(${x}, ${y})`];
-          if (filterSet.size > 0 && entries.length > shown.length) {
-            tip.push(`${entries.length - shown.length} masquée(s) par filtre`);
+          for (const [idAll, nAll] of entries) {
+            tip.push(`${nameFor(names, +idAll)} ×${nAll}`);
           }
           for (const [id, n] of shown) {
             const idNum = +id;
@@ -756,13 +740,9 @@
               span.appendChild(c2);
             }
             div.appendChild(span);
-            tip.push(`${nameFor(names, idNum)} ×${n}`);
           }
           div.dataset.tooltip = tip.join('\n');
         } else if (center) {
-          // Cell sans ressource : filter actif → grise aussi (tu planifies
-          // une route de fer, les cases sans rien sont secondaires)
-          if (filterSet.size > 0) div.classList.add('filtered-out');
           div.dataset.tooltip = `(${x}, ${y})`;
         }
         frag.appendChild(div);
@@ -793,15 +773,15 @@
     updateStats(data);
   }
 
-  // Stats footer : utile pour comprendre pourquoi la grille semble vide.
-  // Compte le nombre de cells, celles avec ressources, et combien sont
-  // masquées par le filtre actif.
+  // Stats footer : indicateur de ce qui est chargé vs ce qui est affiché.
+  // Filtre vide = rien dessiné volontairement (UX dofusdb), donc on montre
+  // juste le nombre de cases chargées pour que l'user comprenne que la
+  // donnée est là, prête à être affichée dès qu'il sélectionne un filtre.
   function updateStats(data) {
     if (!data?.cells) { statsEl.textContent = ''; return; }
-    const total = (radius * 2 + 1) ** 2;
     const withRes = data.cells.filter(c => c.details && Object.keys(c.details).length).length;
     if (filterSet.size === 0) {
-      statsEl.textContent = `${withRes} / ${total} cases avec ressources`;
+      statsEl.textContent = `${withRes} cases avec ressources chargées — choisis un filtre ci-dessus`;
       return;
     }
     const matching = data.cells.filter(c => {
@@ -809,8 +789,7 @@
       for (const id of Object.keys(c.details)) if (filterSet.has(+id)) return true;
       return false;
     }).length;
-    const color = matching === 0 ? '#e74c3c' : '#f39c12';
-    statsEl.innerHTML = `<span style="color:${color};font-weight:700">Filtre : ${matching} / ${withRes} cases matchent</span>`;
+    statsEl.textContent = `${matching} case(s) affichée(s) sur ${withRes} contenant des ressources`;
   }
 
   // ─── Toolbar refresh ──────────────────────────────────────────────
