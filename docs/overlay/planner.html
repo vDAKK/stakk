@@ -157,6 +157,22 @@
     }
     .filters .reset:hover { border-color: var(--accent); color: var(--accent); }
     .filters.empty { display: none; }
+    .filters.active {
+      background: linear-gradient(90deg, rgba(243, 156, 18, 0.15), var(--panel) 30%);
+      border-bottom-color: var(--orange, #f39c12);
+    }
+    .filters .active-badge {
+      background: #f39c12;
+      color: #0a0d12;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: none;
+    }
+    .filters.active .active-badge { display: inline-block; }
 
     /* Cellules qui ne matchent pas le filtre actif : grisées, coords
        gardés pour continuer à planifier autour. */
@@ -397,6 +413,7 @@
       <kbd>click+drag</kbd> déplacer la carte ·
       <kbd>+ / −</kbd> agrandir le rayon
     </span>
+    <span id="stats" class="hint"></span>
     <span id="diag"></span>
   </footer>
 </div>
@@ -471,6 +488,7 @@
   const radiusLabel = document.getElementById('radiusLabel');
   const wpCount     = document.getElementById('wpCount');
   const filtersEl   = document.getElementById('filters');
+  const statsEl     = document.getElementById('stats');
 
   // ─── Utils ────────────────────────────────────────────────────────
   function showToast(msg) {
@@ -555,10 +573,15 @@
       return;
     }
     filtersEl.classList.remove('empty');
+    filtersEl.classList.toggle('active', filterSet.size > 0);
     const label = document.createElement('span');
     label.className = 'flabel';
     label.textContent = 'Filtrer :';
     filtersEl.appendChild(label);
+    const badge = document.createElement('span');
+    badge.className = 'active-badge';
+    badge.textContent = `⚠ Filtre actif (${filterSet.size})`;
+    filtersEl.appendChild(badge);
     // Tri alpha par nom pour une UX stable (pas de reshuffle à chaque fetch)
     const sorted = [...counts.entries()].sort((a, b) => {
       const na = nameFor(names, a[0]);
@@ -589,7 +612,7 @@
         else filterSet.add(id);
         saveFilter();
         renderFilterBar(lastData);
-        if (lastData) renderGrid(lastData);
+        if (lastData) { renderGrid(lastData); updateStats(lastData); }
       });
       filtersEl.appendChild(chip);
     }
@@ -601,7 +624,7 @@
         filterSet.clear();
         saveFilter();
         renderFilterBar(lastData);
-        if (lastData) renderGrid(lastData);
+        if (lastData) { renderGrid(lastData); updateStats(lastData); }
       });
       filtersEl.appendChild(reset);
     }
@@ -717,12 +740,34 @@
       setDiag('Aucune map courante — joue en-jeu pour que STAKK la détecte.');
       renderGrid(null);
       renderFilterBar(null);
+      statsEl.textContent = '';
       return;
     }
     const data = await fetchGrid(centerMapId, radius);
     lastData = data;
     renderGrid(data);
     renderFilterBar(data);
+    updateStats(data);
+  }
+
+  // Stats footer : utile pour comprendre pourquoi la grille semble vide.
+  // Compte le nombre de cells, celles avec ressources, et combien sont
+  // masquées par le filtre actif.
+  function updateStats(data) {
+    if (!data?.cells) { statsEl.textContent = ''; return; }
+    const total = (radius * 2 + 1) ** 2;
+    const withRes = data.cells.filter(c => c.details && Object.keys(c.details).length).length;
+    if (filterSet.size === 0) {
+      statsEl.textContent = `${withRes} / ${total} cases avec ressources`;
+      return;
+    }
+    const matching = data.cells.filter(c => {
+      if (!c.details) return false;
+      for (const id of Object.keys(c.details)) if (filterSet.has(+id)) return true;
+      return false;
+    }).length;
+    const color = matching === 0 ? '#e74c3c' : '#f39c12';
+    statsEl.innerHTML = `<span style="color:${color};font-weight:700">⚠ Filtre : ${matching} / ${withRes} cases matchent</span>`;
   }
 
   // ─── Toolbar refresh ──────────────────────────────────────────────
@@ -948,29 +993,31 @@
   refreshWpCount();
 
   (async () => {
-    // Préfère le dernier center planner, sinon le player courant, sinon rien.
-    let initial = null;
-    try { initial = parseInt(localStorage.getItem(PLANNER_CENTER) || '', 10) || null; } catch {}
-    if (!initial) {
-      const state = await fetchMapState();
-      if (state?.mapId) { initial = state.mapId; playerMapId = state.mapId; }
+    // Priorité : position courante du joueur > dernier cache planner. Le
+    // cache peut être une map d'une session précédente où le joueur
+    // jouait ailleurs — partir du cache causait « rien ne s'affiche sur
+    // ma map actuelle » parce qu'on centrait sur une map obsolète.
+    const state = await fetchMapState();
+    if (state?.mapId) {
+      playerMapId = state.mapId;
+      centerMapId = state.mapId;
+      try { localStorage.setItem(PLANNER_CENTER, String(centerMapId)); } catch {}
     } else {
-      const state = await fetchMapState();
-      if (state?.mapId) playerMapId = state.mapId;
+      try { centerMapId = parseInt(localStorage.getItem(PLANNER_CENTER) || '', 10) || null; } catch {}
     }
-    if (initial) {
-      centerMapId = initial;
+    if (centerMapId) {
       await refresh();
       requestAnimationFrame(centerViewportOnCenter);
     } else {
-      setDiag('Lance le jeu pour que STAKK détecte ta position, puis clique « 📍 Me centrer ».');
+      setDiag('Lance le jeu pour que STAKK détecte ta position, puis rafraîchis la page.');
     }
-    // Poll périodique pour mettre à jour playerMapId (indicateur visuel
-    // éventuel futur). Pas de re-center auto sur bouger du joueur pour
-    // éviter d'interrompre la planification.
+    // Poll périodique pour suivre la position du joueur en background. Pas
+    // de re-center auto sur un bouger (on pourrait tout casser en pleine
+    // planif), mais si le player bouge beaucoup, le bouton « 📍 Me centrer »
+    // ramène à la position courante.
     setInterval(async () => {
-      const state = await fetchMapState();
-      if (state?.mapId) playerMapId = state.mapId;
+      const s = await fetchMapState();
+      if (s?.mapId) playerMapId = s.mapId;
     }, 2000);
   })();
 </script>
