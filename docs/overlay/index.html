@@ -79,7 +79,13 @@
       min-width: 0;
       min-height: 0;
       transition: background 80ms, border-color 80ms;
+      /* Empêche HTML5 native drag : sans ça, mousedown sur une .res img déclenche
+         un dragstart qui montre un ghost flottant top-right puis revient → bug
+         visuel "la case saute" au début du drag-to-pan. */
+      -webkit-user-drag: none;
+      user-drag: none;
     }
+    .res, .res img { -webkit-user-drag: none; user-drag: none; }
     .cell.alt { background: rgba(255, 255, 255, 0.08); }
     .cell.center {
       border-color: var(--gold);
@@ -730,7 +736,12 @@
     const panel = document.getElementById('panel');
     if (panel) {
       panel.addEventListener('mouseenter', () => { document.title = 'stakk-overlay-click'; });
-      panel.addEventListener('mouseleave', () => { document.title = 'stakk-overlay-idle'; });
+      panel.addEventListener('mouseleave', () => {
+        // Ne pas toggle click-through pendant un drag : sinon la souris qui
+        // passe sur la bordure 3px hors du panel coupe le drag à mi-chemin.
+        if (document.body.classList.contains('dragging')) return;
+        document.title = 'stakk-overlay-idle';
+      });
     }
 
     // ─── Bouton vue étendue (big map) ────────────────────────────────────
@@ -762,8 +773,11 @@
     // ─── Chargement dynamique : expand radius quand on scroll près d'un bord
     //     (et qu'on est en vue étendue). Garde la position scroll relative au
     //     center en compensant les nouvelles cells ajoutées aux bords.
+    //     Skip pendant un drag actif : sinon le re-render mid-drag fait sauter
+    //     le grid et la baseline scrollX/Y du drag devient stale.
     async function expandBigMapIfNeeded() {
       if (!bigMap || expandPending || bigMapRadius >= BIG_MAP_MAX_RADIUS) return;
+      if (dragState && dragState.moved) return;
       const edge = EDGE_THRESHOLD_CELLS * (CELL_SIZE + CELL_GAP);
       const maxX = grid.scrollWidth - grid.clientWidth;
       const maxY = grid.scrollHeight - grid.clientHeight;
@@ -811,28 +825,38 @@
     }
 
     // ─── Drag-to-pan (vue étendue uniquement) ───────────────────────────
-    // Mousedown + move = scroll du container ; mouseup sans drag = click
-    // normal (copie /travel). Si drag détecté (move > 4px), on swallow le
-    // click qui suit pour ne pas déclencher /travel par mégarde.
+    // Pointer events + setPointerCapture : garantit qu'on reçoit pointermove
+    // et pointerup même si la souris sort de la fenêtre Electron, contrairement
+    // à mouse* qui s'arrête au bord. Le flag body.dragging :
+    //   1. désactive le toggle click-through pendant le drag (sinon la souris
+    //      qui passe brièvement sur la bordure 3px du panel coupe le drag),
+    //   2. signale au reste du code (expand, etc.) qu'un drag est en cours.
+    // dragstart preventDefault + CSS user-drag:none = belt-and-suspenders pour
+    // empêcher le drag HTML5 natif d'une .res img qui causait le "saut au début
+    // du drag" (ghost image qui vole top-right puis revient).
     let dragState = null;
     const DRAG_THRESHOLD = 4;
-    grid.addEventListener('mousedown', (e) => {
+    grid.addEventListener('dragstart', (e) => e.preventDefault());
+    grid.addEventListener('pointerdown', (e) => {
       if (!bigMap) return;
-      if (e.button !== 0) return;
+      if (e.button !== 0 || e.pointerType === 'touch') return;
       dragState = {
+        pointerId: e.pointerId,
         startX: e.clientX, startY: e.clientY,
         scrollX: grid.scrollLeft, scrollY: grid.scrollTop,
         moved: false,
       };
-      e.preventDefault(); // empêche sélection de texte
+      try { grid.setPointerCapture(e.pointerId); } catch {}
+      e.preventDefault();
     });
-    window.addEventListener('mousemove', (e) => {
-      if (!dragState) return;
+    grid.addEventListener('pointermove', (e) => {
+      if (!dragState || e.pointerId !== dragState.pointerId) return;
       const dx = e.clientX - dragState.startX;
       const dy = e.clientY - dragState.startY;
       if (!dragState.moved && (Math.abs(dx) > DRAG_THRESHOLD || Math.abs(dy) > DRAG_THRESHOLD)) {
         dragState.moved = true;
         grid.classList.add('dragging');
+        document.body.classList.add('dragging');
         hideTooltip();
       }
       if (dragState.moved) {
@@ -840,13 +864,15 @@
         grid.scrollTop  = dragState.scrollY - dy;
       }
     });
-    window.addEventListener('mouseup', () => {
-      if (!dragState) return;
+    function endDrag(e) {
+      if (!dragState || (e && e.pointerId !== dragState.pointerId)) return;
       const wasDragging = dragState.moved;
+      try { grid.releasePointerCapture(dragState.pointerId); } catch {}
       dragState = null;
       grid.classList.remove('dragging');
+      document.body.classList.remove('dragging');
       if (wasDragging) {
-        // Capture le click qui suit le mouseup pour l'annuler (sinon la
+        // Capture le click qui suit le pointerup pour l'annuler (sinon la
         // cellule où on relâche la souris déclencherait un copy /travel).
         const killClick = (ev) => {
           ev.stopPropagation();
@@ -855,7 +881,9 @@
         };
         window.addEventListener('click', killClick, { capture: true, once: true });
       }
-    });
+    }
+    grid.addEventListener('pointerup', endDrag);
+    grid.addEventListener('pointercancel', endDrag);
 
     if (window.overlay) {
       window.overlay.onEditMode((on) => {
