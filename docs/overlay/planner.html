@@ -78,11 +78,30 @@
     }
     .tb input { min-width: 180px; }
     .tb input:focus, .tb select:focus { border-color: var(--accent); }
-    .tb button { cursor: pointer; font-weight: 600; transition: all .15s; }
+    .tb button {
+      cursor: pointer;
+      font-weight: 600;
+      transition: all .15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .tb button svg, .filters .reset svg {
+      width: 14px;
+      height: 14px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex-shrink: 0;
+    }
+    .filters .reset { display: inline-flex; align-items: center; gap: 5px; }
     .tb button:hover { border-color: var(--accent); color: var(--accent); }
     .tb button.primary { background: var(--accent); border-color: var(--accent); color: #0a0d12; }
     .tb button.primary:hover { filter: brightness(1.1); color: #0a0d12; }
     .tb button.danger:hover { border-color: var(--red); color: var(--red); }
+    .tb button.on { background: rgba(26, 188, 156, 0.25); border-color: var(--accent); color: var(--accent); }
     .tb .sep { width: 1px; height: 22px; background: var(--border); margin: 0 4px; }
     .tb .info {
       color: var(--dim);
@@ -389,16 +408,32 @@
     <h1><span class="logo">S</span> Planner de trajet</h1>
     <div class="tb">
       <input id="routeName" type="text" placeholder="Nom du trajet" maxlength="40">
-      <button id="saveBtn" class="primary">💾 Enregistrer</button>
+      <button id="saveBtn" class="primary" title="Enregistrer le trajet sous ce nom">
+        <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Enregistrer
+      </button>
       <select id="loadSel"><option value="">— charger un trajet —</option></select>
-      <button id="deleteBtn" class="danger">🗑️ Supprimer</button>
+      <button id="deleteBtn" class="danger" title="Supprimer le trajet courant">
+        <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+        Supprimer
+      </button>
       <span class="sep"></span>
-      <button id="clearBtn">✕ Vider</button>
-      <button id="recenterBtn">📍 Me centrer</button>
+      <button id="clearBtn" title="Retirer toutes les étapes">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        Vider
+      </button>
+      <button id="recenterBtn" title="Recentrer sur ma position courante">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+        Me centrer
+      </button>
+      <button id="followBtn" title="Re-centre automatiquement quand tu changes de map">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+        <span>Suivre</span>
+      </button>
       <span class="sep"></span>
       <span class="info">Rayon : <strong id="radiusLabel">20</strong> cases</span>
-      <button id="radiusDecBtn">−</button>
-      <button id="radiusIncBtn">+</button>
+      <button id="radiusDecBtn" title="Réduire le rayon">−</button>
+      <button id="radiusIncBtn" title="Agrandir le rayon">+</button>
       <span class="sep"></span>
       <span class="info"><strong id="wpCount">0</strong> étape(s)</span>
     </div>
@@ -442,6 +477,7 @@
   const PLANNER_CENTER    = 'stakk-planner-center'; // dernier center utilisé
   const PLANNER_RADIUS    = 'stakk-planner-radius';
   const PLANNER_FILTER    = 'stakk-planner-filter'; // Set d'itemIds à montrer
+  const PLANNER_FOLLOW    = 'stakk-planner-follow'; // auto-recenter sur le joueur
 
   let playerMapId = null;     // map courante du joueur (polled via /api/map-state)
   let centerMapId = null;     // centre de la vue (= player par défaut, ou pick manuel)
@@ -460,6 +496,12 @@
   function saveFilter() {
     try { localStorage.setItem(PLANNER_FILTER, JSON.stringify([...filterSet])); } catch {}
   }
+
+  // Follow : true (default) → planner auto-re-centre quand le joueur
+  // change de map. L'user peut désactiver pour planifier à distance sans
+  // être interrompu. Persisté.
+  let followPlayer = true;
+  try { followPlayer = localStorage.getItem(PLANNER_FOLLOW) !== 'false'; } catch {}
 
   // Routes persistées (shared avec overlay)
   let routeStore = {};
@@ -489,6 +531,7 @@
   const wpCount     = document.getElementById('wpCount');
   const filtersEl   = document.getElementById('filters');
   const statsEl     = document.getElementById('stats');
+  const followBtn   = document.getElementById('followBtn');
 
   // ─── Utils ────────────────────────────────────────────────────────
   function showToast(msg) {
@@ -580,7 +623,7 @@
     filtersEl.appendChild(label);
     const badge = document.createElement('span');
     badge.className = 'active-badge';
-    badge.textContent = `⚠ Filtre actif (${filterSet.size})`;
+    badge.textContent = `Filtre actif (${filterSet.size})`;
     filtersEl.appendChild(badge);
     // Tri alpha par nom pour une UX stable (pas de reshuffle à chaque fetch)
     const sorted = [...counts.entries()].sort((a, b) => {
@@ -619,7 +662,7 @@
     if (filterSet.size > 0) {
       const reset = document.createElement('button');
       reset.className = 'reset';
-      reset.textContent = '✕ Tout afficher';
+      reset.innerHTML = '<svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Tout afficher';
       reset.addEventListener('click', () => {
         filterSet.clear();
         saveFilter();
@@ -767,7 +810,7 @@
       return false;
     }).length;
     const color = matching === 0 ? '#e74c3c' : '#f39c12';
-    statsEl.innerHTML = `<span style="color:${color};font-weight:700">⚠ Filtre : ${matching} / ${withRes} cases matchent</span>`;
+    statsEl.innerHTML = `<span style="color:${color};font-weight:700">Filtre : ${matching} / ${withRes} cases matchent</span>`;
   }
 
   // ─── Toolbar refresh ──────────────────────────────────────────────
@@ -809,7 +852,7 @@
     saveRouteStore();
     saveActiveName();
     refreshLoadSelect();
-    showToast(`✓ "${name}" enregistré (${activeRoute.waypoints.length} étapes)`);
+    showToast(`« ${name} » enregistré (${activeRoute.waypoints.length} étapes)`);
   }
   function loadRoute(name) {
     if (!name || !routeStore[name]) return;
@@ -818,7 +861,7 @@
     saveActiveName();
     refreshWpCount();
     if (lastData) renderGrid(lastData);
-    showToast(`"${name}" chargé`);
+    showToast(`« ${name} » chargé`);
   }
   function deleteRoute() {
     const name = activeRoute.name || routeName.value.trim();
@@ -832,7 +875,7 @@
     refreshLoadSelect();
     refreshWpCount();
     if (lastData) renderGrid(lastData);
-    showToast(`"${name}" supprimé`);
+    showToast(`« ${name} » supprimé`);
   }
   function clearWaypoints() {
     if (activeRoute.waypoints.length === 0) return;
@@ -950,6 +993,20 @@
   deleteBtn.addEventListener('click', deleteRoute);
   clearBtn.addEventListener('click', clearWaypoints);
   recenterBtn.addEventListener('click', recenterOnPlayer);
+  function updateFollowBtn() {
+    followBtn.classList.toggle('on', followPlayer);
+    // On ne réécrit QUE le span label pour pas détruire l'<svg> au milieu
+    // du bouton (sinon il faut recomposer le markup à chaque toggle).
+    const label = followBtn.querySelector('span');
+    if (label) label.textContent = followPlayer ? 'Suivre (actif)' : 'Suivre';
+  }
+  followBtn.addEventListener('click', () => {
+    followPlayer = !followPlayer;
+    try { localStorage.setItem(PLANNER_FOLLOW, String(followPlayer)); } catch {}
+    updateFollowBtn();
+    if (followPlayer) recenterOnPlayer();
+  });
+  updateFollowBtn();
   radiusInc.addEventListener('click', () => setRadius(radius + RADIUS_STEP));
   radiusDec.addEventListener('click', () => setRadius(radius - RADIUS_STEP));
   loadSel.addEventListener('change', () => {
@@ -1011,13 +1068,22 @@
     } else {
       setDiag('Lance le jeu pour que STAKK détecte ta position, puis rafraîchis la page.');
     }
-    // Poll périodique pour suivre la position du joueur en background. Pas
-    // de re-center auto sur un bouger (on pourrait tout casser en pleine
-    // planif), mais si le player bouge beaucoup, le bouton « 📍 Me centrer »
-    // ramène à la position courante.
+    // Poll périodique : si followPlayer est ON et que le joueur change de
+    // map, on re-centre automatiquement. Skip si un drag est en cours pour
+    // pas interrompre le pan manuel. L'user toggle 🧭 pour désactiver le
+    // follow s'il veut planifier une zone distante sans être tiré dessus.
     setInterval(async () => {
       const s = await fetchMapState();
-      if (s?.mapId) playerMapId = s.mapId;
+      if (!s?.mapId) return;
+      const changed = s.mapId !== playerMapId;
+      playerMapId = s.mapId;
+      if (followPlayer && changed && s.mapId !== centerMapId && !dragState) {
+        centerMapId = s.mapId;
+        try { localStorage.setItem(PLANNER_CENTER, String(centerMapId)); } catch {}
+        gridCache.clear();
+        await refresh();
+        requestAnimationFrame(centerViewportOnCenter);
+      }
     }, 2000);
   })();
 </script>

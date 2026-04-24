@@ -204,7 +204,7 @@
     }
     body.edit #status { display: block; }
 
-    /* Bouton "vue étendue" : bascule vers un grid 13x13 scrollable pour voir
+    /* Bouton "vue étendue" : bascule vers le grid scrollable pour voir
        où sont les ressources dans la zone façon dofusdb. Coin haut-droit. */
     #bigMapBtn {
       position: absolute;
@@ -232,6 +232,16 @@
       border-color: var(--gold);
     }
     body.big-map #bigMapBtn { background: rgba(245, 192, 66, 0.35); border-color: var(--gold); }
+    /* SVG inline dans les boutons overlay : 12px, stroke courrant */
+    #bigMapBtn svg, #plannerBtn svg {
+      width: 12px;
+      height: 12px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
 
     /* Vue étendue : grid cells à taille fixe, container scrollable dans le
        panel. Cellules 36x36 pour voir icones + compteur confortablement.
@@ -253,6 +263,30 @@
       min-width: 36px;
       min-height: 36px;
     }
+
+    /* Dropdown de choix de trajet : top-left du panel, compact. Le <select>
+       native est un dropdown OS qui marche sans click-through tant que
+       l'overlay a windowHovered=true au moment du click (cf updateTitle). */
+    #routeSel {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      height: 18px;
+      max-width: 110px;
+      padding: 0 2px;
+      background: rgba(0, 0, 0, 0.55);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 2px;
+      color: #eef1f8;
+      font-size: 10px;
+      font-family: inherit;
+      line-height: 1;
+      outline: none;
+      cursor: pointer;
+      z-index: 30;
+    }
+    #routeSel:hover { background: rgba(26, 188, 156, 0.25); border-color: var(--gold); }
+    #routeSel option { background: #1c203a; color: #eef1f8; }
 
     /* Second bouton carré (📋) à côté de ⛶, même style */
     #plannerBtn {
@@ -494,8 +528,15 @@
 </head>
 <body>
   <div id="panel">
-    <button id="bigMapBtn" title="Vue étendue (scroll + drag)">⛶</button>
-    <button id="plannerBtn" title="Ouvrir le planner de trajet (nouvelle fenêtre navigateur)">📋</button>
+    <select id="routeSel" title="Charger un trajet enregistré">
+      <option value="">— trajet —</option>
+    </select>
+    <button id="bigMapBtn" title="Vue étendue (scroll + drag)" aria-label="Vue étendue">
+      <svg viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+    </button>
+    <button id="plannerBtn" title="Ouvrir le planner de trajet dans le navigateur" aria-label="Ouvrir le planner">
+      <svg viewBox="0 0 24 24"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+    </button>
     <div id="routeBanner"></div>
     <div id="grid"></div>
   </div>
@@ -557,14 +598,43 @@
       } catch {}
     }
     loadActiveRouteFromStorage();
+    // Populate le <select> de trajets et le branche : click user → load le
+    // trajet + save active name (l'overlay et le planner partagent localStorage).
+    function populateRouteSel() {
+      const sel = document.getElementById('routeSel');
+      if (!sel) return;
+      const names = Object.keys(routeStore).sort();
+      sel.innerHTML =
+        '<option value="">— trajet —</option>' +
+        names.map(n => {
+          const safe = n.replace(/"/g, '&quot;');
+          const cnt = (routeStore[n].waypoints || []).length;
+          const selAttr = n === activeRoute.name ? ' selected' : '';
+          return `<option value="${safe}"${selAttr}>${safe} (${cnt})</option>`;
+        }).join('');
+    }
+    populateRouteSel();
+    document.getElementById('routeSel')?.addEventListener('change', (e) => {
+      const name = e.target.value;
+      if (name && routeStore[name]) {
+        activeRoute = { name, waypoints: [...(routeStore[name].waypoints || [])] };
+      } else {
+        activeRoute = { name: '', waypoints: [] };
+      }
+      try { localStorage.setItem(ACTIVE_ROUTE_KEY, activeRoute.name || ''); } catch {}
+      if (lastData) renderGrid(lastData);
+      showToast(activeRoute.name ? `Trajet « ${activeRoute.name} » chargé` : 'Trajet désactivé');
+    });
     // Écoute les modifs du planner (autre onglet/fenêtre) : mise à jour live.
     window.addEventListener('storage', (e) => {
       if (e.key === ROUTES_KEY) {
         try { routeStore = JSON.parse(e.newValue || '{}'); } catch {}
         loadActiveRouteFromStorage();
+        populateRouteSel();
         if (lastData) renderGrid(lastData);
       } else if (e.key === ACTIVE_ROUTE_KEY) {
         loadActiveRouteFromStorage();
+        populateRouteSel();
         if (lastData) renderGrid(lastData);
       }
     });
@@ -586,7 +656,7 @@
         nextWp = wps[0];
         stepLabel = `Départ → 1/${wps.length}`;
       } else if (curIdx === wps.length - 1) {
-        banner.textContent = `✓ Arrivé (${wps.length}/${wps.length})${activeRoute.name ? ' · ' + activeRoute.name : ''}`;
+        banner.textContent = `Arrivé (${wps.length}/${wps.length})${activeRoute.name ? ' · ' + activeRoute.name : ''}`;
         banner.style.display = 'block';
         return;
       } else {
@@ -989,7 +1059,11 @@
         radius = normalRadius;
       }
       bigMapBtn.title = bigMap ? 'Vue normale' : 'Vue étendue (scroll + drag)';
-      bigMapBtn.textContent = bigMap ? '×' : '⛶';
+      // Icônes SVG : expand (flèches sortantes) en vue normale, X en big-map
+      // pour signifier "fermer la vue étendue".
+      bigMapBtn.innerHTML = bigMap
+        ? '<svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'
+        : '<svg viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>';
       // Signale à main.js qu'on veut la fenêtre en plan-size (via title).
       // Le click sur ⛶ implique forcément que la souris est dans la fenêtre
       // à ce moment, donc on force windowHovered=true pour garantir que le
