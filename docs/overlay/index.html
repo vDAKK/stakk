@@ -254,6 +254,110 @@
       min-height: 36px;
     }
 
+    /* ─── Waypoints (création trajet) ──────────────────────────────────── */
+    .cell.waypoint {
+      background: rgba(26, 188, 156, 0.32);
+      border-color: #1abc9c;
+      box-shadow: inset 0 0 0 1px rgba(26, 188, 156, 0.6);
+    }
+    .cell.waypoint.center { background: rgba(245, 192, 66, 0.32); border-color: var(--gold); }
+    .cell.waypoint-next {
+      animation: wp-pulse 1400ms ease-in-out infinite;
+    }
+    @keyframes wp-pulse {
+      0%, 100% { box-shadow: inset 0 0 0 1px rgba(26, 188, 156, 0.6); }
+      50%      { box-shadow: inset 0 0 0 2px rgba(26, 188, 156, 1), 0 0 8px rgba(26, 188, 156, 0.8); }
+    }
+    .waypoint-badge {
+      position: absolute;
+      top: 1px;
+      right: 1px;
+      min-width: 13px;
+      height: 13px;
+      padding: 0 3px;
+      box-sizing: border-box;
+      background: #1abc9c;
+      color: #fff;
+      font-size: 9px;
+      font-weight: 800;
+      border: 1px solid rgba(0, 0, 0, 0.55);
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      text-shadow: 0 1px 0 #000;
+      pointer-events: none;
+      z-index: 5;
+      letter-spacing: -0.3px;
+    }
+    /* body.route-mode : click sur une cellule = ajout/suppression waypoint,
+       pas copie /travel. Curseur crosshair pour clarifier. */
+    body.route-mode.big-map #grid { cursor: crosshair; }
+    body.route-mode.big-map #grid.dragging { cursor: grabbing; }
+    body.route-mode #panel { border-color: #1abc9c; }
+
+    /* Toolbar trajet : visible seulement en big-map. Barre horizontale sous
+       le bouton ⛶, permet mode routes + save/load/clear. */
+    #routeBar {
+      position: absolute;
+      top: 26px;
+      left: 3px;
+      right: 24px;
+      padding: 3px 5px;
+      background: var(--panel-bg-alt);
+      border: 1px solid var(--panel-border);
+      border-radius: 4px;
+      display: none;
+      gap: 4px;
+      align-items: center;
+      z-index: 40;
+      font-size: 10px;
+    }
+    body.big-map #routeBar { display: flex; }
+    #routeBar button, #routeBar input, #routeBar select {
+      height: 18px;
+      padding: 0 5px;
+      background: rgba(0, 0, 0, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 3px;
+      color: var(--text);
+      font-size: 10px;
+      font-family: inherit;
+      box-sizing: border-box;
+    }
+    #routeBar input { flex: 1; min-width: 40px; }
+    #routeBar select { max-width: 90px; }
+    #routeBar button { cursor: pointer; white-space: nowrap; }
+    #routeBar button:hover { background: rgba(245, 192, 66, 0.25); border-color: var(--gold); }
+    #routeBar button.on { background: rgba(26, 188, 156, 0.45); border-color: #1abc9c; }
+    #routeBar .sep { width: 1px; height: 14px; background: rgba(255, 255, 255, 0.18); margin: 0 2px; }
+
+    /* Banner dans la vue normale (pas big-map) quand un trajet est actif :
+       affiche "Étape X/Y" et la direction vers le next waypoint. */
+    #routeBanner {
+      position: absolute;
+      top: 3px;
+      left: 24px;
+      right: 24px;
+      padding: 2px 6px;
+      background: rgba(26, 188, 156, 0.85);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      border-radius: 3px;
+      border: 1px solid rgba(0, 0, 0, 0.4);
+      text-shadow: 0 1px 0 rgba(0, 0, 0, 0.5);
+      text-align: center;
+      z-index: 35;
+      display: none;
+      pointer-events: none;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    body.big-map #routeBanner { display: none !important; }
+
     /* Filter bar — panneau horizontal ancré en haut façon toolbar Dofus.
        Visible en mode filtre (Ctrl+Shift+F), permet de toggler les types
        affichés. */
@@ -405,7 +509,16 @@
 </head>
 <body>
   <div id="panel">
-    <button id="bigMapBtn" title="Vue étendue (13x13 scrollable)">⛶</button>
+    <button id="bigMapBtn" title="Vue étendue (scroll + drag)">⛶</button>
+    <div id="routeBar">
+      <button id="routeModeBtn" title="Mode création : click sur les cases pour ajouter des étapes">📍</button>
+      <input id="routeName" type="text" placeholder="Nom du trajet" maxlength="40">
+      <button id="routeSaveBtn" title="Enregistrer ce trajet sous ce nom">💾</button>
+      <select id="routeLoadSel" title="Charger un trajet enregistré"><option value="">— charger —</option></select>
+      <span class="sep"></span>
+      <button id="routeClearBtn" title="Effacer les étapes du trajet actif">✕</button>
+    </div>
+    <div id="routeBanner"></div>
     <div id="grid"></div>
   </div>
   <div id="filterBar"></div>
@@ -423,9 +536,9 @@
     let radius = 1;       // effective radius used for rendering
     let normalRadius = 1; // radius set by user via hotkeys (1 = 3x3 … 3 = 7x7)
     let bigMap = false;   // toggle via bouton : vue étendue scrollable
-    const BIG_MAP_INITIAL_RADIUS = 6;   // 13x13 = 169 cells (fast initial load)
-    const BIG_MAP_STEP = 3;              // +3 par expansion auto
-    const BIG_MAP_MAX_RADIUS = 20;       // 41x41 = 1681 cells cap
+    const BIG_MAP_INITIAL_RADIUS = 10;   // 21x21 = 441 cells (fast initial load)
+    const BIG_MAP_STEP = 5;              // +5 par expansion auto
+    const BIG_MAP_MAX_RADIUS = 50;       // 101x101 = 10201 cells cap (route planner)
     const EDGE_THRESHOLD_CELLS = 3;      // si scroll dans 3 cells d'un bord → expand
     const CELL_SIZE = 36;
     const CELL_GAP = 2;
@@ -442,6 +555,119 @@
       const raw = localStorage.getItem(HIDDEN_KEY);
       if (raw) hiddenIds = new Set(JSON.parse(raw).map(Number));
     } catch {}
+
+    // ─── Routes (trajets) ───────────────────────────────────────────────
+    // Structure persistée : { [name]: { waypoints: [{x,y,mapId}], createdAt } }
+    // activeRoute = copie live éditable ; quand l'user tape un nom + save →
+    // copie dans le store. Active route persistée séparément (nom seul) pour
+    // que l'overlay recharge le dernier trajet au prochain démarrage.
+    const ROUTES_KEY = 'stakk-overlay-routes';
+    const ACTIVE_ROUTE_KEY = 'stakk-overlay-active-route';
+    let routeStore = {};
+    try { routeStore = JSON.parse(localStorage.getItem(ROUTES_KEY) || '{}'); } catch {}
+    let activeRoute = { name: '', waypoints: [] };
+    try {
+      const activeName = localStorage.getItem(ACTIVE_ROUTE_KEY) || '';
+      if (activeName && routeStore[activeName]) {
+        activeRoute = { name: activeName, waypoints: [...(routeStore[activeName].waypoints || [])] };
+      }
+    } catch {}
+    let routeMode = false; // click-to-add waypoints (toggle via bouton 📍)
+
+    function saveRouteStore() {
+      try { localStorage.setItem(ROUTES_KEY, JSON.stringify(routeStore)); } catch {}
+    }
+    function saveActiveName() {
+      try { localStorage.setItem(ACTIVE_ROUTE_KEY, activeRoute.name || ''); } catch {}
+    }
+    function refreshRouteLoadSelect() {
+      const sel = document.getElementById('routeLoadSel');
+      if (!sel) return;
+      const names = Object.keys(routeStore).sort();
+      sel.innerHTML = '<option value="">— charger —</option>' +
+        names.map(n => `<option value="${n.replace(/"/g,'&quot;')}"${n===activeRoute.name?' selected':''}>${n}</option>`).join('');
+    }
+    function toggleWaypointAt(x, y, mapId) {
+      const idx = activeRoute.waypoints.findIndex(w => w.x === x && w.y === y);
+      if (idx >= 0) activeRoute.waypoints.splice(idx, 1);
+      else activeRoute.waypoints.push({ x, y, mapId });
+      if (lastData) renderGrid(lastData);
+    }
+    function clearActiveRoute() {
+      activeRoute = { name: '', waypoints: [] };
+      saveActiveName();
+      const nameInput = document.getElementById('routeName');
+      if (nameInput) nameInput.value = '';
+      if (lastData) renderGrid(lastData);
+    }
+    function saveActiveRoute() {
+      const nameInput = document.getElementById('routeName');
+      const name = (nameInput?.value || '').trim();
+      if (!name) { showToast('Donne un nom au trajet'); return; }
+      if (activeRoute.waypoints.length === 0) { showToast('Ajoute au moins une étape'); return; }
+      routeStore[name] = {
+        waypoints: activeRoute.waypoints.slice(),
+        createdAt: new Date().toISOString(),
+      };
+      activeRoute.name = name;
+      saveRouteStore();
+      saveActiveName();
+      refreshRouteLoadSelect();
+      showToast(`Trajet "${name}" sauvé (${activeRoute.waypoints.length} étapes)`);
+    }
+    function loadRoute(name) {
+      if (!name || !routeStore[name]) return;
+      activeRoute = { name, waypoints: [...routeStore[name].waypoints] };
+      saveActiveName();
+      const nameInput = document.getElementById('routeName');
+      if (nameInput) nameInput.value = name;
+      if (lastData) renderGrid(lastData);
+      showToast(`Trajet "${name}" chargé`);
+    }
+
+    // Banner "Étape X/Y → direction" affiché dans la vue normale (3x3) quand
+    // un trajet est actif. Donne à l'user l'info next-step sans qu'il ait à
+    // ouvrir le big-map. Direction = 8 octants (N, NE, E, SE, S, SW, W, NW).
+    function renderRouteBanner(center) {
+      const banner = document.getElementById('routeBanner');
+      if (!banner) return;
+      if (!center || activeRoute.waypoints.length === 0 || bigMap) {
+        banner.style.display = 'none';
+        return;
+      }
+      const wps = activeRoute.waypoints;
+      const curIdx = wps.findIndex(w => w.x === center.posX && w.y === center.posY);
+      let nextWp, stepLabel;
+      if (curIdx === -1) {
+        nextWp = wps[0];
+        stepLabel = `Départ → 1/${wps.length}`;
+      } else if (curIdx === wps.length - 1) {
+        banner.textContent = `✓ Arrivé (${wps.length}/${wps.length})${activeRoute.name ? ' · ' + activeRoute.name : ''}`;
+        banner.style.display = 'block';
+        return;
+      } else {
+        nextWp = wps[curIdx + 1];
+        stepLabel = `${curIdx + 1}/${wps.length} →`;
+      }
+      const dx = nextWp.x - center.posX;
+      const dy = nextWp.y - center.posY;
+      const dir = dirOctant(dx, dy);
+      const dist = Math.max(Math.abs(dx), Math.abs(dy));
+      banner.textContent = `${stepLabel} ${dir} ${dist} case${dist > 1 ? 's' : ''} (${nextWp.x},${nextWp.y})${activeRoute.name ? ' · ' + activeRoute.name : ''}`;
+      banner.style.display = 'block';
+    }
+    function dirOctant(dx, dy) {
+      if (dx === 0 && dy === 0) return '•';
+      const ang = Math.atan2(dy, dx) * 180 / Math.PI; // -180..180, 0 = E, -90 = N
+      if (ang >= -22.5 && ang < 22.5) return 'E';
+      if (ang >= 22.5 && ang < 67.5) return 'SE';
+      if (ang >= 67.5 && ang < 112.5) return 'S';
+      if (ang >= 112.5 && ang < 157.5) return 'SW';
+      if (ang >= 157.5 || ang < -157.5) return 'W';
+      if (ang >= -157.5 && ang < -112.5) return 'NW';
+      if (ang >= -112.5 && ang < -67.5) return 'N';
+      return 'NE';
+    }
     function saveHidden() {
       try { localStorage.setItem(HIDDEN_KEY, JSON.stringify([...hiddenIds])); } catch {}
     }
@@ -554,8 +780,23 @@
       const names = data?.names || {};
       const byCoord = new Map();
       for (const c of cells) byCoord.set(`${c.posX},${c.posY}`, c);
-      // Si pas de data, on rend quand même la grille vide pour que l'overlay
-      // soit visible (sinon la fenêtre transparente sans contenu = invisible).
+      // Waypoint lookup : posX,posY → indice 1-based dans la route active
+      const wpByCoord = new Map();
+      for (let i = 0; i < activeRoute.waypoints.length; i++) {
+        const w = activeRoute.waypoints[i];
+        wpByCoord.set(`${w.x},${w.y}`, i + 1);
+      }
+      // Prochain waypoint à atteindre : premier non visité après le center.
+      // Si le center EST un waypoint, le suivant = waypoint i+1.
+      let nextWpIdx = null;
+      if (center && activeRoute.waypoints.length > 0) {
+        const centerIdx = wpByCoord.get(`${center.posX},${center.posY}`);
+        if (centerIdx) nextWpIdx = centerIdx < activeRoute.waypoints.length ? centerIdx + 1 : null;
+        else nextWpIdx = 1; // pas encore sur le trajet → commencer au premier
+      }
+      // DocumentFragment : ajout de 10k cells dans le DOM en une seule fois
+      // au lieu de 10k reflows. Gain de ~10× sur le render en mode XL.
+      const frag = document.createDocumentFragment();
       for (let dy = -radius; dy <= radius; dy++) {
         for (let dx = -radius; dx <= radius; dx++) {
           const x = center ? center.posX + dx : null;
@@ -566,6 +807,15 @@
           if ((dx + dy + radius * 2) % 2 === 1) div.classList.add('alt');
           if (dx === 0 && dy === 0) div.classList.add('center');
           if (!cell) div.classList.add('empty-cell');
+          const wpIdx = center ? wpByCoord.get(`${x},${y}`) : null;
+          if (wpIdx) {
+            div.classList.add('waypoint');
+            if (wpIdx === nextWpIdx) div.classList.add('waypoint-next');
+            const badge = document.createElement('span');
+            badge.className = 'waypoint-badge';
+            badge.textContent = wpIdx;
+            div.appendChild(badge);
+          }
           if (center) {
             // Expose coords pour le click → copier /travel X Y
             div.dataset.x = x;
@@ -610,9 +860,11 @@
           } else if (center) {
             div.dataset.tooltip = `(${x}, ${y})`;
           }
-          grid.appendChild(div);
+          frag.appendChild(div);
         }
       }
+      grid.appendChild(frag);
+      renderRouteBanner(center);
     }
 
     async function refresh(mapId) {
@@ -708,10 +960,25 @@
       return ok;
     }
     document.addEventListener('click', async (e) => {
+      // Clicks sur la route bar sont gérés par leurs propres handlers, skip ici.
+      if (e.target.closest('#routeBar')) return;
       const cell = e.target.closest('.cell');
       if (!cell || cell.dataset.clickable !== '1') return;
       const x = cell.dataset.x, y = cell.dataset.y;
       if (x == null || y == null) return;
+      // Mode création trajet : click = toggle waypoint, pas copy /travel.
+      if (routeMode) {
+        const xi = parseInt(x, 10), yi = parseInt(y, 10);
+        // mapId de la cell : on cherche dans lastData.cells. Si pas trouvé
+        // (cell vide hors data), on stocke null — le waypoint reste valide par
+        // coord, juste impossible de "resync" par mapId si les données bougent.
+        let mapId = null;
+        for (const c of (lastData?.cells || [])) {
+          if (c.posX === xi && c.posY === yi) { mapId = c.mapId; break; }
+        }
+        toggleWaypointAt(xi, yi, mapId);
+        return;
+      }
       const cmd = `/travel ${x} ${y}`;
       const ok = await copyToClipboard(cmd);
       if (ok) {
@@ -722,6 +989,39 @@
         showToast('Copie échouée');
       }
     });
+
+    // ─── Route toolbar : boutons + inputs ───────────────────────────────
+    {
+      const modeBtn = document.getElementById('routeModeBtn');
+      const nameInput = document.getElementById('routeName');
+      const saveBtn = document.getElementById('routeSaveBtn');
+      const loadSel = document.getElementById('routeLoadSel');
+      const clearBtn = document.getElementById('routeClearBtn');
+      if (nameInput) nameInput.value = activeRoute.name;
+      refreshRouteLoadSelect();
+      modeBtn?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        routeMode = !routeMode;
+        document.body.classList.toggle('route-mode', routeMode);
+        modeBtn.classList.toggle('on', routeMode);
+        showToast(routeMode ? 'Mode création : click = étape' : 'Mode création off');
+      });
+      saveBtn?.addEventListener('click', (e) => { e.stopPropagation(); saveActiveRoute(); });
+      clearBtn?.addEventListener('click', (e) => { e.stopPropagation(); clearActiveRoute(); });
+      loadSel?.addEventListener('change', (e) => {
+        e.stopPropagation();
+        const name = loadSel.value;
+        if (name) loadRoute(name);
+      });
+      // Pendant la frappe du nom, on update l'activeRoute.name au keyup pour
+      // que saveActiveName soit cohérent si l'user quitte sans cliquer save.
+      nameInput?.addEventListener('input', () => {
+        activeRoute.name = nameInput.value.trim();
+      });
+      // Empêche les hotkeys globales d'intercepter les touches pendant qu'on
+      // tape dans l'input (sinon Ctrl+Shift+Q quitte en plein milieu du nom).
+      nameInput?.addEventListener('keydown', (e) => e.stopPropagation());
+    }
 
     applyGridSize();
     renderGrid(null); // grille vide visible dès le démarrage
