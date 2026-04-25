@@ -2,7 +2,7 @@
 
 **[Site de présentation](https://vdakk.github.io/stakk/about.html)** · **[Télécharger](https://github.com/vDAKK/stakk/releases/latest)** ·
 
-> Bypass les retrictions monocompte pour Dofus 3, Dofus Retro, Wakfu et Dofus Touch — joue plus de comptes, sur un seul PC.
+> Joue en multi compte, sur monocompte Dofus ou Dofus Retro avec un seul PC.
 
 ![STAKK](https://raw.githubusercontent.com/vDAKK/stakk/main/docs/preview.png)
 ![OVERLAY](https://raw.githubusercontent.com/vDAKK/stakk/main/docs/overlay.png)
