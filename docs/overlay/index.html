@@ -132,6 +132,22 @@
       width: 5px; height: 5px; margin: -2.5px 0 0 -2.5px;
       box-shadow: 0 0 4px var(--gold-glow);
     }
+    /* Cells sans map dofusdb = infranchissable. Hachures rouges. */
+    .cell.no-map {
+      background:
+        repeating-linear-gradient(45deg,
+          transparent 0 4px,
+          rgba(231, 76, 60, 0.20) 4px 8px),
+        rgba(0, 0, 0, 0.3) !important;
+      border-color: rgba(231, 76, 60, 0.40) !important;
+    }
+    .cell.no-map.center {
+      background:
+        repeating-linear-gradient(45deg,
+          transparent 0 4px,
+          rgba(231, 76, 60, 0.20) 4px 8px),
+        rgba(245, 192, 66, 0.16) !important;
+    }
     .res {
       position: relative;
       display: inline-flex;
@@ -805,6 +821,10 @@
           if ((dx + dy + radius * 2) % 2 === 1) div.classList.add('alt');
           if (dx === 0 && dy === 0) div.classList.add('center');
           if (!cell) div.classList.add('empty-cell');
+          // Marque les coords sans map dofusdb (falaises/mer/bord du monde)
+          // distinctement de "loading" : empty-cell sans center = pas de data,
+          // empty-cell AVEC center = vraiment pas de map à ces coords.
+          if (center && !cell) div.classList.add('no-map');
           if (center && wpSet.has(`${x},${y}`)) {
             div.classList.add('waypoint');
           }

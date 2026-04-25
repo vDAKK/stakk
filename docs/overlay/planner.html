@@ -234,6 +234,27 @@
       background: rgba(26, 188, 156, 0.12);
       z-index: 2;
     }
+    /* Aucune map dofusdb à ces coords = case infranchissable (falaise, mer,
+       bord de zone). Hachures rouges + cursor not-allowed pour signaler
+       au joueur qu'il peut pas planifier de passage par là. */
+    .cell.no-map {
+      background:
+        repeating-linear-gradient(45deg,
+          transparent 0 5px,
+          rgba(231, 76, 60, 0.18) 5px 10px),
+        rgba(0, 0, 0, 0.25);
+      border-color: rgba(231, 76, 60, 0.35);
+      cursor: not-allowed;
+    }
+    .cell.no-map:hover {
+      background:
+        repeating-linear-gradient(45deg,
+          transparent 0 5px,
+          rgba(231, 76, 60, 0.32) 5px 10px),
+        rgba(0, 0, 0, 0.35);
+      border-color: rgba(231, 76, 60, 0.6);
+    }
+    .cell.no-map .coord { color: rgba(231, 76, 60, 0.55); }
     .cell.current {
       border-color: var(--gold);
       background: var(--gold-dim);
@@ -718,6 +739,8 @@
         div.className = 'cell';
         if ((dx + dy + radius * 2) % 2 === 1) div.classList.add('alt');
         if (dx === 0 && dy === 0) div.classList.add('current');
+        // Aucune map à ces coords dans le worldmap dofusdb = case infranchissable
+        if (center && !cell) div.classList.add('no-map');
         if (center) {
           div.dataset.x = x;
           div.dataset.y = y;
@@ -979,6 +1002,10 @@
     if (moved > DRAG_THRESHOLD) return; // c'était un drag
     const cell = e.target.closest('.cell');
     if (!cell || cell.dataset.x === undefined) return;
+    if (cell.classList.contains('no-map')) {
+      showToast('Aucune map à ces coords (falaise/mer) — choisis une autre case');
+      return;
+    }
     const x = parseInt(cell.dataset.x, 10);
     const y = parseInt(cell.dataset.y, 10);
     const mapId = cell.dataset.mapId ? parseInt(cell.dataset.mapId, 10) : null;
