@@ -53,11 +53,21 @@
         0 4px 10px rgba(0, 0, 0, 0.6);
     }
     #grid {
+      position: relative; /* ancrage de #routeSvg en absolute */
       width: 100%;
       height: 100%;
       display: grid;
       gap: 2px;
       background: transparent;
+    }
+    /* SVG des flèches de trajet, par-dessus la grille mais pointer-events
+       none pour ne pas bloquer click-to-copy /travel ni le drag. */
+    #routeSvg {
+      position: absolute;
+      top: 0; left: 0;
+      pointer-events: none;
+      z-index: 10;
+      overflow: visible;
     }
     .cell {
       position: relative;
@@ -315,43 +325,9 @@
       border-color: var(--gold);
     }
 
-    /* ─── Waypoints (affichage en lecture seule, création via planner page) ─── */
-    .cell.waypoint {
-      background: rgba(26, 188, 156, 0.32);
-      border-color: #1abc9c;
-      box-shadow: inset 0 0 0 1px rgba(26, 188, 156, 0.6);
-    }
-    .cell.waypoint.center { background: rgba(245, 192, 66, 0.32); border-color: var(--gold); }
-    .cell.waypoint-next {
-      animation: wp-pulse 1400ms ease-in-out infinite;
-    }
-    @keyframes wp-pulse {
-      0%, 100% { box-shadow: inset 0 0 0 1px rgba(26, 188, 156, 0.6); }
-      50%      { box-shadow: inset 0 0 0 2px rgba(26, 188, 156, 1), 0 0 8px rgba(26, 188, 156, 0.8); }
-    }
-    .waypoint-badge {
-      position: absolute;
-      top: 1px;
-      right: 1px;
-      min-width: 13px;
-      height: 13px;
-      padding: 0 3px;
-      box-sizing: border-box;
-      background: #1abc9c;
-      color: #fff;
-      font-size: 9px;
-      font-weight: 800;
-      border: 1px solid rgba(0, 0, 0, 0.55);
-      border-radius: 7px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      line-height: 1;
-      text-shadow: 0 1px 0 #000;
-      pointer-events: none;
-      z-index: 5;
-      letter-spacing: -0.3px;
-    }
+    /* Waypoints : pas de highlight cell, le tracé visuel se fait via les
+       flèches SVG par-dessus. Subtle outline pour distinguer. */
+    .cell.waypoint { border-color: rgba(26, 188, 156, 0.45); }
     /* Banner dans la vue normale (pas big-map) quand un trajet est actif :
        affiche "Étape X/Y" et la direction vers le next waypoint. */
     #routeBanner {
@@ -538,7 +514,7 @@
       <svg viewBox="0 0 24 24"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
     </button>
     <div id="routeBanner"></div>
-    <div id="grid"></div>
+    <div id="grid"><svg id="routeSvg" xmlns="http://www.w3.org/2000/svg"></svg></div>
   </div>
   <div id="filterBar"></div>
   <div id="status">drag pour positionner · Ctrl+Shift+F filtres · Ctrl+Shift+↑/↓ zoom · Ctrl+Shift+O sortir édit · Ctrl+Shift+Q quitter</div>
@@ -805,27 +781,17 @@
     }
 
     function renderGrid(data) {
-      grid.innerHTML = '';
+      // Clear seulement les cellules — on garde le <svg id="routeSvg"> qui
+      // est un enfant frère du grid.
+      for (const c of grid.querySelectorAll('.cell')) c.remove();
       applyGridSize();
       const center = data?.center;
       const cells = data?.cells || [];
       const names = data?.names || {};
       const byCoord = new Map();
       for (const c of cells) byCoord.set(`${c.posX},${c.posY}`, c);
-      // Waypoint lookup : posX,posY → indice 1-based dans la route active
-      const wpByCoord = new Map();
-      for (let i = 0; i < activeRoute.waypoints.length; i++) {
-        const w = activeRoute.waypoints[i];
-        wpByCoord.set(`${w.x},${w.y}`, i + 1);
-      }
-      // Prochain waypoint à atteindre : premier non visité après le center.
-      // Si le center EST un waypoint, le suivant = waypoint i+1.
-      let nextWpIdx = null;
-      if (center && activeRoute.waypoints.length > 0) {
-        const centerIdx = wpByCoord.get(`${center.posX},${center.posY}`);
-        if (centerIdx) nextWpIdx = centerIdx < activeRoute.waypoints.length ? centerIdx + 1 : null;
-        else nextWpIdx = 1; // pas encore sur le trajet → commencer au premier
-      }
+      const wpSet = new Set();
+      for (const w of activeRoute.waypoints) wpSet.add(`${w.x},${w.y}`);
       // DocumentFragment : ajout de 10k cells dans le DOM en une seule fois
       // au lieu de 10k reflows. Gain de ~10× sur le render en mode XL.
       const frag = document.createDocumentFragment();
@@ -839,14 +805,8 @@
           if ((dx + dy + radius * 2) % 2 === 1) div.classList.add('alt');
           if (dx === 0 && dy === 0) div.classList.add('center');
           if (!cell) div.classList.add('empty-cell');
-          const wpIdx = center ? wpByCoord.get(`${x},${y}`) : null;
-          if (wpIdx) {
+          if (center && wpSet.has(`${x},${y}`)) {
             div.classList.add('waypoint');
-            if (wpIdx === nextWpIdx) div.classList.add('waypoint-next');
-            const badge = document.createElement('span');
-            badge.className = 'waypoint-badge';
-            badge.textContent = wpIdx;
-            div.appendChild(badge);
           }
           if (center) {
             // Expose coords pour le click → copier /travel X Y
@@ -897,6 +857,62 @@
       }
       grid.appendChild(frag);
       renderRouteBanner(center);
+      renderRouteArrows();
+    }
+
+    // Dessine les flèches du trajet par-dessus la grille via le SVG enfant
+    // de #grid. Cercle vert au départ, rouge à l'arrivée, bleus au milieu.
+    // Pixel positions calculées via offsetLeft/Top (relatives au grid car
+    // #grid est position:relative).
+    function renderRouteArrows() {
+      const svgEl = document.getElementById('routeSvg');
+      if (!svgEl) return;
+      svgEl.innerHTML = '';
+      if (!activeRoute.waypoints.length) {
+        svgEl.setAttribute('width', 0);
+        svgEl.setAttribute('height', 0);
+        return;
+      }
+      const cellByCoord = new Map();
+      for (const cell of grid.querySelectorAll('.cell[data-x]')) {
+        cellByCoord.set(`${cell.dataset.x},${cell.dataset.y}`, cell);
+      }
+      const points = [];
+      for (const wp of activeRoute.waypoints) {
+        const cell = cellByCoord.get(`${wp.x},${wp.y}`);
+        if (!cell) { points.push(null); continue; }
+        points.push({
+          x: cell.offsetLeft + cell.offsetWidth / 2,
+          y: cell.offsetTop + cell.offsetHeight / 2,
+        });
+      }
+      const w = grid.scrollWidth;
+      const h = grid.scrollHeight;
+      svgEl.setAttribute('width', w);
+      svgEl.setAttribute('height', h);
+      svgEl.setAttribute('viewBox', `0 0 ${w} ${h}`);
+      let svg = `<defs><marker id="arr-${Date.now()}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L10,5 L0,10 z" fill="#1abc9c"/></marker></defs>`;
+      const markerId = svg.match(/id="(arr-\d+)"/)[1];
+      for (let i = 0; i < points.length - 1; i++) {
+        const a = points[i], b = points[i + 1];
+        if (!a || !b) continue;
+        const dx = b.x - a.x, dy = b.y - a.y;
+        const d = Math.hypot(dx, dy);
+        if (d < 1) continue;
+        const nx = dx / d, ny = dy / d;
+        const trim = 8;
+        svg += `<line x1="${a.x + nx*trim}" y1="${a.y + ny*trim}" x2="${b.x - nx*trim}" y2="${b.y - ny*trim}" stroke="#1abc9c" stroke-width="2.5" stroke-linecap="round" marker-end="url(#${markerId})" opacity="0.9"/>`;
+      }
+      for (let i = 0; i < points.length; i++) {
+        const p = points[i];
+        if (!p) continue;
+        let color, r;
+        if (i === 0) { color = '#2ecc71'; r = 6; }
+        else if (i === points.length - 1) { color = '#e74c3c'; r = 6; }
+        else { color = '#3498db'; r = 5; }
+        svg += `<circle cx="${p.x}" cy="${p.y}" r="${r}" fill="${color}" stroke="#fff" stroke-width="1.5"/>`;
+      }
+      svgEl.innerHTML = svg;
     }
 
     async function refresh(mapId) {
