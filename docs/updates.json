@@ -25,9 +25,9 @@
       "publishedAt": "2026-04-22T19:11:14.162Z"
     },
     "frida-hook": {
-      "url": "https://vdakk.github.io/stakk/modules/frida-hook-51c8f3bc.js",
-      "sha256": "51c8f3bc5481fe3de1f567ffe0417a041c36445cfc076d37dcd3057b78e11b45",
-      "publishedAt": "2026-04-17T16:44:34.679Z"
+      "url": "https://vdakk.github.io/stakk/modules/frida-hook-14b35f85.js",
+      "sha256": "14b35f85072dfd26dad1d24df7564305134a9d8f31fafa869d798da5e436bcc3",
+      "publishedAt": "2026-04-26T11:49:21.948Z"
     },
     "game-proxy": {
       "url": "https://vdakk.github.io/stakk/modules/game-proxy-69a9238b.js",
