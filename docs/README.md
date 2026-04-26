@@ -1,4 +1,4 @@
-# STAKK
+# STAKK - FREE
 
 **[Site de présentation](https://vdakk.github.io/stakk/about.html)** · **[Télécharger](https://github.com/vDAKK/stakk/releases/latest)** ·
 
