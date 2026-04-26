@@ -3,6 +3,7 @@
 **[Site de présentation](https://vdakk.github.io/stakk/about.html)** · **[Télécharger](https://github.com/vDAKK/stakk/releases/latest)** ·
 
 > Joue en multi compte, sur monocompte Dofus ou Dofus Retro avec un seul PC.
+> Le tool se met à jour automatiquement pour être fonctionnel après chaque mise à jour
 
 ![STAKK](https://raw.githubusercontent.com/vDAKK/stakk/main/docs/preview.png)
 ![OVERLAY](https://raw.githubusercontent.com/vDAKK/stakk/main/docs/overlay.png)
