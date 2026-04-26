@@ -30,9 +30,9 @@
       "publishedAt": "2026-04-26T13:13:28.807Z"
     },
     "game-proxy": {
-      "url": "https://vdakk.github.io/stakk/modules/game-proxy-320da31e.js",
-      "sha256": "320da31e2004821eb4105f8bc3f7957a56780369e5e90b0c18f22271139812a4",
-      "publishedAt": "2026-04-26T13:13:29.591Z"
+      "url": "https://vdakk.github.io/stakk/modules/game-proxy-ecba5e48.js",
+      "sha256": "ecba5e487b667a45b594ee4fdba239a0c4278891bced07f0e5db10e7436b9ac3",
+      "publishedAt": "2026-04-26T13:21:56.907Z"
     },
     "launcher-import": {
       "url": "https://vdakk.github.io/stakk/modules/launcher-import-6b815c16.js",
