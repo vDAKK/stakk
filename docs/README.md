@@ -12,7 +12,7 @@
 
 ### Dofus 3 (PC)
 
-- Import automatique des comptes depuis le launcher officiel Ankama
+- Import automatique des comptes depuis le launcher officiel
 - Nombre de comptes illimité
 - Lancement simultané de plusieurs comptes Dofus 3
 - Contournement des serveurs mono-compte
