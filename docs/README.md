@@ -55,7 +55,7 @@ Plus d'infos sur la **[page de présentation du logiciel](https://vdakk.github.i
 1. Télécharge et extrais la dernière release
 2. Lance `STAKK`
 3. L'interface web s'ouvre automatiquement
-4. Connecte-toi avec Discord
+4. Connecte-toi avec Discord (tu obtiens automatiquement 3 jours d'abonnement gratuitement afin d'essayer le tool)
 5. Tes comptes sont importés automatiquement depuis le Launcher Ankama
 6. En haut à gauche, choisis le jeu (**Dofus 3**, **Retro** ou **Wakfu**)
 7. Sélectionne les comptes et clique sur **PLAY**
