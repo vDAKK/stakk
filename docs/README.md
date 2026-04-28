@@ -27,7 +27,7 @@
 - Import des comptes depuis le launcher Ankama
 - Lancement de plusieurs instances Dofus Retro en parallèle
 - **Limite 1 compte par adresse IP** : sur Dofus Retro, un seul compte par IP est autorisé par Ankama. Pour chaque compte supplémentaire, utilise une seconde carte réseau (ex. clé 4G USB) et crée un groupe réseau dédié
-- Règles réseau distinctes de Dofus 3 (configurables par jeu)
+- Règles réseau distinctes
 
 ### Wakfu (PC)
 
