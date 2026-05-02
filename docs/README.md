@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/vDAKK/stakk/docs/stakk.ico" alt="STAKK" width="128" height="128">
+<img src="https://raw.githubusercontent.com/vDAKK/stakk/main/docs/stakk.ico" alt="STAKK" width="128" height="128">
 
 # STAKK
 
