@@ -6,7 +6,7 @@
 
 **Joue plus de comptes Dofus, sur un seul PC.**
 
-*Lance autant d'instances que ta machine peut encaisser, switch d'un compte à l'autre **d'un seul appui clavier**, sans usine à gaz. Dofus 3, Dofus Retro, Wakfu et Dofus Touch — un seul outil.*
+*Lance autant d'instances que ta machine peut encaisser, switch d'un compte à l'autre **d'un seul appui clavier**, sans usine à gaz. Dofus 3, Dofus Retro, Wakfu et Dofus Touch | un seul outil.*
 
 [![Version](https://img.shields.io/github/v/release/vDAKK/stakk?display_name=tag&label=version&color=1abc9c)](https://github.com/vDAKK/stakk/releases)
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%2B-0078D6?logo=windows)](https://github.com/vDAKK/stakk/releases)
