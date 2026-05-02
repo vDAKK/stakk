@@ -10,7 +10,6 @@
 
 [![Version](https://img.shields.io/github/v/release/vDAKK/stakk?display_name=tag&label=version&color=1abc9c)](https://github.com/vDAKK/stakk/releases)
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%2B-0078D6?logo=windows)](https://github.com/vDAKK/stakk/releases)
-[![Discord](https://img.shields.io/badge/Discord-rejoindre-5865F2?logo=discord&logoColor=white)](https://discord.gg/qwcxAbxns9)
 
 **[Site de présentation](https://vdakk.github.io/stakk/about.html)** · **[Télécharger](https://github.com/vDAKK/stakk/releases/latest)**
 
