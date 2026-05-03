@@ -19,7 +19,7 @@
 
 > ⚠️ **Attention aux contrefaçons.** Le seul endroit légitime pour télécharger
 > STAKK est la page [Releases de ce dépôt GitHub](https://github.com/vDAKK/stakk/releases).
-> Tout autre site (forums, pages de téléchargement tiers, « miroirs »…) ne
+> Tout autre site (forums, pages de téléchargement tiers, « miroirs » …) ne
 > provient pas de moi et peut contenir un binaire modifié.
 
 ## Aperçu
