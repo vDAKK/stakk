@@ -48,7 +48,7 @@ PLAY, ça part.
 - 💚 **Indicateurs de santé** des comptes : état du Shield, validité des
   clés, activité récente
 - 🗺️ **Overlay de récolte** affichant les ressources autour de ta position
-  et qui s'adapte à tes déplacements
+  et qui s'adapte à tes déplacements avec possibilité de créer des trajets à afficher sur l'overlay
 - 🎨 **Interface multilingue** FR · EN · ES · DE · PT, thème sombre
 - 🔄 **Mises à jour transparentes** — les correctifs protocole et
   logiques de lancement sont appliqués en hot-update, sans télécharger
