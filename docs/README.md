@@ -44,7 +44,7 @@ PLAY, ça part.
 - 🛡️ **Shield intégré** — Email & OTP / Authenticator gérés sans friction
 - 🌐 **Groupes réseau** — associe chaque compte à une IP ou à un proxy
   SOCKS5 (indispensable sur Dofus Retro)
-- ⌨️ **Raccourcis clavier** pour switcher d'un compte à l'autre instantanément
+- ⌨️ **Raccourcis clavier** pour switcher d'un compte à l'autre instantanément (Organizer like)
 - 💚 **Indicateurs de santé** des comptes : état du Shield, validité des
   clés, activité récente
 - 🗺️ **Overlay de récolte** affichant les ressources autour de ta position
