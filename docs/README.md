@@ -130,8 +130,7 @@ localement et les stocke chiffrés sur ton PC. Aucun mot de passe ne
 transite en clair.
 
 **Windows affiche un avertissement bleu au premier lancement, c'est normal ?**
-Oui. STAKK n'est pas signé avec un **certificat code-signing** (qui coûte
-~300 €/an et n'est pas justifiable pour un projet de ce type). Windows
+Oui. STAKK n'est pas signé avec un **certificat code-signing**, Windows
 SmartScreen affiche donc une alerte par précaution sur tout exécutable
 peu connu. Clique sur **« Informations complémentaires »** puis
 **« Exécuter quand même »**.
