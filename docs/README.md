@@ -33,7 +33,7 @@ Tu veux jouer plusieurs comptes sur serveur monocompte mais tu en as marre de jo
 launchers, des proxies bricolés et des clones de fenêtres ? STAKK
 centralise **l'import, le lancement et la gestion** de tous tes comptes
 Dofus dans une seule interface — tu choisis le compte à lancer, tu cliques sur
-PLAY, ça part.
+PLAY, ça part !
 
 ## Fonctionnalités
 
