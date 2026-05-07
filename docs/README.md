@@ -82,7 +82,7 @@ disponible sur Firefox / Safari.
 5. En haut à gauche, choisis le jeu (**Dofus 3**, **Retro** ou **Wakfu**)
 6. Sélectionne les comptes et clique sur **PLAY**
 7. Pour fermer STAKK, clique sur "Fermer STAKK" en haut à droite de
-   l'interface
+   l'interface, cela fermera complètement le tool et pas l; interface web uniquement
 
 > ⚠️ **Dofus Retro** : un seul compte par IP autorisé par Ankama.
 > Utilise une seconde connexion (ex. clé 4G USB) + un groupe réseau dédié
