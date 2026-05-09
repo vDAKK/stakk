@@ -61,9 +61,9 @@
       "publishedAt": "2026-04-19T14:43:23.907Z"
     },
     "account-sync": {
-      "url": "https://vdakk.github.io/stakk/modules/account-sync-1ae3d78d.js",
-      "sha256": "1ae3d78dab776d9b99ce802f189019457f8fc2f37c78a62d6c36aef7c3d15656",
-      "publishedAt": "2026-05-04T17:46:20.693Z"
+      "url": "https://vdakk.github.io/stakk/modules/account-sync-a23d1e5e.js",
+      "sha256": "a23d1e5ee4710c36dc1e4ec4bcc18f12cc4c8339e79a3818e16018b22ca4295c",
+      "publishedAt": "2026-05-09T15:11:00.060Z"
     },
     "click-broadcast": {
       "url": "https://vdakk.github.io/stakk/modules/click-broadcast-0a72ef73.js",
