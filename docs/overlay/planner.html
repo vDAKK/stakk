@@ -588,11 +588,14 @@
       if (!stateRes.ok) return null;
       const state = await stateRes.json();
       const linked = linkRes?.ok ? (await linkRes.json()).accountId : null;
-      const entries = Object.entries(state);
-      if (entries.length === 0) return null;
-      if (linked != null && state[linked]) return state[linked];
-      entries.sort((a, b) => (b[1].updatedAt || 0) - (a[1].updatedAt || 0));
-      return entries[0][1];
+      // /api/map-state inclut désormais les comptes lancés sans mapId détecté
+      // (running:true, mapId:null) — on filtre pour ne garder que ceux avec
+      // une map réelle, sinon le planner essaierait de fetch grid(null).
+      const withMap = Object.entries(state).filter(([, v]) => v && v.mapId);
+      if (withMap.length === 0) return null;
+      if (linked != null && state[linked] && state[linked].mapId) return state[linked];
+      withMap.sort((a, b) => (b[1].updatedAt || 0) - (a[1].updatedAt || 0));
+      return withMap[0][1];
     } catch (e) { return null; }
   }
   async function fetchGrid(mapId, r) {

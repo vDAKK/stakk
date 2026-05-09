@@ -954,15 +954,23 @@
         const state = await stateRes.json();
         const linked = linkRes?.ok ? (await linkRes.json()).accountId : null;
         const entries = Object.entries(state);
-        if (entries.length === 0) { diagSet('aucun compte actif'); return; }
+        if (entries.length === 0) { diagSet('aucun compte lancé'); return; }
+        // Comptes avec une map détectée (le proxy a vu un ChangeMapMessage).
+        // Tant qu'aucun compte n'a bougé, mapId est null → on demande un
+        // déplacement plutôt que d'afficher "aucun compte actif".
+        const withMap = entries.filter(([, v]) => v && v.mapId);
+        if (withMap.length === 0) {
+          diagSet(`${entries.length} compte(s) lancé(s) — bouge sur la map pour détecter ta position`);
+          return;
+        }
 
         let chosen;
-        if (linked != null && state[linked]) {
+        if (linked != null && state[linked] && state[linked].mapId) {
           chosen = state[linked];
         } else {
           // Auto-pick : celui dont la map a été update le plus récemment
-          entries.sort((a, b) => (b[1].updatedAt || 0) - (a[1].updatedAt || 0));
-          chosen = entries[0][1];
+          withMap.sort((a, b) => (b[1].updatedAt || 0) - (a[1].updatedAt || 0));
+          chosen = withMap[0][1];
         }
         const mapId = chosen.mapId;
         if (mapId !== lastMapId) {

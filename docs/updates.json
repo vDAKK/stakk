@@ -71,9 +71,9 @@
       "publishedAt": "2026-04-22T15:47:40.303Z"
     },
     "overlay-backend": {
-      "url": "https://vdakk.github.io/stakk/modules/overlay-backend-878d71e5.js",
-      "sha256": "878d71e560ce62d29ab2a10c86797a203c5e825acba5185f1eeeb97e0d177565",
-      "publishedAt": "2026-04-24T20:50:23.924Z"
+      "url": "https://vdakk.github.io/stakk/modules/overlay-backend-e5b66188.js",
+      "sha256": "e5b661884edcbfe621da2d7bc3700c143524f455d74c00836e8a92a9428f22cf",
+      "publishedAt": "2026-05-09T17:50:04.871Z"
     },
     "key-refresh": {
       "url": "https://vdakk.github.io/stakk/modules/key-refresh-ad3ca40b.js",
