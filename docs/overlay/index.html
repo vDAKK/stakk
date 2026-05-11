@@ -960,7 +960,7 @@
         // déplacement plutôt que d'afficher "aucun compte actif".
         const withMap = entries.filter(([, v]) => v && v.mapId);
         if (withMap.length === 0) {
-          diagSet(`${entries.length} compte(s) lancé(s) — bouge sur la map pour détecter ta position`);
+          diagSet(`${entries.length} compte(s) lancé(s), bouge sur la map pour détecter ta position`);
           return;
         }
 
