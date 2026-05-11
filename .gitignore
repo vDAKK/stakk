@@ -14,6 +14,14 @@ releases-archive/
 # Zips de release générés au root avant upload GitHub
 stakk-v*.zip
 stakk-macos-v*.zip
+stakk-macos-arm64-v*.zip
+stakk-macos-x64-v*.zip
+macos-arm64-v*.zip
+macos-x64-v*.zip
+
+# Outils dev locaux (Claude Code, VSCode) — pas pour le repo public
+.claude/
+.vscode/
 
 # Build output / caches éphémères (pour sécurité si re-générés au root)
 node_modules/
