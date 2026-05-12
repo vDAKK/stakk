@@ -2,7 +2,7 @@
 
 <img src="https://raw.githubusercontent.com/vDAKK/stakk/main/docs/stakk.ico" alt="STAKK" width="128" height="128">
 
-# STAKK | Gratuit ❤️ !
+# STAKK | Gratuit ❤️ | Dernière version de Dofus
 
 **Joue plus de comptes Dofus, sur un seul PC.**
 
