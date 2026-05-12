@@ -45,6 +45,7 @@ PLAY, ça part !
 - 🌐 **Groupes réseau** — associe chaque compte à une IP ou à un proxy
   SOCKS5 (indispensable sur Dofus Retro)
 - ⌨️ **Raccourcis clavier** pour switcher d'un compte à l'autre instantanément (Organizer like)
+- 📅 **Almanax** affiché avec vue calendrier et possibilité de filtrer sur le type de bonus, le nombre de kamas que ça rapporte etc
 - 💚 **Indicateurs de santé** des comptes : état du Shield, validité des
   clés, activité récente
 - 🗺️ **Overlay de récolte** affichant les ressources autour de ta position
