@@ -2,7 +2,7 @@
 
 <img src="https://raw.githubusercontent.com/vDAKK/stakk/main/docs/stakk.ico" alt="STAKK" width="128" height="128">
 
-# STAKK | Gratuit ❤️ | 🟢 Dofus 3.5.14.18
+# STAKK | Gratuit ❤️ | UP 🟢 Dofus 3.5.14.18
 
 **Joue plus de comptes Dofus, sur un seul PC.**
 
