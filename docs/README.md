@@ -45,6 +45,12 @@ PLAY, ça part !
 - 🌐 **Groupes réseau** — associe chaque compte à une IP ou à un proxy
   SOCKS5 (indispensable sur Dofus Retro)
 - ⌨️ **Raccourcis clavier** pour switcher d'un compte à l'autre instantanément (Organizer like)
+- ⚒️ **Forgemagie automatique** — clé en main, sans calibrage : plage
+  min/max par stat, choix du palier de rune au poids, **exos PA / PM / PO /
+  Invocation** lancés quand la condition est atteinte, orbe régénérante
+  automatique sur jet brisé, arrêt + notification dès que l'exo tombe ou
+  qu'une rune manque, historique détaillé façon jeu, et deux modes sans
+  risque (simulation et essai à blanc) avant de toucher au vrai personnage
 - 📅 **Almanax** affiché avec vue calendrier et possibilité de filtrer sur le type de bonus, le nombre de kamas que ça rapporte etc
 - 💚 **Indicateurs de santé** des comptes : état du Shield, validité des
   clés, activité récente
@@ -106,6 +112,61 @@ disponible sur Firefox / Safari.
 8. Clique sur **Macro** dans la barre latérale pour associer une touche
    PC à une zone du canvas (dessine la zone → appuie sur la touche pour
    l'enregistrer)
+
+## Forgemagie automatique
+
+Onglet **Forgemagie**. Tu choisis un item, tu règles tes plages, tu cliques
+sur Forger. Il n'y a **rien à calibrer ni à observer** : STAKK reconnaît
+l'atelier, l'item et ton stock de runes tout seul.
+
+### Plages de stats
+
+Chaque stat a un curseur double : **viser au moins** et **plafond**. Par
+défaut, ce sont le jet minimum et le jet maximum de l'item — tu ne pars donc
+jamais d'une page vide.
+
+Le palier de rune est choisi sur la **place restante sous le plafond**, pas sur
+l'écart à l'objectif : sur une plage 20–25 à 20, STAKK envoie une Pa (+3)
+plutôt qu'une simple (+1), parce que 23 tient encore sous le plafond. Il tient
+aussi compte de la **limite de poids** du jeu (101 par ligne) et n'envoie pas
+une rune qui ne passerait jamais.
+
+### Exos
+
+Coche **Exo** sur PA, PM, PO ou Invocation, et dis à partir de quand tenter :
+*exo une fois les plages atteintes*. STAKK monte d'abord le jet, puis bascule
+sur la rune d'exo.
+
+- **Jet brisé après un exo raté** → orbe régénérante utilisée
+  automatiquement (elle choisit le niveau utilisable pour ton item), puis
+  STAKK remonte le jet et retente l'exo.
+- **Exo réussi** → arrêt immédiat, son et notification.
+- **Plus de runes** → arrêt, avec le nom exact de celle qui manque.
+
+### Historique
+
+Chaque jet est détaillé comme en jeu, mais en mieux : la rune, la stat visée,
+le verdict (**passé** / **raté** / **refusé**), **toutes les lignes touchées**
+avec leur valeur avant → après, le mouvement du reliquat et le poids détruit.
+Un onglet *Journal* garde la trace texte brute.
+
+### Modes
+
+| Mode | Ce qu'il fait | Risque |
+|---|---|---|
+| **Simulation** | Déroule la boucle en local, sans jeu ni réseau | Aucun |
+| **Essai à blanc** | Lit le vrai atelier et le vrai stock, construit les paquets, **n'envoie rien** | Aucun |
+| **Jeu** | Envoie réellement les jets | Réel |
+
+### Bon à savoir
+
+- **Cadence** : le délai entre deux jets est tiré au hasard dans la fourchette
+  que tu fixes, et compté depuis le jet précédent — pas ajouté à l'attente de
+  la réponse serveur. Garde une vraie fourchette, pas une valeur fixe.
+- **Tous les exemplaires** : STAKK compte les exemplaires de l'item dans ton
+  inventaire et les enchaîne. Entre deux, il te demande de changer l'item et
+  repart tout seul quand il en voit un neuf dans l'atelier.
+- **Presets** : enregistre un jeu de plages par item et recharge-le plus tard.
 
 ## FAQ
 

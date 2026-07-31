@@ -23,6 +23,9 @@ macos-x64-v*.zip
 .claude/
 .vscode/
 
+# Binaires tiers analysés en local (ste.exe & co, ~300 Mo) — jamais publiés
+multi/
+
 # Build output / caches éphémères (pour sécurité si re-générés au root)
 node_modules/
 dist/

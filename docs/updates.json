@@ -7,7 +7,8 @@
     "account-sync",
     "click-broadcast",
     "overlay-backend",
-    "key-refresh"
+    "key-refresh",
+    "fm"
   ],
   "modules": {
     "zaap-server": {
@@ -31,9 +32,9 @@
       "publishedAt": "2026-04-26T13:13:28.807Z"
     },
     "game-proxy": {
-      "url": "https://vdakk.github.io/stakk/modules/game-proxy-8dc539e1.js",
-      "sha256": "8dc539e10513ab4451b38ac5b170cf66341156a97e449f3ecdb1bfb378ccbf48",
-      "publishedAt": "2026-06-24T08:33:02.383Z"
+      "url": "https://vdakk.github.io/stakk/modules/game-proxy-4b12e608.js",
+      "sha256": "4b12e6084cae53a31edc0ef461fdb9597963c69fd7e7aeb4782b4db94e22688d",
+      "publishedAt": "2026-07-31T06:39:29.493Z"
     },
     "launcher-import": {
       "url": "https://vdakk.github.io/stakk/modules/launcher-import-6b815c16.js",
@@ -79,6 +80,36 @@
       "url": "https://vdakk.github.io/stakk/modules/key-refresh-ad3ca40b.js",
       "sha256": "ad3ca40b028f2aceef87f778a6f401a317a1b635350c48afecf3e7137cfcf864",
       "publishedAt": "2026-05-04T17:46:20.088Z"
+    },
+    "fm-engine": {
+      "url": "https://vdakk.github.io/stakk/modules/fm-engine-4632f88b.js",
+      "sha256": "4632f88bc6a0b882f241a17ed0e8ed59d930dd76b73412ff36c76adea1491ebe",
+      "publishedAt": "2026-07-31T16:21:00.281Z"
+    },
+    "fm-data": {
+      "url": "https://vdakk.github.io/stakk/modules/fm-data-5c5e8f26.js",
+      "sha256": "5c5e8f266ff216c6e3a1c4cbcb5903c21b87c627f2ba32b842d7971638b2d0d2",
+      "publishedAt": "2026-07-31T16:21:00.925Z"
+    },
+    "fm": {
+      "url": "https://vdakk.github.io/stakk/modules/fm-0581f891.js",
+      "sha256": "0581f89138a10d670c904dcb149541afda74517e39257be7e63562f55f214f44",
+      "publishedAt": "2026-07-31T16:27:29.708Z"
+    },
+    "fm-protocol": {
+      "url": "https://vdakk.github.io/stakk/modules/fm-protocol-2ac70865.js",
+      "sha256": "2ac70865b75609b5f1f78d16e1600434ba5fc1ce510f7ab8e0d8219331f86cfd",
+      "publishedAt": "2026-07-31T12:04:07.573Z"
+    },
+    "fm-live": {
+      "url": "https://vdakk.github.io/stakk/modules/fm-live-886282b3.js",
+      "sha256": "886282b3e87af2c601821bc05162d09a1aeeafd3a45f48f2e7910dcb4b6b26c7",
+      "publishedAt": "2026-07-31T16:21:01.598Z"
+    },
+    "fm-weights": {
+      "url": "https://vdakk.github.io/stakk/modules/fm-weights-c10f0a4e.js",
+      "sha256": "c10f0a4e37ce44c1899c6a797e924026b62326a9499806cb945ae8232952f962",
+      "publishedAt": "2026-07-31T12:17:36.092Z"
     }
   }
 }
