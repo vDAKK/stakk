@@ -2,7 +2,8 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8">
-  <title>STAKK — Planner de trajet</title>
+  <title>STAKK — Planner</title>
+  <script src="i18n.js"></script>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231abc9c' stroke-width='2'%3E%3Cpath d='M12 2L2 7l10 5 10-5-10-5z'/%3E%3C/svg%3E">
   <style>
     :root {
@@ -383,37 +384,37 @@
 <body>
 <div class="app">
   <header>
-    <h1><span class="logo">S</span> Planner de trajet</h1>
+    <h1><span class="logo">S</span> <span id="pageTitle">Planner de trajet</span></h1>
     <div class="tb">
-      <input id="routeName" type="text" placeholder="Nom du trajet" maxlength="40">
-      <button id="saveBtn" class="primary" title="Enregistrer le trajet sous ce nom">
+      <input id="routeName" type="text" maxlength="40">
+      <button id="saveBtn" class="primary">
         <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-        Enregistrer
+        <span id="saveBtnLbl">Enregistrer</span>
       </button>
-      <select id="loadSel"><option value="">— charger un trajet —</option></select>
-      <button id="deleteBtn" class="danger" title="Supprimer le trajet courant">
+      <select id="loadSel"><option value=""></option></select>
+      <button id="deleteBtn" class="danger">
         <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
-        Supprimer
+        <span id="deleteBtnLbl">Supprimer</span>
       </button>
       <span class="sep"></span>
-      <button id="clearBtn" title="Retirer toutes les étapes">
+      <button id="clearBtn">
         <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        Vider
+        <span id="clearBtnLbl">Vider</span>
       </button>
-      <button id="recenterBtn" title="Recentrer sur ma position courante">
+      <button id="recenterBtn">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
-        Me centrer
+        <span id="recenterBtnLbl">Me centrer</span>
       </button>
-      <button id="followBtn" title="Re-centre automatiquement quand tu changes de map">
+      <button id="followBtn">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
-        <span>Suivre</span>
+        <span id="followBtnLbl">Suivre</span>
       </button>
       <span class="sep"></span>
-      <span class="info">Rayon : <strong id="radiusLabel">20</strong> cases</span>
-      <button id="radiusDecBtn" title="Réduire le rayon">−</button>
-      <button id="radiusIncBtn" title="Agrandir le rayon">+</button>
+      <span class="info"><span id="radiusLbl">Rayon</span> : <strong id="radiusLabel">20</strong> <span id="radiusUnit">cases</span></span>
+      <button id="radiusDecBtn">−</button>
+      <button id="radiusIncBtn">+</button>
       <span class="sep"></span>
-      <span class="info"><strong id="wpCount">0</strong> étape(s)</span>
+      <span class="info"><strong id="wpCount">0</strong> <span id="wpCountLbl">étape(s)</span></span>
     </div>
   </header>
   <div class="filters empty" id="filters"></div>
@@ -422,9 +423,9 @@
   </main>
   <footer>
     <span class="hint">
-      <kbd>click</kbd> ajouter/retirer étape ·
-      <kbd>click+drag</kbd> déplacer la carte ·
-      <kbd>+ / −</kbd> agrandir le rayon
+      <kbd>click</kbd> <span id="helpClick"></span> ·
+      <kbd>click+drag</kbd> <span id="helpDrag"></span> ·
+      <kbd>+ / −</kbd> <span id="helpRadius"></span>
     </span>
     <span id="stats" class="hint"></span>
     <span id="diag"></span>
@@ -437,6 +438,33 @@
   'use strict';
   // STAKK URL : même origin que cette page (loopback stakk.exe HTTP).
   const STAKK_URL = location.origin;
+
+  // ─── i18n ──────────────────────────────────────────────────────────
+  // Langue pilotée par l'UI STAKK (GitHub Pages) via /api/overlay/lang :
+  // les deux origines ne partagent pas leur localStorage.
+  const I18N = window.STAKK_I18N;
+  const tr = (k, v) => I18N.t(k, v);
+  function applyStaticI18n() {
+    const set = (id, key) => { const el = document.getElementById(id); if (el) el.textContent = tr(key); };
+    const title = (id, key) => { const el = document.getElementById(id); if (el) el.title = tr(key); };
+    document.documentElement.lang = I18N.lang;
+    document.title = 'STAKK — ' + tr('plannerTitle');
+    set('pageTitle', 'plannerTitle');
+    const rn = document.getElementById('routeName');
+    if (rn) rn.placeholder = tr('routeNamePlaceholder');
+    set('saveBtnLbl', 'save');       title('saveBtn', 'saveRouteTitle');
+    set('deleteBtnLbl', 'delete');   title('deleteBtn', 'deleteRouteTitle');
+    set('clearBtnLbl', 'clear');     title('clearBtn', 'clearTitle');
+    set('recenterBtnLbl', 'recenter'); title('recenterBtn', 'recenterTitle');
+    set('followBtnLbl', 'follow');   title('followBtn', 'followTitle');
+    title('radiusDecBtn', 'radiusDecTitle');
+    title('radiusIncBtn', 'radiusIncTitle');
+    set('radiusUnit', 'cells');
+    set('wpCountLbl', 'steps');
+    set('helpClick', 'helpClick');
+    set('helpDrag', 'helpDrag');
+    set('helpRadius', 'helpRadius');
+  }
 
   // ─── Constantes & état ────────────────────────────────────────────
   const CELL_SIZE = 40;
@@ -521,9 +549,9 @@
     showToast._t = setTimeout(() => toast.classList.remove('show'), 1800);
   }
   function setDiag(msg) { diag.textContent = msg || ''; }
+  // Nom d'item dans la langue de l'UI (dofusdb renvoie fr/en/es/de/pt)
   function nameFor(names, id) {
-    const n = names?.[id];
-    return (n && (n.fr || n.en)) || 'id ' + id;
+    return I18N.itemName(names, id);
   }
   function iconUrlFor(names, id) {
     const n = names?.[id];
@@ -650,20 +678,18 @@
     // normal au chargement, pas une anomalie à signaler.
     const label = document.createElement('span');
     label.className = 'flabel';
-    label.textContent = filterSet.size === 0
-      ? 'Sélectionne les ressources à afficher :'
-      : 'Ressources affichées :';
+    label.textContent = filterSet.size === 0 ? tr('pickResources') : tr('shownResources');
     filtersEl.appendChild(label);
     // Tri alpha par nom pour une UX stable (pas de reshuffle à chaque fetch)
     const sorted = [...counts.entries()].sort((a, b) => {
       const na = nameFor(names, a[0]);
       const nb = nameFor(names, b[0]);
-      return na.localeCompare(nb);
+      return na.localeCompare(nb, I18N.lang);
     });
     for (const [id, count] of sorted) {
       const chip = document.createElement('span');
       chip.className = 'chip' + (filterSet.has(id) ? ' on' : '');
-      chip.title = nameFor(names, id) + ` · ${count.cells} case(s)` + (count.total > count.cells ? ` · ${count.total} au total` : '');
+      chip.title = nameFor(names, id) + ` · ${count.cells} ${tr('cells')}` + (count.total > count.cells ? ` · ${count.total} ${tr('total')}` : '');
       const url = iconUrlFor(names, id);
       if (url) {
         const img = document.createElement('img');
@@ -694,7 +720,7 @@
     const toggleAll = document.createElement('button');
     toggleAll.className = 'reset';
     if (filterSet.size === 0) {
-      toggleAll.innerHTML = '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Tout sélectionner';
+      toggleAll.innerHTML = '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> ' + tr('selectAll');
       toggleAll.addEventListener('click', () => {
         for (const id of counts.keys()) filterSet.add(id);
         saveFilter();
@@ -702,7 +728,7 @@
         if (lastData) { renderGrid(lastData); updateStats(lastData); }
       });
     } else {
-      toggleAll.innerHTML = '<svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Tout désélectionner';
+      toggleAll.innerHTML = '<svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> ' + tr('deselectAll');
       toggleAll.addEventListener('click', () => {
         filterSet.clear();
         saveFilter();
@@ -866,7 +892,7 @@
 
   async function refresh() {
     if (!centerMapId) {
-      setDiag('Aucune map courante — joue en-jeu pour que STAKK la détecte.');
+      setDiag(tr('noCurrentMap'));
       renderGrid(null);
       renderFilterBar(null);
       statsEl.textContent = '';
@@ -887,7 +913,7 @@
     if (!data?.cells) { statsEl.textContent = ''; return; }
     const withRes = data.cells.filter(c => c.details && Object.keys(c.details).length).length;
     if (filterSet.size === 0) {
-      statsEl.textContent = `${withRes} cases avec ressources chargées — choisis un filtre ci-dessus`;
+      statsEl.textContent = tr('cellsWithResources', { n: withRes });
       return;
     }
     const matching = data.cells.filter(c => {
@@ -895,13 +921,13 @@
       for (const id of Object.keys(c.details)) if (filterSet.has(+id)) return true;
       return false;
     }).length;
-    statsEl.textContent = `${matching} case(s) affichée(s) sur ${withRes} contenant des ressources`;
+    statsEl.textContent = tr('cellsShown', { n: matching, total: withRes });
   }
 
   // ─── Toolbar refresh ──────────────────────────────────────────────
   function refreshLoadSelect() {
     const names = Object.keys(routeStore).sort();
-    loadSel.innerHTML = '<option value="">— charger un trajet —</option>' +
+    loadSel.innerHTML = '<option value="">' + tr('loadRoutePlaceholder') + '</option>' +
       names.map(n => {
         const safe = n.replace(/"/g, '&quot;');
         const sel = n === activeRoute.name ? ' selected' : '';
@@ -925,16 +951,16 @@
 
   async function saveRoute() {
     const name = (routeName.value || '').trim();
-    if (!name) { showToast('Donne un nom au trajet'); routeName.focus(); return; }
-    if (activeRoute.waypoints.length === 0) { showToast('Ajoute au moins une étape'); return; }
+    if (!name) { showToast(tr('nameTheRoute')); routeName.focus(); return; }
+    if (activeRoute.waypoints.length === 0) { showToast(tr('addOneStep')); return; }
     const r = await apiSaveRoute(name, activeRoute.waypoints);
-    if (!r?.ok) { showToast('Erreur serveur — trajet non enregistré'); return; }
+    if (!r?.ok) { showToast(tr('serverErrSave')); return; }
     routeStore[name] = r.route;
     activeRoute.name = name;
     routesVersion = r.version;
     await apiSetActiveRoute(name);
     refreshLoadSelect();
-    showToast(`« ${name} » enregistré (${activeRoute.waypoints.length} étapes)`);
+    showToast(tr('routeSaved', { name, n: activeRoute.waypoints.length }));
   }
   async function loadRoute(name) {
     if (!name || !routeStore[name]) return;
@@ -944,14 +970,14 @@
     if (r?.version) routesVersion = r.version;
     refreshWpCount();
     if (lastData) renderGrid(lastData);
-    showToast(`« ${name} » chargé`);
+    showToast(tr('routeLoadedShort', { name }));
   }
   async function deleteRoute() {
     const name = activeRoute.name || routeName.value.trim();
-    if (!name || !routeStore[name]) { showToast('Aucun trajet à supprimer'); return; }
-    if (!confirm(`Supprimer le trajet "${name}" ?`)) return;
+    if (!name || !routeStore[name]) { showToast(tr('noRouteToDelete')); return; }
+    if (!confirm(tr('confirmDeleteRoute', { name }))) return;
     const r = await apiDeleteRoute(name);
-    if (!r?.ok) { showToast('Erreur serveur — suppression échouée'); return; }
+    if (!r?.ok) { showToast(tr('serverErrDelete')); return; }
     delete routeStore[name];
     activeRoute = { name: '', waypoints: [] };
     routeName.value = '';
@@ -959,7 +985,7 @@
     refreshLoadSelect();
     refreshWpCount();
     if (lastData) renderGrid(lastData);
-    showToast(`« ${name} » supprimé`);
+    showToast(tr('routeDeleted', { name }));
   }
   async function clearWaypoints() {
     if (activeRoute.waypoints.length === 0) return;
@@ -973,7 +999,7 @@
   }
   async function recenterOnPlayer() {
     const state = await fetchMapState();
-    if (!state?.mapId) { showToast('Pas de position joueur détectée'); return; }
+    if (!state?.mapId) { showToast(tr('noPlayerPos')); return; }
     playerMapId = state.mapId;
     centerMapId = state.mapId;
     try { localStorage.setItem(PLANNER_CENTER, String(centerMapId)); } catch {}
@@ -1006,7 +1032,7 @@
     const cell = e.target.closest('.cell');
     if (!cell || cell.dataset.x === undefined) return;
     if (cell.classList.contains('no-map')) {
-      showToast('Aucune map à ces coords (falaise/mer) — choisis une autre case');
+      showToast(tr('noMapHere'));
       return;
     }
     const x = parseInt(cell.dataset.x, 10);
@@ -1129,7 +1155,7 @@
     try { legacyStore = JSON.parse(localStorage.getItem(LEGACY_ROUTES_KEY) || 'null'); } catch {}
     try { legacyActive = localStorage.getItem(LEGACY_ACTIVE_ROUTE_KEY) || ''; } catch {}
     if (!legacyStore || typeof legacyStore !== 'object' || Object.keys(legacyStore).length === 0) return;
-    showToast(`Migration : ${Object.keys(legacyStore).length} trajet(s) vers le serveur…`);
+    showToast(tr('migrating', { n: Object.keys(legacyStore).length }));
     for (const [name, entry] of Object.entries(legacyStore)) {
       if (!entry || !Array.isArray(entry.waypoints)) continue;
       await apiSaveRoute(name, entry.waypoints);
@@ -1138,6 +1164,17 @@
     try { localStorage.removeItem(LEGACY_ROUTES_KEY); } catch {}
     try { localStorage.removeItem(LEGACY_ACTIVE_ROUTE_KEY); } catch {}
   }
+
+  // Langue : peinture immédiate avec la langue en cache, puis sync serveur
+  // (poll : l'utilisateur peut changer de langue pendant que le planner est
+  // ouvert). Chaque changement repeint les libellés et les noms d'items.
+  applyStaticI18n();
+  I18N.onChange(() => {
+    applyStaticI18n();
+    refreshLoadSelect();
+    if (lastData) { renderGrid(lastData); renderFilterBar(lastData); updateStats(lastData); }
+  });
+  I18N.autoSync(STAKK_URL, 5000);
 
   (async () => {
     // 1. Charger les trajets depuis le serveur
@@ -1167,7 +1204,7 @@
       await refresh();
       requestAnimationFrame(centerViewportOnCenter);
     } else {
-      setDiag('Lance le jeu pour que STAKK détecte ta position, puis rafraîchis la page.');
+      setDiag(tr('launchGameHint'));
     }
     // Poll périodique : si followPlayer est ON et que le joueur change de
     // map, on re-centre automatiquement. Skip si un drag est en cours pour

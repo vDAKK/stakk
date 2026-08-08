@@ -519,21 +519,22 @@
   </style>
 </head>
 <body>
+  <script src="i18n.js"></script>
   <div id="panel">
-    <select id="routeSel" title="Charger un trajet enregistré">
-      <option value="">— trajet —</option>
+    <select id="routeSel">
+      <option value=""></option>
     </select>
-    <button id="bigMapBtn" title="Vue étendue (scroll + drag)" aria-label="Vue étendue">
+    <button id="bigMapBtn">
       <svg viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
     </button>
-    <button id="plannerBtn" title="Ouvrir le planner de trajet dans le navigateur" aria-label="Ouvrir le planner">
+    <button id="plannerBtn">
       <svg viewBox="0 0 24 24"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
     </button>
     <div id="routeBanner"></div>
     <div id="grid"><svg id="routeSvg" xmlns="http://www.w3.org/2000/svg"></svg></div>
   </div>
   <div id="filterBar"></div>
-  <div id="status">drag pour positionner · Ctrl+Shift+F filtres · Ctrl+Shift+↑/↓ zoom · Ctrl+Shift+O sortir édit · Ctrl+Shift+Q quitter</div>
+  <div id="status"></div>
   <div id="diagBar"></div>
   <div id="tooltip"></div>
   <div id="toast"></div>
@@ -541,6 +542,39 @@
   <script>
     const params = new URLSearchParams(location.search);
     const STAKK_URL = params.get('stakkUrl') || 'http://127.0.0.1:3000';
+
+    // ─── i18n ────────────────────────────────────────────────────────────
+    // La langue vient de l'UI STAKK via /api/overlay/lang (origines
+    // différentes → localStorage non partagé). applyStaticI18n() repeint les
+    // libellés statiques ; le reste passe par I18N.t() au moment du rendu.
+    const I18N = window.STAKK_I18N;
+    const tr = (k, v) => I18N.t(k, v);
+    function applyStaticI18n() {
+      const sel = document.getElementById('routeSel');
+      if (sel) {
+        sel.title = tr('routeSelTitle');
+        const first = sel.querySelector('option[value=""]');
+        if (first) first.textContent = tr('routePlaceholder');
+      }
+      const big = document.getElementById('bigMapBtn');
+      if (big) {
+        big.title = bigMap ? tr('bigMapOff') : tr('bigMapOn');
+        big.setAttribute('aria-label', big.title);
+      }
+      const plan = document.getElementById('plannerBtn');
+      if (plan) {
+        plan.title = tr('openPlanner');
+        plan.setAttribute('aria-label', tr('openPlannerShort'));
+      }
+      const st = document.getElementById('status');
+      if (st) st.textContent = tr('statusBar');
+    }
+    I18N.onChange(() => {
+      applyStaticI18n();
+      populateRouteSel();
+      if (lastData) { renderGrid(lastData); renderFilterBar(lastData); }
+    });
+    I18N.autoSync(STAKK_URL, 5000);
     const grid = document.getElementById('grid');
     const tooltip = document.getElementById('tooltip');
 
@@ -611,7 +645,7 @@
       if (!sel) return;
       const names = Object.keys(routeStore).sort();
       sel.innerHTML =
-        '<option value="">— trajet —</option>' +
+        '<option value="">' + tr('routePlaceholder') + '</option>' +
         names.map(n => {
           const safe = n.replace(/"/g, '&quot;');
           const cnt = (routeStore[n].waypoints || []).length;
@@ -631,7 +665,7 @@
         routesVersion = r.version || routesVersion;
       }
       if (lastData) renderGrid(lastData);
-      showToast(activeRoute.name ? `Trajet « ${activeRoute.name} » chargé` : 'Trajet désactivé');
+      showToast(activeRoute.name ? tr('routeLoaded', { name: activeRoute.name }) : tr('routeDisabled'));
     });
     // Init + poll périodique : détecte les nouveaux trajets créés dans le
     // planner. Le version counter évite de refetcher/re-render pour rien.
@@ -664,9 +698,9 @@
       let nextWp, stepLabel;
       if (curIdx === -1) {
         nextWp = wps[0];
-        stepLabel = `Départ → 1/${wps.length}`;
+        stepLabel = `${tr('start')} → 1/${wps.length}`;
       } else if (curIdx === wps.length - 1) {
-        banner.textContent = `Arrivé (${wps.length}/${wps.length})${activeRoute.name ? ' · ' + activeRoute.name : ''}`;
+        banner.textContent = `${tr('arrived')} (${wps.length}/${wps.length})${activeRoute.name ? ' · ' + activeRoute.name : ''}`;
         banner.style.display = 'block';
         return;
       } else {
@@ -677,7 +711,7 @@
       const dy = nextWp.y - center.posY;
       const dir = dirOctant(dx, dy);
       const dist = Math.max(Math.abs(dx), Math.abs(dy));
-      banner.textContent = `${stepLabel} ${dir} ${dist} case${dist > 1 ? 's' : ''} (${nextWp.x},${nextWp.y})${activeRoute.name ? ' · ' + activeRoute.name : ''}`;
+      banner.textContent = `${stepLabel} ${dir} ${dist} ${dist > 1 ? tr('cells') : tr('cell')} (${nextWp.x},${nextWp.y})${activeRoute.name ? ' · ' + activeRoute.name : ''}`;
       banner.style.display = 'block';
     }
     function dirOctant(dx, dy) {
@@ -714,13 +748,13 @@
         if (c.details) for (const k of Object.keys(c.details)) ids.add(+k);
       }
       const sorted = [...ids].sort((a, b) => {
-        const na = data.names?.[a]?.fr || '';
-        const nb = data.names?.[b]?.fr || '';
-        return na.localeCompare(nb);
+        const na = nameFor(data.names, a);
+        const nb = nameFor(data.names, b);
+        return na.localeCompare(nb, I18N.lang);
       });
       const lbl = document.createElement('span');
       lbl.className = 'lbl';
-      lbl.textContent = 'Filtres :';
+      lbl.textContent = tr('filtersLabel');
       filterBar.appendChild(lbl);
       for (const id of sorted) {
         const url = iconUrlFor(data.names, id);
@@ -728,7 +762,7 @@
         const el = document.createElement('img');
         el.className = 'filter-item' + (hiddenIds.has(id) ? ' off' : '');
         el.src = url;
-        el.title = nameFor(data.names, id) + (hiddenIds.has(id) ? ' (masqué)' : '');
+        el.title = nameFor(data.names, id) + (hiddenIds.has(id) ? ' (' + tr('hidden') + ')' : '');
         el.draggable = false;
         el.addEventListener('click', () => toggleHidden(id));
         filterBar.appendChild(el);
@@ -748,9 +782,9 @@
       }
     }
 
+    // Nom d'item dans la langue de l'UI (dofusdb renvoie fr/en/es/de/pt)
     function nameFor(names, id) {
-      const n = names?.[id];
-      return (n && (n.fr || n.en)) || ('id ' + id);
+      return I18N.itemName(names, id);
     }
     function iconUrlFor(names, id) {
       const n = names?.[id];
@@ -783,7 +817,7 @@
       try {
         const res = await fetch(url);
         if (!res.ok) {
-          diagSet(`HTTP ${res.status} pour map-grid ${mapId}`);
+          diagSet(tr('httpForMapGrid', { code: res.status, mapId }));
           return null;
         }
         const j = await res.json();
@@ -791,7 +825,7 @@
         diagSet('');
         return j;
       } catch (e) {
-        diagSet(`FETCH ERR map-grid: ${e.message}`);
+        diagSet(tr('fetchErrMapGrid', { msg: e.message }));
         return null;
       }
     }
@@ -954,13 +988,13 @@
         const state = await stateRes.json();
         const linked = linkRes?.ok ? (await linkRes.json()).accountId : null;
         const entries = Object.entries(state);
-        if (entries.length === 0) { diagSet('aucun compte lancé'); return; }
+        if (entries.length === 0) { diagSet(tr('noAccountRunning')); return; }
         // Comptes avec une map détectée (le proxy a vu un ChangeMapMessage).
         // Tant qu'aucun compte n'a bougé, mapId est null → on demande un
         // déplacement plutôt que d'afficher "aucun compte actif".
         const withMap = entries.filter(([, v]) => v && v.mapId);
         if (withMap.length === 0) {
-          diagSet(`${entries.length} compte(s) lancé(s), bouge sur la map pour détecter ta position`);
+          diagSet(tr('moveToDetect', { n: entries.length }));
           return;
         }
 
@@ -982,7 +1016,7 @@
           document.body.classList.add('connected');
           diagSet('');
         }
-      } catch (e) { diagSet(`map-state ERR: ${e.message}`); }
+      } catch (e) { diagSet(tr('mapStateErr', { msg: e.message })); }
     }
 
     // ─── Tooltip : évite le clignotement en ne re-setant textContent QUE
@@ -1043,11 +1077,11 @@
       const cmd = `/travel ${x} ${y}`;
       const ok = await copyToClipboard(cmd);
       if (ok) {
-        showToast(`Copié : ${cmd}`);
+        showToast(`${tr('copied')} : ${cmd}`);
         cell.classList.add('copied');
         setTimeout(() => cell.classList.remove('copied'), 500);
       } else {
-        showToast('Copie échouée');
+        showToast(tr('copyFailed'));
       }
     });
 
@@ -1059,6 +1093,7 @@
       window.open(`${STAKK_URL}/overlay/planner.html`, '_blank');
     });
 
+    applyStaticI18n();
     applyGridSize();
     renderGrid(null); // grille vide visible dès le démarrage
     setInterval(poll, 500);
@@ -1120,7 +1155,8 @@
       } else {
         radius = normalRadius;
       }
-      bigMapBtn.title = bigMap ? 'Vue normale' : 'Vue étendue (scroll + drag)';
+      bigMapBtn.title = bigMap ? tr('bigMapOff') : tr('bigMapOn');
+      bigMapBtn.setAttribute('aria-label', bigMapBtn.title);
       // Icônes SVG : expand (flèches sortantes) en vue normale, X en big-map
       // pour signifier "fermer la vue étendue".
       bigMapBtn.innerHTML = bigMap
