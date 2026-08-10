@@ -119,6 +119,10 @@ Onglet **Forgemagie**. Tu choisis un item, tu règles tes plages, tu cliques
 sur Forger. Il n'y a **rien à calibrer ni à observer** : STAKK reconnaît
 l'atelier, l'item et ton stock de runes tout seul.
 
+Et quand Ankama change son protocole à une mise à jour, tu n'as rien à faire non
+plus : pose une rune à la main dans l'atelier, STAKK réapprend le nouveau format
+en la regardant passer, puis reprend la main.
+
 ### Plages de stats
 
 Chaque stat a un curseur double : **viser au moins** et **plafond**. Par
