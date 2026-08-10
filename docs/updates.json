@@ -12,9 +12,9 @@
   ],
   "modules": {
     "zaap-server": {
-      "url": "https://vdakk.github.io/stakk/modules/zaap-server-c4afe13c.js",
-      "sha256": "c4afe13c6ccab4d2db408b0e8251e1f471d68610e3dd218c971067d3b8110a78",
-      "publishedAt": "2026-04-27T15:58:41.080Z"
+      "url": "https://vdakk.github.io/stakk/modules/zaap-server-7fa2cedf.js",
+      "sha256": "7fa2cedf088208e58b381c43c3d0ccc5798fd97cd2a64662cc49ab1a4c4777c0",
+      "publishedAt": "2026-08-10T09:27:26.869Z"
     },
     "retro-hook": {
       "url": "https://vdakk.github.io/stakk/modules/retro-hook-9fa6d2dc.js",
@@ -22,9 +22,9 @@
       "publishedAt": "2026-04-17T16:44:34.512Z"
     },
     "haapi": {
-      "url": "https://vdakk.github.io/stakk/modules/haapi-ac95e169.js",
-      "sha256": "ac95e169350d2ba1aa4e8093933d61c3a144bf902fbf0073cceea97afa6be0ae",
-      "publishedAt": "2026-05-04T17:25:58.861Z"
+      "url": "https://vdakk.github.io/stakk/modules/haapi-d300f2da.js",
+      "sha256": "d300f2daad59eb99835974aebd02a4481c0a37c1d30c7110961f1404058ed39d",
+      "publishedAt": "2026-08-10T09:27:27.749Z"
     },
     "frida-hook": {
       "url": "https://vdakk.github.io/stakk/modules/frida-hook-db2de952.js",
