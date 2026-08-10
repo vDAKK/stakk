@@ -12,9 +12,9 @@
   ],
   "modules": {
     "zaap-server": {
-      "url": "https://vdakk.github.io/stakk/modules/zaap-server-7fa2cedf.js",
-      "sha256": "7fa2cedf088208e58b381c43c3d0ccc5798fd97cd2a64662cc49ab1a4c4777c0",
-      "publishedAt": "2026-08-10T09:27:26.869Z"
+      "url": "https://vdakk.github.io/stakk/modules/zaap-server-7f075d57.js",
+      "sha256": "7f075d57e17fa47aca35a0e24975e5cd04a43f16ae3deca9843174b886505817",
+      "publishedAt": "2026-08-10T09:51:19.892Z"
     },
     "retro-hook": {
       "url": "https://vdakk.github.io/stakk/modules/retro-hook-9fa6d2dc.js",
