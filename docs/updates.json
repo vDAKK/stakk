@@ -77,9 +77,9 @@
       "publishedAt": "2026-08-08T18:05:21.466Z"
     },
     "key-refresh": {
-      "url": "https://vdakk.github.io/stakk/modules/key-refresh-ad3ca40b.js",
-      "sha256": "ad3ca40b028f2aceef87f778a6f401a317a1b635350c48afecf3e7137cfcf864",
-      "publishedAt": "2026-05-04T17:46:20.088Z"
+      "url": "https://vdakk.github.io/stakk/modules/key-refresh-d633dfb6.js",
+      "sha256": "d633dfb62ceab5ed27859dac46fa13562658c177af96e15f1a851872083c8fb1",
+      "publishedAt": "2026-08-10T09:56:49.141Z"
     },
     "fm-engine": {
       "url": "https://vdakk.github.io/stakk/modules/fm-engine-4632f88b.js",
