@@ -92,9 +92,9 @@
       "publishedAt": "2026-08-08T18:05:18.826Z"
     },
     "fm": {
-      "url": "https://vdakk.github.io/stakk/modules/fm-dcfcba39.js",
-      "sha256": "dcfcba392a2796ae866e7120029ce46c99e1ebc2e5063054b7be615ebd128d35",
-      "publishedAt": "2026-08-12T08:31:47.520Z"
+      "url": "https://vdakk.github.io/stakk/modules/fm-f49ef139.js",
+      "sha256": "f49ef1392d8356a629c111b3bf2bc203abae098bcce7325b76ba2852f5e37842",
+      "publishedAt": "2026-08-12T08:59:15.593Z"
     },
     "fm-protocol": {
       "url": "https://vdakk.github.io/stakk/modules/fm-protocol-c2b5cf99.js",
@@ -102,9 +102,9 @@
       "publishedAt": "2026-08-11T19:19:35.446Z"
     },
     "fm-live": {
-      "url": "https://vdakk.github.io/stakk/modules/fm-live-b3dd64b1.js",
-      "sha256": "b3dd64b1e2089f938d32f0e1abb6c85a46e45ba0d7d61ec27eb992d8369fff9d",
-      "publishedAt": "2026-08-12T08:31:48.403Z"
+      "url": "https://vdakk.github.io/stakk/modules/fm-live-abe865b7.js",
+      "sha256": "abe865b7ab0ad136a1000d8e050e73324423e75e3694eefcf4f27d851518a05a",
+      "publishedAt": "2026-08-12T08:59:16.443Z"
     },
     "fm-weights": {
       "url": "https://vdakk.github.io/stakk/modules/fm-weights-c10f0a4e.js",
