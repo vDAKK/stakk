@@ -110,6 +110,11 @@
       "url": "https://vdakk.github.io/stakk/modules/fm-weights-c10f0a4e.js",
       "sha256": "c10f0a4e37ce44c1899c6a797e924026b62326a9499806cb945ae8232952f962",
       "publishedAt": "2026-07-31T12:17:36.092Z"
+    },
+    "protocol-learn": {
+      "url": "https://vdakk.github.io/stakk/modules/protocol-learn-24e625b9.js",
+      "sha256": "24e625b9d747bab53dde903036a210e552f2de9e5ba914bfaf54afe48da0ff67",
+      "publishedAt": "2026-08-22T14:30:21.472Z"
     }
   }
 }
