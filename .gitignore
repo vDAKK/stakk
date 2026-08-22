@@ -2,10 +2,10 @@
 # Tout le reste est dans des sous-dossiers qui vivent dans des repos séparés
 # ou en local only.
 
-# Partie desktop (STAKK) — repo privé séparé
+# Partie desktop (STAKK) — repo privé vDAKK/stakk-client
 client/
 
-# Partie backend (Fly.io) — repo privé séparé
+# Partie backend (Fly.io) — repo privé vDAKK/stakk-server
 server/
 
 # Anciens binaires de release archivés localement
@@ -33,6 +33,7 @@ cache/
 .license
 *.log
 
-# Source lisible du frontend — éditée en local, obfusquée par build-docs.js
-# vers docs/index.html au build. La source reste hors du repo public.
+# Source lisible du frontend — vit dans vDAKK/stakk-client
+# (client/docs/index2.html), obfusquée par build-docs.js vers docs/index.html
+# au build. La source ne doit jamais atterrir dans ce repo public.
 docs/index2.html
