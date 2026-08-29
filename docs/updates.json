@@ -8,7 +8,8 @@
     "click-broadcast",
     "overlay-backend",
     "key-refresh",
-    "fm"
+    "fm",
+    "chasse"
   ],
   "modules": {
     "zaap-server": {
