@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>STAKK Chasse</title>
+  <style>
+    /* Même palette que l'overlay des ressources — c'est celle du HUD Dofus 3.
+       Les deux fenêtres sont indépendantes, mais elles se posent sur le même
+       jeu : deux chartes graphiques différentes se verraient. */
+    :root {
+      --panel-bg:      rgba(28, 32, 58, 0.88);
+      --panel-bg-alt:  rgba(22, 26, 48, 0.92);
+      --panel-border:  rgba(12, 14, 28, 0.95);
+      --panel-hi:      rgba(255, 255, 255, 0.05);
+      --gold:          #f5c042;
+      --gold-soft:     #ffd566;
+      --vert:          #7bff8a;
+      --text:          #eef1f8;
+      --text-dim:      #a8adc2;
+      --radius:        6px;
+    }
+    html, body {
+      margin: 0; padding: 0; height: 100vh; width: 100vw;
+      background: transparent;
+      color: var(--text);
+      font-family: 'Segoe UI', 'Open Sans', system-ui, sans-serif;
+      user-select: none;
+      overflow: hidden;
+      cursor: default;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #cadre {
+      box-sizing: border-box;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 4px;
+      padding: 8px 11px;
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: var(--radius);
+      box-shadow: inset 0 1px 0 var(--panel-hi), 0 4px 12px rgba(0, 0, 0, 0.55);
+      text-shadow: 0 1px 0 rgba(0, 0, 0, 0.55);
+    }
+
+    /* Mode édition : la fenêtre est invisible et click-through le reste du
+       temps. Il faut la voir pour l'attraper. */
+    body.edit #cadre {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 1px var(--gold), 0 4px 12px rgba(0, 0, 0, 0.55);
+      cursor: move;
+      -webkit-app-region: drag;
+    }
+    #aide {
+      display: none;
+      font-size: 9.5px;
+      color: var(--gold);
+      text-align: center;
+    }
+    body.edit #aide { display: block; }
+
+    /* ─── La ligne principale ─────────────────────────────────────────── */
+    #ligne { display: flex; align-items: center; gap: 9px; }
+
+    /* La flèche est tournée par transform : une seule forme SVG pour les huit
+       directions, plutôt que huit dessins à garder cohérents. */
+    #fleche {
+      flex: none;
+      width: 26px; height: 26px;
+      color: var(--gold);
+      transition: transform .18s ease-out;
+    }
+    #fleche.muette { color: var(--text-dim); opacity: .45; }
+
+    #cartes {
+      font-size: 17px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+      color: var(--gold-soft);
+    }
+    #cartes-unite { font-size: 10px; font-weight: 500; color: var(--text-dim); margin-left: 2px; }
+    #pos {
+      font-size: 13px;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      margin-left: auto;
+    }
+    #indice {
+      font-size: 10px;
+      color: var(--text-dim);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    #phorreur { font-size: 11px; font-weight: 700; color: var(--gold-soft); }
+    #phorreur.ici { color: var(--vert); text-shadow: 0 0 7px rgba(123, 255, 138, .5); }
+    #etat { font-size: 10px; color: var(--text-dim); }
+    .cache { display: none !important; }
+  </style>
+</head>
+<body>
+  <div id="cadre">
+    <div id="aide">Ctrl+Shift+H déplacer · Ctrl+Shift+C copie</div>
+    <div id="ligne">
+      <svg id="fleche" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <line x1="12" y1="20" x2="12" y2="5"></line>
+        <polyline points="6 11 12 5 18 11"></polyline>
+      </svg>
+      <div>
+        <span id="cartes"></span><span id="cartes-unite"></span>
+      </div>
+      <span id="pos"></span>
+    </div>
+    <div id="indice"></div>
+    <div id="phorreur" class="cache"></div>
+    <div id="etat"></div>
+  </div>
+
+<script>
+'use strict';
+
+// L'angle de rotation de la flèche, par direction Dofus.
+// Le SVG pointe vers le HAUT au repos, ce qui est le nord : nord = 0°.
+// Convention Dofus, la même que dans monde.js :
+//   0 est · 1 sud-est · 2 sud · 3 sud-ouest · 4 ouest · 5 nord-ouest
+//   6 nord · 7 nord-est
+const ANGLES = { 0: 90, 1: 135, 2: 180, 3: 225, 4: 270, 5: 315, 6: 0, 7: 45 };
+
+const $ = (id) => document.getElementById(id);
+
+function rendre(e) {
+  e = e || {};
+  const enChasse = !!(e.etape || e.indice);
+
+  const fleche = $('fleche');
+  const angle = ANGLES[e.direction];
+  fleche.style.transform = `rotate(${angle === undefined ? 0 : angle}deg)`;
+  // Sans direction connue, la flèche reste là mais s'éteint : la faire
+  // disparaître ferait sauter toute la ligne à chaque étape.
+  fleche.classList.toggle('muette', angle === undefined);
+
+  // Le nombre de cartes vaut null quand le graphe n'a trouvé aucun chemin.
+  // On laisse vide plutôt que d'écrire un chiffre faux — c'est dessus que le
+  // joueur juge si la cible est plausible.
+  //
+  // Sur un phorreur il n'y a PAS de compte à donner : la créature se déplace,
+  // aucune carte n'est visée. Le tiret d'attente y serait un tiret permanent,
+  // à côté de la flèche, sans jamais rien vouloir dire.
+  const n = e.cartes;
+  const connu = n !== null && n !== undefined;
+  const attendu = enChasse && !e.phorreur;
+  $('cartes').textContent = connu ? String(n) : (attendu ? '—' : '');
+  $('cartes-unite').textContent = connu ? (n > 1 ? 'cartes' : 'carte') : '';
+
+  $('pos').textContent = e.cible ? `[${e.cible.x},${e.cible.y}]` : '';
+  $('indice').textContent = e.cible ? (e.cible.nom || '') : '';
+
+  const ph = $('phorreur');
+  if (e.phorreur) {
+    ph.classList.remove('cache');
+    // Un phorreur se déplace : aucune coordonnée ne le désigne. On n'affirme
+    // « ICI » que s'il a été vu parmi les acteurs de la carte.
+    //
+    // « à chercher » et pas « cherche ici » : on ne sait justement PAS s'il est
+    // là, et l'autre formulation disait le contraire de « ICI » tout en lui
+    // ressemblant. La direction, c'est la flèche qui la donne.
+    ph.classList.toggle('ici', !!e.phorreurIci);
+    ph.textContent = e.phorreurIci ? `${e.phorreur} — ICI` : `${e.phorreur} — à chercher`;
+  } else {
+    ph.classList.add('cache');
+    ph.classList.remove('ici');
+  }
+
+  // La ligne d'état ne sert qu'à expliquer une fenêtre vide. Pendant une
+  // chasse elle se tait : la place est étroite.
+  $('etat').textContent = enChasse
+    ? (e.copie === false ? 'copie /travel coupée' : '')
+    : motifDuVide(e);
+}
+
+function motifDuVide(e) {
+  if (e.protocoleConnu === false) return 'protocole non reconnu';
+  if (e.resolveur === false) return 'dofusdb injoignable';
+  if (e.compte === false) return 'aucun compte lancé';
+  return 'aucune chasse en cours';
+}
+
+// L'état est posé par le processus principal via executeJavaScript : preload
+// est bundlé dans l'exe et n'expose pas de canal pour ça, alors que ce
+// fichier-ci se met à jour à chaud.
+window.addEventListener('chasse', () => rendre(window.__chasse));
+window.addEventListener('edit-mode', () => {
+  document.body.classList.toggle('edit', !!window.__edit);
+});
+
+rendre(null);
+</script>
+</body>
+</html>

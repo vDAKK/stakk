@@ -72,9 +72,9 @@
       "publishedAt": "2026-08-29T08:07:05.467Z"
     },
     "overlay-backend": {
-      "url": "https://vdakk.github.io/stakk/modules/overlay-backend-5d5996bc.js",
-      "sha256": "5d5996bccae1038d3a33b3e665372a4b74ed2b70bf4c59d7b4fa0dfd6c1918a4",
-      "publishedAt": "2026-08-08T18:05:21.466Z"
+      "url": "https://vdakk.github.io/stakk/modules/overlay-backend-7875dd49.js",
+      "sha256": "7875dd49b818fdc7a8e0618917b40e9d2142a01910c58703c0837b89531c003e",
+      "publishedAt": "2026-08-29T12:49:15.086Z"
     },
     "key-refresh": {
       "url": "https://vdakk.github.io/stakk/modules/key-refresh-d633dfb6.js",
@@ -115,6 +115,21 @@
       "url": "https://vdakk.github.io/stakk/modules/protocol-learn-24e625b9.js",
       "sha256": "24e625b9d747bab53dde903036a210e552f2de9e5ba914bfaf54afe48da0ff67",
       "publishedAt": "2026-08-22T14:30:21.472Z"
+    },
+    "chasse": {
+      "url": "https://vdakk.github.io/stakk/modules/chasse-d0229209.js",
+      "sha256": "d02292094087b09b0236d632880437bac842ca2601f45975d6548608f9b71f11",
+      "publishedAt": "2026-08-29T12:45:26.374Z"
+    },
+    "chasse-protocol": {
+      "url": "https://vdakk.github.io/stakk/modules/chasse-protocol-254152ba.js",
+      "sha256": "254152bac11f69bc48776ad99481ace5c57257dc7131dcc393846671235f52dc",
+      "publishedAt": "2026-08-29T12:45:27.078Z"
+    },
+    "recolte": {
+      "url": "https://vdakk.github.io/stakk/modules/recolte-82f91373.js",
+      "sha256": "82f913739e4e70988e028ea9f3fc14507aed85e17dda0965f825cb435305a436",
+      "publishedAt": "2026-08-29T12:45:27.800Z"
     }
   }
 }
