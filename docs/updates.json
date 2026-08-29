@@ -27,9 +27,9 @@
       "publishedAt": "2026-08-10T09:27:27.749Z"
     },
     "frida-hook": {
-      "url": "https://vdakk.github.io/stakk/modules/frida-hook-db2de952.js",
-      "sha256": "db2de9523a29cf04052bf3c7d5ef79eade3cfd67325864407b48c2b7e79f529e",
-      "publishedAt": "2026-04-26T13:13:28.807Z"
+      "url": "https://vdakk.github.io/stakk/modules/frida-hook-c108d19e.js",
+      "sha256": "c108d19ee7ea68b0b32e6457cf6bb7b887036aa3670be502cef11dada288c1e4",
+      "publishedAt": "2026-08-29T08:07:05.467Z"
     },
     "game-proxy": {
       "url": "https://vdakk.github.io/stakk/modules/game-proxy-4b12e608.js",
@@ -37,9 +37,9 @@
       "publishedAt": "2026-07-31T06:39:29.493Z"
     },
     "launcher-import": {
-      "url": "https://vdakk.github.io/stakk/modules/launcher-import-6b815c16.js",
-      "sha256": "6b815c16cf50591de0bfb8def2207d9200bd0e32068bfecd05e52a75360eb5d6",
-      "publishedAt": "2026-04-22T18:45:15.243Z"
+      "url": "https://vdakk.github.io/stakk/modules/launcher-import-2a851a49.js",
+      "sha256": "2a851a4918dbd3090adeed2143b653c44e298d7fa0a15a06628ede79c4003adc",
+      "publishedAt": "2026-08-29T08:07:05.467Z"
     },
     "dt-clone": {
       "url": "https://vdakk.github.io/stakk/modules/dt-clone-bc2e6b00.js",
@@ -52,9 +52,9 @@
       "publishedAt": "2026-04-17T16:44:34.961Z"
     },
     "organizer": {
-      "url": "https://vdakk.github.io/stakk/modules/organizer-51c645b2.js",
-      "sha256": "51c645b2a5078f800849505dbee85268088735e525da287c15a7bc77c70d506f",
-      "publishedAt": "2026-04-20T14:21:03.218Z"
+      "url": "https://vdakk.github.io/stakk/modules/organizer-620147b1.js",
+      "sha256": "620147b1449550b63202b106ec7c96b5cdb5b848f6f15b6f5ac93a4da6dccb89",
+      "publishedAt": "2026-08-29T08:07:05.467Z"
     },
     "sub-tracker": {
       "url": "https://vdakk.github.io/stakk/modules/sub-tracker-16ce45a8.js",
@@ -67,9 +67,9 @@
       "publishedAt": "2026-05-09T15:11:00.060Z"
     },
     "click-broadcast": {
-      "url": "https://vdakk.github.io/stakk/modules/click-broadcast-0a72ef73.js",
-      "sha256": "0a72ef73d37dc41d9985b453a3c0b6378b5191d224dd09b341fa2953d653fc04",
-      "publishedAt": "2026-04-22T15:47:40.303Z"
+      "url": "https://vdakk.github.io/stakk/modules/click-broadcast-e322ef29.js",
+      "sha256": "e322ef29e217feb6c1627d1b5ff9020225e3b7b3712bbb326723983522ebfe5b",
+      "publishedAt": "2026-08-29T08:07:05.467Z"
     },
     "overlay-backend": {
       "url": "https://vdakk.github.io/stakk/modules/overlay-backend-5d5996bc.js",
