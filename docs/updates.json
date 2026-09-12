@@ -13,9 +13,9 @@
   ],
   "modules": {
     "zaap-server": {
-      "url": "https://vdakk.github.io/stakk/modules/zaap-server-7f075d57.js",
-      "sha256": "7f075d57e17fa47aca35a0e24975e5cd04a43f16ae3deca9843174b886505817",
-      "publishedAt": "2026-08-10T09:51:19.892Z"
+      "url": "https://vdakk.github.io/stakk/modules/zaap-server-61605bbc.js",
+      "sha256": "61605bbc03faf3b60e354201b513f223db9054b845f7678db4abf3899c781e2c",
+      "publishedAt": "2026-09-12T12:34:31.701Z"
     },
     "retro-hook": {
       "url": "https://vdakk.github.io/stakk/modules/retro-hook-9fa6d2dc.js",
@@ -48,9 +48,9 @@
       "publishedAt": "2026-04-17T16:44:34.924Z"
     },
     "oauth-browser": {
-      "url": "https://vdakk.github.io/stakk/modules/oauth-browser-0af19aa8.js",
-      "sha256": "0af19aa86b6915799acaeaa269596cce051e51330d4da2e4195d0b059a58c352",
-      "publishedAt": "2026-04-17T16:44:34.961Z"
+      "url": "https://vdakk.github.io/stakk/modules/oauth-browser-018cbaa4.js",
+      "sha256": "018cbaa43537710fbfb4d75721e1ca81142bf246d95d52f4dc3022019398df7c",
+      "publishedAt": "2026-09-12T12:39:25.625Z"
     },
     "organizer": {
       "url": "https://vdakk.github.io/stakk/modules/organizer-620147b1.js",
@@ -78,9 +78,9 @@
       "publishedAt": "2026-08-29T12:49:15.086Z"
     },
     "key-refresh": {
-      "url": "https://vdakk.github.io/stakk/modules/key-refresh-d633dfb6.js",
-      "sha256": "d633dfb62ceab5ed27859dac46fa13562658c177af96e15f1a851872083c8fb1",
-      "publishedAt": "2026-08-10T09:56:49.141Z"
+      "url": "https://vdakk.github.io/stakk/modules/key-refresh-2712b622.js",
+      "sha256": "2712b622f3b93a53a90d941e0901b0cba2ba2ab65ac090a44be024f93c3558e5",
+      "publishedAt": "2026-09-12T12:58:23.734Z"
     },
     "fm-engine": {
       "url": "https://vdakk.github.io/stakk/modules/fm-engine-4632f88b.js",
