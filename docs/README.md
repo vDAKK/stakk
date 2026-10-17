@@ -1,8 +1,15 @@
+> [!IMPORTANT]
+> **STAKK n'est plus maintenu.** Ce dépôt ne recevra plus de mises à jour ni de correctifs.
+> STAKK continue en **open source** (GPL-3.0), 100 % local, sans compte ni connexion :
+> 👉 **[github.com/vDAKK/stakk-open-source](https://github.com/vDAKK/stakk-open-source)**
+>
+> *STAKK is no longer maintained. The open source version lives at [vDAKK/stakk-open-source](https://github.com/vDAKK/stakk-open-source).*
+
 <div align="center">
 
 <img src="https://raw.githubusercontent.com/vDAKK/stakk/main/docs/stakk.ico" alt="STAKK" width="128" height="128">
 
-# STAKK | Auto forgemagie | [UP] 🟢 Dofus 3.6.10.13
+# STAKK | ⛔ Plus maintenu → [version open source](https://github.com/vDAKK/stakk-open-source)
 
 **Joue plus de comptes Dofus, sur un seul PC.**
 
