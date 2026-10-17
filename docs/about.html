@@ -483,12 +483,13 @@ footer{
     <p style="margin:0 0 10px;line-height:1.55;font-size:14px;color:#c9d1d9">Cette version ne recevra plus de mises à jour ni de correctifs après les patchs Dofus. STAKK continue en <b>open source</b> : même outil, 100&nbsp;% local, sans compte ni connexion.</p>
     <p style="margin:0 0 20px;line-height:1.55;font-size:13px;color:#8b949e">STAKK is no longer maintained. An open source version is available.</p>
     <div style="display:flex;gap:10px;flex-wrap:wrap">
-      <a href="https://github.com/vDAKK/stakk-open-source" target="_blank" rel="noopener" style="flex:1;min-width:200px;text-align:center;background:#1abc9c;color:#0a0d12;font-weight:700;text-decoration:none;padding:12px 16px;border-radius:8px">Passer à la version open source</a>
-      <button type="button" onclick="document.getElementById('stakkEol').style.display='none';document.getElementById('stakkEolPill').style.display='block'" style="background:transparent;border:1px solid #30363d;color:#8b949e;padding:12px 16px;border-radius:8px;cursor:pointer;font:inherit">Continuer quand même</button>
+      <a href="https://github.com/vDAKK/stakk-open-source" target="_blank" rel="noopener" style="flex:1 1 100%;text-align:center;background:#1abc9c;color:#0a0d12;font-weight:700;text-decoration:none;padding:12px 16px;border-radius:8px">Passer à la version open source</a>
+      <button type="button" onclick="document.getElementById('stakkEol').style.display='none'" style="flex:1;background:transparent;border:1px solid #30363d;color:#c9d1d9;padding:12px 16px;border-radius:8px;cursor:pointer;font:inherit">Continuer quand même</button>
+      <button type="button" onclick="try{localStorage.setItem('stakkEolHidden','1')}catch(e){}document.getElementById('stakkEol').style.display='none'" style="flex:1;background:transparent;border:1px solid #30363d;color:#8b949e;padding:12px 16px;border-radius:8px;cursor:pointer;font:inherit">Ne plus afficher</button>
     </div>
   </div>
 </div>
-<a id="stakkEolPill" href="https://github.com/vDAKK/stakk-open-source" target="_blank" rel="noopener" style="display:none;position:fixed;left:12px;bottom:12px;z-index:2147483646;background:#1abc9c;color:#0a0d12;font:700 12px Inter,system-ui,sans-serif;text-decoration:none;padding:8px 12px;border-radius:999px;box-shadow:0 4px 14px rgba(0,0,0,.4)">STAKK n'est plus maintenu → version open source</a>
+<script>try{if(localStorage.getItem('stakkEolHidden')==='1')document.getElementById('stakkEol').style.display='none'}catch(e){}</script>
 <!-- /stakk-eol -->
 
 
